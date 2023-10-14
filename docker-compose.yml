@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    container_name: banky_api
+    restart: always
+    ports:
+      - '3333:80'
+    env_file:
+      - .env
+    environment:
+      NODE_ENV: production
+      PORT: 80
+    networks:
+      - app-network
+
+
+networks:
+  banky:
+    driver: bridge
