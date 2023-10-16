@@ -10,12 +10,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Set the value
-        id: step_one
+      - name: Set the version value
+        id: version
         run: |
           version=$(jq '.version' package.json | sed "s/\"//g")
-          echo "PKG_VERSION=v$version" >> "$GITHUB_ENV"
+          echo "PKG_VERSION=v$version" >> "$GITHUB_OUTPUT"
       - name: Use the value
         id: step_two
         run: |
-          printf 'rodcordeiro/banky:%s\n' "$PKG_VERSION" # This will output 'yellow'
+         rodcordeiro/banky:latest,rodcordeiro/banky:${{ steps.version.outputs.PKG_VERSION }}
