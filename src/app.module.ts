@@ -23,10 +23,12 @@ import { SharedModule } from '@/modules/shared.module';
       // migrationsRun: true,
       debug: false,
     }),
-    ThrottlerModule.forRoot({
-      ttl: 30,
-      limit: 10,
-    }),
+    ThrottlerModule.forRoot([
+      {
+        ttl: 30,
+        limit: 10,
+      },
+    ]),
     HttpModule,
     SharedModule,
   ],

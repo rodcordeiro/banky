@@ -22,7 +22,7 @@ import { CreateAccountDTO } from '@/modules/accounts/dto/create.dto';
 import { UpdateAccountDTO } from '@/modules/accounts/dto/update.dto';
 
 @Auth()
-@ApiTags('accounts')
+@ApiTags('Accounts')
 @Controller({
   version: '1',
   path: '/accounts',
