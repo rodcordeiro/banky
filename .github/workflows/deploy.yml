@@ -23,6 +23,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Set the version value
+        id: version
+        run: |
+          version=$(jq '.version' package.json | sed "s/\"//g")
+          echo "PKG_VERSION=v$version" >> "$GITHUB_OUTPUT"
       # PREPARE DOCKER ENVIRONMENT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -56,5 +61,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: rodcordeiro/banky:latest,${{ steps.meta.outputs.tags }}
+          tags: rodcordeiro/banky:latest,rodcordeiro/banky:${{ steps.version.outputs.PKG_VERSION }}
           labels: ${{ steps.meta.outputs.labels }}
