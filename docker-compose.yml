@@ -7,11 +7,24 @@ services:
     restart: always
     ports:
       - '3333:80'
-    env_file:
-      - .env
+    
     environment:
       NODE_ENV: production
-      PORT: 80
+      PORT: ${PORT}
+      HOST: 0.0.0.0
+      ENC_SECRET: ${ENC_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_EXPIRES: ${JWT_EXPIRES}
+
+      EMAIL: ${EMAIL}
+      PASSWORD: ${PASSWORD}
+
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_USER: ${DB_USER}
+      DB_PWD: ${DB_PWD}
+      DB_NAME: ${DB_NAME}
     networks:
       - app-network
 
