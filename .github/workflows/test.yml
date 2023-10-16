@@ -14,4 +14,8 @@ jobs:
         id: step_one
         run: |
           version=$(jq '.version' package.json)
-          echo "PKG_VERSION=$version" # >> "$GITHUB_ENV"
+          echo "PKG_VERSION=$version" >> "$GITHUB_ENV"
+      - name: Use the value
+          id: step_two
+          run: |
+            printf '%s\n' "$PKG_VERSION" # This will output 'yellow'
