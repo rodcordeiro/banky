@@ -3,13 +3,13 @@ name: Docker Image CI
 on:
   push:
     branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
+  
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
       # PREPARE DOCKER ENVIRONMENT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -21,13 +21,27 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_TOKEN }}
           logout: true
-      
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          # list of Docker images to use as base name for tags
+          images: |
+            rodcordeiro/banky
+          # generate Docker tags based on the following events/attributes
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha  
       # BUILD AND PUSH DOCKER IMAGES
       - name: Build and push Docker images
         uses: docker/build-push-action@v5.0.0
         with:
           context: .
           push: true
-          tags: 
-            - rodcordeiro/banky:latest
-            - rodcordeiro/banky:$(date +%s)
+          tags: rodcordeiro/banky:latest,${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
