@@ -1,0 +1,20 @@
+name: TEST
+
+on:
+  push:
+    branches: [ "develop" ]
+  
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set the value
+        id: step_one
+        run: |
+          cat ./package.json && jq .
+          # version = $()
+          # echo "action_state=yellow" >> "$GITHUB_ENV"
+    
+      
