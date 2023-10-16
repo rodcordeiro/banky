@@ -7,7 +7,7 @@ import {
   Body,
 } from '@nestjs/common';
 
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBody } from '@nestjs/swagger';
 
 import { Authenticate } from '@/common/interfaces/authenticated.interface';
 
@@ -16,7 +16,7 @@ import { CreateUserDTO } from '@/modules/users/dto/create.dto';
 import { AuthService } from '@/modules/auth/services/auth.service';
 import { LocalAuth, Reauth } from '@/common/decorators/auth.decorator';
 
-@ApiTags('auth')
+@ApiTags('Auth')
 @Controller({
   version: '1',
   path: '/auth',
@@ -24,6 +24,18 @@ import { LocalAuth, Reauth } from '@/common/decorators/auth.decorator';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
+  @ApiBody({
+    schema: {
+      properties: {
+        login: {
+          type: 'string',
+        },
+        password: {
+          type: 'string',
+        },
+      },
+    },
+  })
   @LocalAuth()
   @HttpCode(HttpStatus.OK)
   @Post('/login')
@@ -36,6 +48,18 @@ export class AuthController {
     return this.authService.register(body);
   }
 
+  @ApiBody({
+    schema: {
+      properties: {
+        login: {
+          type: 'string',
+        },
+        refreshToken: {
+          type: 'string',
+        },
+      },
+    },
+  })
   @Reauth()
   @Post('/refresh')
   async refresh(@Req() req: Authenticate.IAuthenticatedUser) {

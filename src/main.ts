@@ -68,18 +68,18 @@ async function bootstrap() {
    * Swagger
    * ------------------------------------------------------
    */
-  // const config = new DocumentBuilder()
-  //   .setTitle('Banky')
-  //   .setDescription('Banky RestAPI documentation and examples')
-  //   .setVersion(version)
-  //   .addSecurity('bearer', {
-  //     type: 'http',
-  //     scheme: 'basic',
-  //   })
-  //   .build();
+  const config = new DocumentBuilder()
+    .setTitle('Banky')
+    .setDescription('Banky RestAPI documentation and examples')
+    .setVersion(version)
+    .addSecurity('bearer', {
+      type: 'http',
+      scheme: 'basic',
+    })
+    .build();
 
-  // const document = SwaggerModule.createDocument(app, config);
-  // SwaggerModule.setup('/swagger', app, document);
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('/swagger', app, document);
 
   await app.listen(process.env.PORT, '0.0.0.0', (err, address) => {
     if (err) {

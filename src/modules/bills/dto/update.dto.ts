@@ -1,28 +1,19 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  IsCurrency,
-} from 'class-validator';
+import { IsEnum, IsString, IsUUID, IsCurrency } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { BillsTypes } from '../types/bills.types';
 
-export class CreateBillDTO {
-  @ApiProperty({ required: true })
-  @IsNotEmpty()
+export class UpdateBillDTO {
+  @ApiProperty({ required: false })
   @IsString()
   name: string;
 
-  @ApiProperty({ required: true, enum: BillsTypes.BillFrequency })
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
   @IsString()
   @IsEnum(BillsTypes.BillFrequency)
   frequency: BillsTypes.BillFrequency;
 
-  @ApiProperty({ required: true, type: 'number' })
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
   @IsCurrency(
     {
       allow_decimal: true,
@@ -32,10 +23,7 @@ export class CreateBillDTO {
   )
   value: number;
 
-  owner: string;
-
-  @ApiProperty({ required: true })
-  @IsNotEmpty()
+  @ApiProperty({ required: false })
   @IsString()
   @IsUUID()
   account: string;

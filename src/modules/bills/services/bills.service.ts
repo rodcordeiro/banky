@@ -7,6 +7,7 @@ import { AccountsService } from '@/modules/accounts/services/accounts.service';
 
 import { BillsEntity } from '@/modules/bills/entities/bills.entity';
 import { CreateBillDTO } from '@/modules/bills/dto/create.dto';
+import { UpdateBillDTO } from '@/modules/bills/dto/update.dto';
 
 @Injectable()
 export class BillsService {
@@ -41,5 +42,22 @@ export class BillsService {
     });
     const bill = this.billsRepository.create({ ...data, owner, account });
     return await this.billsRepository.save(bill);
+  }
+  async update(id: string, data: UpdateBillDTO) {
+    const bill = await this.findOneBy({
+      id,
+    });
+    const account = data.account
+      ? await this.accountsService.findOneBy({
+          id: data.account,
+        })
+      : bill.account;
+    this.billsRepository.merge(bill, { ...data, account });
+    return await this.billsRepository.save(bill);
+  }
+
+  async delete(id: string) {
+    await this.findOneBy({ id });
+    await this.billsRepository.delete({ id });
   }
 }
