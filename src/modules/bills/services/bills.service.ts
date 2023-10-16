@@ -5,7 +5,8 @@ import { FindOneOptions, Repository } from 'typeorm';
 import { UsersService } from '@/modules/users/services/users.service';
 import { AccountsService } from '@/modules/accounts/services/accounts.service';
 
-import { BillsEntity } from 'src/modules/bills/entities/bills.entity';
+import { BillsEntity } from '@/modules/bills/entities/bills.entity';
+import { CreateBillDTO } from '@/modules/bills/dto/create.dto';
 
 @Injectable()
 export class BillsService {
@@ -22,5 +23,23 @@ export class BillsService {
         owner: { id: owner },
       },
     });
+  }
+  async findOneBy(options: FindOneOptions<BillsEntity>['where']) {
+    return this.billsRepository
+      .findOneByOrFail(options)
+      .then(value => value)
+      .catch(() => {
+        throw new NotFoundException('Bill not found');
+      });
+  }
+  async store(data: CreateBillDTO) {
+    const owner = await this.usersService.findBy({
+      id: data.owner,
+    });
+    const account = await this.accountsService.findOneBy({
+      id: data.account,
+    });
+    const bill = this.billsRepository.create({ ...data, owner, account });
+    return await this.billsRepository.save(bill);
   }
 }
