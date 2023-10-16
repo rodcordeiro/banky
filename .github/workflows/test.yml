@@ -13,6 +13,5 @@ jobs:
       - name: Set the value
         id: step_one
         run: |
-
-          version = $(jq '.version' package.json)
+          version=$(jq '.version' package.json)
           echo "PKG_VERSION=$version" # >> "$GITHUB_ENV"
