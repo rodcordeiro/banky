@@ -20,7 +20,6 @@ import { SharedModule } from '@/modules/shared.module';
       migrations: [__dirname + '/core/database/migrations/{.ts,*.js}'],
       entities: [__dirname + '/modules/*/entities/*.entity.js'],
       synchronize: true,
-      // migrationsRun: true,
       debug: false,
     }),
     ThrottlerModule.forRoot([

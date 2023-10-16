@@ -3,8 +3,10 @@ import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { BaseEntity } from '@/common/entities/base.entity';
 
 import { UsersEntity } from '@/modules/users/entities/users.entity';
-import { AccountType } from '../types/accounts.types';
 import { BillsEntity } from '@/modules/bills/entities/bills.entity';
+import { ExpensesEntity } from '@/modules/expenses/entities/expenses.entity';
+
+import { AccountType } from '../types/accounts.types';
 
 @Entity({ name: 'banky_tb_accounts' })
 export class AccountsEntity extends BaseEntity {
@@ -26,6 +28,10 @@ export class AccountsEntity extends BaseEntity {
   @OneToMany(() => BillsEntity, bill => bill.account)
   @JoinColumn()
   bills: BillsEntity[];
+
+  @OneToMany(() => ExpensesEntity, expense => expense.account)
+  @JoinColumn()
+  expenses: ExpensesEntity[];
 
   /** Methods */
 }

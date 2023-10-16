@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
-// import { ApiTags } from '@nestjs/swagger';
-
-import { UsersService } from '@/modules/users/services/users.service';
 import { ApiTags } from '@nestjs/swagger';
 
+import { Auth } from '@/common/decorators/auth.decorator';
+
+import { UsersService } from '@/modules/users/services/users.service';
+
+@Auth()
 @ApiTags('Users')
 @Controller({
   version: '1',
