@@ -13,8 +13,9 @@ jobs:
       - name: Set the value
         id: step_one
         run: |
-          cat ./package.json && jq .
-          # version = $()
+          
+          version = $(cat ./package.json && jq .).version
+          $version
           # echo "action_state=yellow" >> "$GITHUB_ENV"
     
       
