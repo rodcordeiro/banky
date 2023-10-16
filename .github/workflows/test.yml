@@ -2,8 +2,8 @@ name: TEST
 
 on:
   push:
-    branches: [ "develop" ]
-  
+    branches: ['develop']
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -13,9 +13,6 @@ jobs:
       - name: Set the value
         id: step_one
         run: |
-          
-          version = $(cat ./package.json && jq .).version
-          $version
-          # echo "action_state=yellow" >> "$GITHUB_ENV"
-    
-      
+
+          version = $(jq '.version' package.json)
+          echo "PKG_VERSION=$version" # >> "$GITHUB_ENV"
