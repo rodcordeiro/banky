@@ -38,7 +38,7 @@ export class BillsController {
 
   @Get(':id')
   async view(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.billsService.findOneBy({ id });
+    return this.billsService.view({ id });
   }
 
   @Post()

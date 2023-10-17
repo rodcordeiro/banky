@@ -6,6 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
+    "prebuild": "npm run format",
     "build": "nest build",
     "preformat": "npm run lint",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

@@ -10,7 +10,9 @@ export class CreateAccountDTO {
 
   owner?: string;
 
-  @ApiProperty()
+  @ApiProperty({
+    enum: AccountType,
+  })
   @IsNotEmpty()
   @IsString()
   @IsEnum(AccountType)

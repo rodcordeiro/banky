@@ -25,9 +25,38 @@ export class BillsService {
       },
     });
   }
+  async view(options: FindOneOptions<BillsEntity>['where']) {
+    const bill = await this.billsRepository
+      .findOneOrFail({
+        where: options,
+        relations: {
+          account: true,
+          expenses: true,
+        },
+      })
+      .then(value => value)
+      .catch(() => {
+        throw new NotFoundException('Bill not found');
+      });
+    return {
+      ...bill,
+      averageValue: bill.expenses
+        ? (
+            bill.expenses.reduce((curr, expense) => curr + expense.value, 0) /
+            bill.expenses.length
+          ).toFixed(2)
+        : 0,
+    };
+  }
   async findOneBy(options: FindOneOptions<BillsEntity>['where']) {
     return this.billsRepository
-      .findOneByOrFail(options)
+      .findOneOrFail({
+        where: options,
+        relations: {
+          account: true,
+          expenses: true,
+        },
+      })
       .then(value => value)
       .catch(() => {
         throw new NotFoundException('Bill not found');

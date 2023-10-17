@@ -72,10 +72,7 @@ async function bootstrap() {
     .setTitle('Banky')
     .setDescription('Banky RestAPI documentation and examples')
     .setVersion(version)
-    .addSecurity('bearer', {
-      type: 'http',
-      scheme: 'basic',
-    })
+    .addBearerAuth()
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
