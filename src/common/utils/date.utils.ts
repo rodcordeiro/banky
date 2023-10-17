@@ -48,11 +48,9 @@ export function convertDate(d: any) {
     : d.constructor === Array
     ? new Date(d[0], d[1], d[2])
     : d.constructor === Number
-    ? // @ts-ignore
-      new Date(d)
+    ? new Date(d as any)
     : d.constructor === String
-    ? // @ts-ignore
-      new Date(d)
+    ? new Date(d as string)
     : typeof d === 'object'
     ? new Date(d.year, d.month, d.date)
     : NaN;
@@ -79,8 +77,7 @@ export function compareDates(
   // eslint-disable-next-line no-return-assign
   return Number.isFinite((a = convertDate(a).valueOf())) &&
     Number.isFinite((b = convertDate(b).valueOf()))
-    ? // @ts-ignore
-      (a > b) - (a < b)
+    ? (((a as any) > b) as any) - (((a as any) < b) as any)
     : NaN;
 }
 

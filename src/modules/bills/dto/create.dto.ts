@@ -1,10 +1,4 @@
-import {
-  IsEnum,
-  IsNotEmpty,
-  IsString,
-  IsUUID,
-  IsCurrency,
-} from 'class-validator';
+import { IsEnum, IsNotEmpty, IsString, IsUUID } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { BillsTypes } from '../types/bills.types';
@@ -20,17 +14,6 @@ export class CreateBillDTO {
   @IsString()
   @IsEnum(BillsTypes.BillFrequency)
   frequency: BillsTypes.BillFrequency;
-
-  @ApiProperty({ required: true, type: 'number' })
-  @IsNotEmpty()
-  @IsCurrency(
-    {
-      allow_decimal: true,
-      decimal_separator: '.',
-    },
-    { message: 'Invalid currency value' },
-  )
-  value: number;
 
   owner: string;
 

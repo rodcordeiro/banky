@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsEmail, Matches } from 'class-validator';
+import { IsNotEmpty, Matches } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { RegexHelper } from '@/common/utils/regex.util';
 export class CreateUserDTO {

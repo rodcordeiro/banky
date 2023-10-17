@@ -21,7 +21,7 @@ export class ExpensesEntity extends BaseEntity {
   paymentType: PaymentType;
 
   @Column({
-    type: 'decimal',
+    type: 'double',
   })
   value: number;
 

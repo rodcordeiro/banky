@@ -26,6 +26,7 @@ export class UpdateExpenseDTO {
     {
       allow_decimal: true,
       decimal_separator: '.',
+      digits_after_decimal: [1, 2],
     },
     { message: 'Invalid currency value' },
   )
