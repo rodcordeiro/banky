@@ -26,7 +26,7 @@ services:
       DB_PWD: ${DB_PWD}
       DB_NAME: ${DB_NAME}
     networks:
-      - app-network
+      - banky
 
 
 networks:
