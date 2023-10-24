@@ -30,9 +30,6 @@ export class UsersService {
         where: {
           ...options,
         },
-        // relations: {
-        //   books: true,
-        // },
       });
       return user;
     } catch (err) {

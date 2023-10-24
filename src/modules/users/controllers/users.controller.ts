@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Req } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
@@ -17,5 +17,9 @@ export class UsersControllers {
   @Get()
   async index() {
     return await this.usersService.findAll();
+  }
+  @Get('/me')
+  async view(@Req() req: BankyRequest) {
+    return this.usersService.findBy({ id: req.user.id });
   }
 }
