@@ -1,4 +1,4 @@
-name: "Scan code quality"
+name: "Code build validation"
 
 on:
   pull_request:
@@ -23,6 +23,6 @@ jobs:
         with:
           node-version: 18.x
           cache: 'npm'
-      - run: npm ci
+      - run: npm install
       - run: npm run build --if-present
       - run: npm test
