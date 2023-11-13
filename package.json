@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@fastify/compress": "^6.5.0",
-    "@fastify/csrf-protection": "^6.3.0",
+    "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^11.1.1",
     "@fastify/oauth2": "^7.5.0",
     "@fastify/secure-session": "^7.1.0",
