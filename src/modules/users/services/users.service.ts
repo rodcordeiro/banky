@@ -1,9 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { FindOneOptions, Repository } from 'typeorm';
 
 import { UsersEntity } from '@/modules/users/entities/users.entity';
@@ -13,20 +13,16 @@ import { CreateUserDTO } from '../dto/create.dto';
 @Injectable()
 export class UsersService {
   constructor(
-    @InjectRepository(UsersEntity)
-    private readonly usersRepository: Repository<UsersEntity>,
+    @Inject('USER_REPOSITORY')
+    private _usersRepository: Repository<UsersEntity>,
   ) {}
   async findAll() {
-    return await this.usersRepository.find({
-      select: ['id', 'name', 'username', 'createdAt', 'updatedAt'],
-    });
+    return await this._usersRepository.find();
   }
 
   async findBy(options: FindOneOptions<UsersEntity>['where']) {
     try {
-      console.log({ options });
-      const user = await this.usersRepository.findOneOrFail({
-        select: ['id', 'name', 'username', 'createdAt', 'updatedAt'],
+      const user = await this._usersRepository.findOneOrFail({
         where: {
           ...options,
         },
@@ -37,36 +33,42 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
   }
+
   async validate(options: FindOneOptions<UsersEntity>['where']) {
     try {
-      return await this.usersRepository.findOneOrFail({
+      return await this._usersRepository.findOneOrFail({
+        select: ['password', 'username', 'id'],
         where: options,
       });
     } catch (err) {
       throw new NotFoundException('User not found');
     }
   }
+
   async store(data: CreateUserDTO) {
-    const alreadyRegistered = await this.usersRepository.findOneBy({
+    const alreadyRegistered = await this._usersRepository.findOneBy({
       username: data.username,
     });
     if (alreadyRegistered)
       throw new BadRequestException(`Username ${data.username} already in use`);
-    const user = this.usersRepository.create(data);
-    return await this.usersRepository.save(user);
+    const user = this._usersRepository.create(data);
+    return await this._usersRepository.save(user);
   }
-  async update(id: string, data: UpdateUserDTO) {
-    const user = await this.usersRepository.findOneOrFail({ where: { id } });
-    this.usersRepository.merge(user, data);
-    return await this.usersRepository.save(user);
+
+  async update(id: number, data: UpdateUserDTO) {
+    const user = await this._usersRepository.findOneOrFail({ where: { id } });
+    this._usersRepository.merge(user, data);
+    return await this._usersRepository.save(user);
   }
-  async destroy(id: string) {
-    await this.usersRepository.findOneOrFail({ where: { id } });
-    await this.usersRepository.delete({ id });
+
+  async destroy(id: number) {
+    await this._usersRepository.findOneOrFail({ where: { id } });
+    await this._usersRepository.delete({ id });
   }
-  async updateToken(id: string, refreshToken: string) {
-    const user = await this.usersRepository.findOneOrFail({ where: { id } });
-    this.usersRepository.merge(user, { refreshToken });
-    await this.usersRepository.save(user);
+
+  async updateToken(id: number, refreshToken: string) {
+    const user = await this._usersRepository.findOneOrFail({ where: { id } });
+    this._usersRepository.merge(user, { refreshToken });
+    await this._usersRepository.save(user);
   }
 }

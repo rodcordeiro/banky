@@ -1,12 +1,15 @@
 FROM node:20 AS builder
 
-WORKDIR /banky
+WORKDIR /rod
+
+ENV NEW_RELIC_NO_CONFIG_FILE=true
+ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
+ENV NEW_RELIC_LOG=stdout
+
 
 COPY . .
 
-RUN yarn
-
-RUN yarn build
+RUN yarn && yarn build
 
 EXPOSE 80
 

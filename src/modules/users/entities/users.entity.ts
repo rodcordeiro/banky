@@ -1,11 +1,9 @@
-import { Column, Entity, BeforeInsert, OneToMany, JoinColumn } from 'typeorm';
+import { Column, Entity, BeforeInsert } from 'typeorm';
 import { hashSync } from 'bcrypt';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 
-import { AccountsEntity } from '@/modules/accounts/entities/accounts.entity';
-
-@Entity({ name: 'banky_tb_users' })
+@Entity('tb_user')
 export class UsersEntity extends BaseEntity {
   /** Columns */
 
@@ -15,16 +13,13 @@ export class UsersEntity extends BaseEntity {
   @Column()
   username: string;
 
-  @Column()
+  @Column({ select: false })
   password: string;
 
   @Column()
   refreshToken: string;
 
   /** Joins */
-  @OneToMany(() => AccountsEntity, account => account.owner)
-  @JoinColumn()
-  accounts: AccountsEntity[];
 
   /** Methods */
   @BeforeInsert()

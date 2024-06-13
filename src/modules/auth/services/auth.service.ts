@@ -9,20 +9,20 @@ import { EncryptUtils } from '@/common/utils/encrypt.util';
 import DateManipulation from '@/common/utils/date.utils';
 
 interface JwtPayload {
-  id: string;
+  id: number;
   username: string;
 }
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly usersService: UsersService,
-    private readonly jwtService: JwtService,
+    private readonly _usersService: UsersService,
+    private readonly _jwtService: JwtService,
   ) {}
 
   async validate(username: string, password: string) {
     try {
-      const user = await this.usersService.validate({ username });
+      const user = await this._usersService.validate({ username });
       const validPassword = compareSync(password, user.password);
 
       if (!validPassword) return null;
@@ -42,7 +42,7 @@ export class AuthService {
       process.env.ENC_SECRET,
     );
     const tokens = this.getTokens(payload);
-    await this.usersService.updateToken(user.id, tokens.refreshToken);
+    await this._usersService.updateToken(user.id, tokens.refreshToken);
     return {
       ...tokens,
       authenticated: true,
@@ -50,7 +50,7 @@ export class AuthService {
   }
 
   async register(payload: CreateUserDTO) {
-    const user = await this.usersService.store(payload);
+    const user = await this._usersService.store(payload);
     const tokenPayload = EncryptUtils.encrypt(
       {
         id: user.id,
@@ -59,7 +59,7 @@ export class AuthService {
       process.env.ENC_SECRET,
     );
     const tokens = this.getTokens(tokenPayload);
-    await this.usersService.updateToken(user.id, tokens.refreshToken);
+    await this._usersService.updateToken(user.id, tokens.refreshToken);
     return {
       ...tokens,
     };
@@ -71,7 +71,7 @@ export class AuthService {
       process.env.ENC_SECRET,
     );
     const tokens = this.getTokens(tokenPayload);
-    await this.usersService.updateToken(payload.id, tokens.refreshToken);
+    await this._usersService.updateToken(payload.id, tokens.refreshToken);
     return {
       ...tokens,
       authenticated: true,
@@ -80,9 +80,9 @@ export class AuthService {
 
   private getTokens(payload: string) {
     return {
-      accessToken: this.jwtService.sign({ payload }),
+      accessToken: this._jwtService.sign({ payload }),
       expires: DateManipulation.hour(new Date(), 1),
-      refreshToken: this.jwtService.sign(
+      refreshToken: this._jwtService.sign(
         { payload },
         {
           expiresIn: '10d',

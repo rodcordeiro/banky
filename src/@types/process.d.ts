@@ -9,11 +9,6 @@ declare global {
       readonly JWT_REFRESH_SECRET: string;
       readonly JWT_EXPIRES: string;
 
-      /** Email communication setup: email */
-      readonly EMAIL: string;
-      /** Email communication setup: password */
-      readonly PASSWORD: string;
-
       /** Database Hostname */
       readonly DB_HOST: string;
       /** Database Port */
@@ -25,6 +20,19 @@ declare global {
       /** Database name */
       readonly DB_NAME: string;
     }
+  }
+  export interface File {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    buffer: Buffer;
+    size: number;
+  }
+
+  interface Buffer {
+    type: string;
+    data: number[];
   }
 }
 

@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-namespace */
-
 export namespace Authenticate {
   export type IAuthToken = {
-    id: string;
+    id: number;
     username: string;
   };
   export type IAuthenticatedUser = {

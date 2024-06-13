@@ -3,18 +3,24 @@ import { Module } from '@nestjs/common';
 import { HealthModule } from '@/modules/health/health.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { AuthModule } from '@/modules/auth/auth.module';
-import { AccountsModule } from '@/modules/accounts/accounts.module';
-import { BillsModule } from '@/modules/bills/bills.module';
-import { ExpensesModule } from './expenses/expenses.module';
+import { CategoriesModule } from '@/modules/categories/categories.module';
+import { LinesModule } from '@/modules/lines/lines.module';
+import { GirasModule } from '@/modules/giras/giras.module';
+import { RythmsModule } from './rythms/rythms.module';
+import { PointsModule } from '@/modules/points/points.module';
+import { UploadsModule } from './uploads/upload.module';
 
 @Module({
   imports: [
     HealthModule,
     UsersModule,
     AuthModule,
-    AccountsModule,
-    BillsModule,
-    ExpensesModule,
+    UploadsModule,
+    CategoriesModule,
+    RythmsModule,
+    LinesModule,
+    GirasModule,
+    PointsModule,
   ],
   controllers: [],
   providers: [],
