@@ -65,8 +65,8 @@ async function bootstrap() {
    * ------------------------------------------------------
    */
   const config = new DocumentBuilder()
-    .setTitle('Raizes API')
-    .setDescription('Raizes RestAPI documentation and examples')
+    .setTitle('Banky API')
+    .setDescription('Banky RestAPI documentation and examples')
     .setVersion(version)
     .addBearerAuth()
     .build();

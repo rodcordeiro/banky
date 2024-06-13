@@ -32,7 +32,7 @@ jobs:
         with:
           # list of Docker images to use as base name for tags
           images: |
-            rodcordeiro/raizes-api
+            rodcordeiro/banky-api
           # generate Docker tags based on the following events/attributes
           tags: |
             type=schedule
@@ -48,7 +48,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: rodcordeiro/raizes-api:latest,rodcordeiro/raizes-api:${{ steps.version.outputs.PKG_VERSION }}
+          tags: rodcordeiro/banky-api:latest,rodcordeiro/banky-api:${{ steps.version.outputs.PKG_VERSION }}
           labels: ${{ steps.meta.outputs.labels }}
       
   

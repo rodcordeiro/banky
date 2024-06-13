@@ -16,10 +16,6 @@ export const envSchema = z.object({
   DB_PWD: z.string(),
   DB_NAME: z.string(),
 
-  FTP_HOST: z.string(),
-  FTP_PORT: z.string().transform(port => +port),
-  FTP_USER: z.string(),
-  FTP_PWD: z.string(),
 
   DEBUG: z.boolean().optional().default(false),
 });

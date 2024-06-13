@@ -5,15 +5,15 @@ import {
   import {  Repository } from 'typeorm';
   import { BaseService } from '@/common/services/base.service';
   
-  import { CategoriesEntity } from '@/modules/categories/entities/categories.entity';
+  import { AccountsEntity } from '@/modules/accounts/entities/accounts.entity';
   
   
   @Injectable()
-  export class CategoriesService extends BaseService {
+  export class AccountsService extends BaseService {
     override repository = this._repository;
     constructor(
-      @Inject('CATEGORIES_REPOSITORY')
-      private _repository: Repository<CategoriesEntity>,
+      @Inject('ACCOUNTS_REPOSITORY')
+      private _repository: Repository<AccountsEntity>,
     ) {
       super();
     }

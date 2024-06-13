@@ -10,7 +10,6 @@ export abstract class BaseService<Entity = any> {
   }
 
   async findBy(options: FindOneOptions<Entity>['where']) {
-    console.log({ options });
     return await this.repository.findBy(options);
   }
   async findOneBy(options: FindOneOptions<Entity>['where']) {
@@ -31,12 +30,12 @@ export abstract class BaseService<Entity = any> {
     const details = this.repository.create(data);
     return await this.repository.save(details);
   }
-  async update(id: number, data: any) {
+  async update(id: string, data: any) {
     const details = await this.findOneBy({ id } as any);
     this.repository.merge(details, data);
     return await this.repository.save(details);
   }
-  async destroy(id: number) {
+  async destroy(id: string) {
     await this.findBy({ id } as any);
     await this.repository.delete({ id } as any);
   }

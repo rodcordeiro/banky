@@ -7,24 +7,24 @@ import {
     HttpStatus,
     Param,
     Post,
-    Put,Req
+    Put
   } from '@nestjs/common';
   import { ApiTags } from '@nestjs/swagger';
   
   import { Auth } from '@/common/decorators/auth.decorator';
   
-  import { CategoriesService } from '../services/categories.service';
-  import { CreateCategoryDTO } from '../dto/create.dto';
+  import { PaymentsService } from '../services/payments.service';
+  import { CreatePaymentDTO } from '../dto/create.dto';
   
   
   @Auth()
-  @ApiTags('Categories')
+  @ApiTags('Payment types')
   @Controller({
     version: '1',
-    path: '/categories',
+    path: '/payments',
   })
-  export class CategoriesController {
-    constructor(private readonly _service: CategoriesService) {}
+  export class PaymentsController {
+    constructor(private readonly _service: PaymentsService) {}
   
     @Get()
     async index() {
@@ -37,13 +37,13 @@ import {
     }
   
     @Post()
-    async create(@Req() req: AuthenticatedRequest,@Body() data: CreateCategoryDTO) {
-      return this._service.store({...data,owner:req.user.id});
+    async create(@Body() data: CreatePaymentDTO) {
+      return this._service.store(data);
     }
   
     @Put('/:id')
-    async update(@Req() req: AuthenticatedRequest,@Param('id') id: string, @Body() data: CreateCategoryDTO) {
-      return this._service.update(id, {...data,owner:req.user.id});
+    async update(@Param('id') id: string, @Body() data: CreatePaymentDTO) {
+      return this._service.update(id, data);
     }
   
     @Delete('/:id')

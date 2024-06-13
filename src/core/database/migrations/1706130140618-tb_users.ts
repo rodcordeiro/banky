@@ -4,14 +4,14 @@ export class TbUsers1706130140618 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.createTable(
       new Table({
-        name: 'tb_user',
+        name: 'bk_tb_user',
         columns: [
           {
             name: 'id',
-            type: 'int',
+            type: 'varchar',
             isPrimary: true,
             isGenerated: true,
-            generationStrategy: 'increment',
+            generationStrategy: 'uuid',
           },
           {
             name: 'password',

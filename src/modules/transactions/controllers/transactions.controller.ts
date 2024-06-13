@@ -13,18 +13,18 @@ import {
   
   import { Auth } from '@/common/decorators/auth.decorator';
   
-  import { CategoriesService } from '../services/categories.service';
-  import { CreateCategoryDTO } from '../dto/create.dto';
+  import { TransactionsService } from '../services/transactions.service';
+  import { CreateTransactionDTO } from '../dto/create.dto';
   
   
   @Auth()
-  @ApiTags('Categories')
+  @ApiTags('Transactions')
   @Controller({
     version: '1',
-    path: '/categories',
+    path: '/transactions',
   })
-  export class CategoriesController {
-    constructor(private readonly _service: CategoriesService) {}
+  export class TransactionsController {
+    constructor(private readonly _service: TransactionsService) {}
   
     @Get()
     async index() {
@@ -37,12 +37,12 @@ import {
     }
   
     @Post()
-    async create(@Req() req: AuthenticatedRequest,@Body() data: CreateCategoryDTO) {
+    async create(@Req() req: AuthenticatedRequest,@Body() data: CreateTransactionDTO) {
       return this._service.store({...data,owner:req.user.id});
     }
   
     @Put('/:id')
-    async update(@Req() req: AuthenticatedRequest,@Param('id') id: string, @Body() data: CreateCategoryDTO) {
+    async update(@Req() req: AuthenticatedRequest,@Param('id') id: string, @Body() data: CreateTransactionDTO) {
       return this._service.update(id, {...data,owner:req.user.id});
     }
   

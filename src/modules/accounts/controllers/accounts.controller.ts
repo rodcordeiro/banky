@@ -7,24 +7,25 @@ import {
     HttpStatus,
     Param,
     Post,
-    Put,Req
+    Put,
+    Req
   } from '@nestjs/common';
   import { ApiTags } from '@nestjs/swagger';
   
   import { Auth } from '@/common/decorators/auth.decorator';
   
-  import { CategoriesService } from '../services/categories.service';
-  import { CreateCategoryDTO } from '../dto/create.dto';
+  import { AccountsService } from '../services/accounts.service';
+  import { CreateAccountDTO } from '../dto/create.dto';
   
   
   @Auth()
-  @ApiTags('Categories')
+  @ApiTags('Accounts')
   @Controller({
     version: '1',
-    path: '/categories',
+    path: '/accounts',
   })
-  export class CategoriesController {
-    constructor(private readonly _service: CategoriesService) {}
+  export class AccountsController {
+    constructor(private readonly _service: AccountsService) {}
   
     @Get()
     async index() {
@@ -37,13 +38,13 @@ import {
     }
   
     @Post()
-    async create(@Req() req: AuthenticatedRequest,@Body() data: CreateCategoryDTO) {
-      return this._service.store({...data,owner:req.user.id});
+    async create(@Req() req: AuthenticatedRequest,@Body() data: CreateAccountDTO) {
+      return this._service.store({...data,owner: req.user.id});
     }
   
     @Put('/:id')
-    async update(@Req() req: AuthenticatedRequest,@Param('id') id: string, @Body() data: CreateCategoryDTO) {
-      return this._service.update(id, {...data,owner:req.user.id});
+    async update(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() data: CreateAccountDTO) {
+      return this._service.update(id, {...data,owner: req.user.id});
     }
   
     @Delete('/:id')

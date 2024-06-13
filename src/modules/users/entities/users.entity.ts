@@ -3,7 +3,7 @@ import { hashSync } from 'bcrypt';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 
-@Entity('tb_user')
+@Entity('bk_tb_user')
 export class UsersEntity extends BaseEntity {
   /** Columns */
 
