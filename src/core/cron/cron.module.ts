@@ -4,7 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { ExampleService } from './services/expurge.services';
 
 @Module({
-  imports: [ScheduleModule.forRoot() ],
+  imports: [ScheduleModule.forRoot()],
   providers: [ExampleService],
 })
 export class CronModule {}

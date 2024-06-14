@@ -9,7 +9,7 @@ import { EncryptUtils } from '@/common/utils/encrypt.util';
 import DateManipulation from '@/common/utils/date.utils';
 
 interface JwtPayload {
-  id: number;
+  id: string;
   username: string;
 }
 
@@ -50,16 +50,16 @@ export class AuthService {
   }
 
   async register(payload: CreateUserDTO) {
-    const user = await this._usersService.store(payload);
+    const user = (await this._usersService.store(payload)) as UsersEntity[];
     const tokenPayload = EncryptUtils.encrypt(
       {
-        id: user.id,
-        username: user.username,
+        id: user[0].id,
+        username: user[0].username,
       },
       process.env.ENC_SECRET,
     );
     const tokens = this.getTokens(tokenPayload);
-    await this._usersService.updateToken(user.id, tokens.refreshToken);
+    await this._usersService.updateToken(user[0].id, tokens.refreshToken);
     return {
       ...tokens,
     };

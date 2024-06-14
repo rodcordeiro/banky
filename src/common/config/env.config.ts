@@ -16,7 +16,6 @@ export const envSchema = z.object({
   DB_PWD: z.string(),
   DB_NAME: z.string(),
 
-
   DEBUG: z.boolean().optional().default(false),
 });
 

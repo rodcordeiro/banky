@@ -1,13 +1,8 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { FindOneOptions, Repository } from 'typeorm';
 import { BaseService } from '@/common/services/base.service';
 
 import { UsersEntity } from '@/modules/users/entities/users.entity';
-
 
 @Injectable()
 export class UsersService extends BaseService {
@@ -19,8 +14,6 @@ export class UsersService extends BaseService {
     super();
   }
 
-  
-  
   async validate(options: FindOneOptions<UsersEntity>['where']) {
     try {
       return await this._repository.findOneOrFail({
@@ -32,7 +25,7 @@ export class UsersService extends BaseService {
     }
   }
 
-  async updateToken(id: number, refreshToken: string) {
+  async updateToken(id: string, refreshToken: string) {
     const user = await this._repository.findOneOrFail({ where: { id } });
     this._repository.merge(user, { refreshToken });
     await this._repository.save(user);

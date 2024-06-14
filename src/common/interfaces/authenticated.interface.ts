@@ -1,6 +1,6 @@
 export namespace Authenticate {
   export type IAuthToken = {
-    id: number;
+    id: string;
     username: string;
   };
   export type IAuthenticatedUser = {

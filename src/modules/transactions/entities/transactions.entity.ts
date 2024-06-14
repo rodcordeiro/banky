@@ -28,7 +28,7 @@ export class TransactionsEntity extends BaseEntity {
     referencedColumnName: 'id',
   })
   owner: string;
-  
+
   @ManyToOne(() => PaymentsEntity, {
     eager: true,
     nullable: false,
@@ -38,7 +38,7 @@ export class TransactionsEntity extends BaseEntity {
     referencedColumnName: 'id',
   })
   paymentType: string;
-  
+
   @ManyToOne(() => CategoriesEntity, {
     eager: true,
     nullable: false,
@@ -48,7 +48,7 @@ export class TransactionsEntity extends BaseEntity {
     referencedColumnName: 'id',
   })
   category: string;
-  
+
   @ManyToOne(() => AccountsEntity, {
     eager: true,
     nullable: false,

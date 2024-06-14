@@ -21,8 +21,6 @@ declare global {
       readonly DB_NAME: string;
     }
   }
-
-  
 }
 
 export {};

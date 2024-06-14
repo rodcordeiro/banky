@@ -30,3 +30,7 @@ requiredFiles = [".replit", "replit.nix", ".config"]
 run = ["sh", "-c", "npm run start:dev"]
 deploymentTarget = "cloudrun"
 ignorePorts = false
+
+[[ports]]
+localPort = 3333
+externalPort = 80

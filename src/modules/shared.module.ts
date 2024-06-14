@@ -14,7 +14,8 @@ import { TransactionsModule } from './transactions/transactions.module';
     AuthModule,
     PaymentsModule,
     CategoriesModule,
-    AccountsModule,TransactionsModule
+    AccountsModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [],
