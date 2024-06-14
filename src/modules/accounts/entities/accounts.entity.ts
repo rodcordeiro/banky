@@ -1,37 +1,30 @@
-import { Entity, Column, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
 
 import { BaseEntity } from '@/common/entities/base.entity';
-
 import { UsersEntity } from '@/modules/users/entities/users.entity';
-import { BillsEntity } from '@/modules/bills/entities/bills.entity';
-import { ExpensesEntity } from '@/modules/expenses/entities/expenses.entity';
 
-import { AccountType } from '../types/accounts.types';
-
-@Entity({ name: 'banky_tb_accounts' })
+@Entity('bk_tb_accounts')
 export class AccountsEntity extends BaseEntity {
+  /** Columns */
+
   @Column()
   name: string;
 
   @Column({
-    type: 'enum',
-    enum: AccountType,
-    default: AccountType.DEBIT,
+    type: 'double',
   })
-  type: AccountType;
+  ammount: number;
 
   /** Joins */
-  @ManyToOne(() => UsersEntity, user => user.accounts)
-  @JoinColumn()
-  owner: UsersEntity;
-
-  @OneToMany(() => BillsEntity, bill => bill.account)
-  @JoinColumn()
-  bills: BillsEntity[];
-
-  @OneToMany(() => ExpensesEntity, expense => expense.account)
-  @JoinColumn()
-  expenses: ExpensesEntity[];
+  @ManyToOne(() => UsersEntity, {
+    eager: true,
+    nullable: false,
+  })
+  @JoinColumn({
+    name: 'owner',
+    referencedColumnName: 'id',
+  })
+  owner: string;
 
   /** Methods */
 }

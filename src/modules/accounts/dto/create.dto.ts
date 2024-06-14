@@ -1,20 +1,14 @@
-import { IsNotEmpty, IsString, IsEnum } from 'class-validator';
-
-import { AccountType } from '../types/accounts.types';
+import { createZodDto } from 'nestjs-zod';
+import { z } from 'nestjs-zod/z';
 import { ApiProperty } from '@nestjs/swagger';
 
-export class CreateAccountDTO {
+const CreateAccountSchema = z.object({
+  name: z.string(),
+  ammount: z.number(),
+});
+
+export class CreateAccountDTO extends createZodDto(CreateAccountSchema) {
+  /** Account name */
   @ApiProperty()
-  @IsNotEmpty()
   name: string;
-
-  owner?: string;
-
-  @ApiProperty({
-    enum: AccountType,
-  })
-  @IsNotEmpty()
-  @IsString()
-  @IsEnum(AccountType)
-  type: AccountType;
 }

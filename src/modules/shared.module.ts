@@ -3,18 +3,19 @@ import { Module } from '@nestjs/common';
 import { HealthModule } from '@/modules/health/health.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { AuthModule } from '@/modules/auth/auth.module';
-import { AccountsModule } from '@/modules/accounts/accounts.module';
-import { BillsModule } from '@/modules/bills/bills.module';
-import { ExpensesModule } from './expenses/expenses.module';
-
+import { PaymentsModule } from './payments/payments.module';
+import { AccountsModule } from './accounts/accounts.module';
+import { CategoriesModule } from './categories/categories.module';
+import { TransactionsModule } from './transactions/transactions.module';
 @Module({
   imports: [
     HealthModule,
     UsersModule,
     AuthModule,
+    PaymentsModule,
+    CategoriesModule,
     AccountsModule,
-    BillsModule,
-    ExpensesModule,
+    TransactionsModule,
   ],
   controllers: [],
   providers: [],
