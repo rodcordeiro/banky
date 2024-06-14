@@ -4,7 +4,7 @@ import { ApiProperty} from '@nestjs/swagger';
 
 const CreateAccountSchema = z.object({
     name:z.string(),
-
+    ammount: z.number(),
 })
 
 export class CreateAccountDTO extends createZodDto(CreateAccountSchema){

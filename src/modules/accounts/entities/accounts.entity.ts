@@ -9,6 +9,11 @@ export class AccountsEntity extends BaseEntity {
 
   @Column()
   name: string;
+  
+  @Column({
+    type: 'double',
+  })
+  ammount: number;
 
   /** Joins */
   @ManyToOne(() => UsersEntity, {

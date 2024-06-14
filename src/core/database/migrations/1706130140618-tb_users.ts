@@ -48,6 +48,6 @@ export class TbUsers1706130140618 implements MigrationInterface {
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropTable('tb_user');
+    await queryRunner.dropTable('bk_tb_user');
   }
 }

@@ -13,7 +13,9 @@ export class TransactionsEntity extends BaseEntity {
   @Column()
   description: string;
 
-  @Column()
+  @Column({
+    type: 'double',
+  })
   value: number;
 
   /** Joins */
