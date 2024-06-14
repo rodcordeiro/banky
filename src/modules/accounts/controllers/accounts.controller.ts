@@ -6,20 +6,16 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  ParseUUIDPipe,
   Post,
   Put,
   Req,
-  Res,
 } from '@nestjs/common';
-import { FastifyReply } from 'fastify';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 
-import { AccountsService } from '@/modules/accounts/services/accounts.service';
-import { CreateAccountDTO } from '@/modules/accounts/dto/create.dto';
-import { UpdateAccountDTO } from '@/modules/accounts/dto/update.dto';
+import { AccountsService } from '../services/accounts.service';
+import { CreateAccountDTO } from '../dto/create.dto';
 
 @Auth()
 @ApiTags('Accounts')
@@ -28,36 +24,38 @@ import { UpdateAccountDTO } from '@/modules/accounts/dto/update.dto';
   path: '/accounts',
 })
 export class AccountsController {
-  constructor(private readonly accountsService: AccountsService) {}
+  constructor(private readonly _service: AccountsService) {}
 
   @Get()
-  async list(@Req() req: BankyRequest, @Res() res: FastifyReply) {
-    const accounts = await this.accountsService.list(req.user.id);
-    return res.header('X-TOTAL-ACCOUNTS', accounts.length).send(accounts);
+  async index() {
+    return await this._service.findAll();
   }
 
-  @Get(':id')
-  async view(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.accountsService.findOneBy({ id });
+  @Get('/:id')
+  async view(@Param('id') id: string) {
+    return this._service.findOneBy({ id });
   }
 
   @Post()
-  @HttpCode(HttpStatus.CREATED)
-  async create(@Req() req: BankyRequest, @Body() body: CreateAccountDTO) {
-    return this.accountsService.create({ ...body, owner: req.user.id });
-  }
-
-  @Put(':id')
-  async update(
-    @Param('id', new ParseUUIDPipe()) id: string,
-    @Body() body: UpdateAccountDTO,
+  async create(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: CreateAccountDTO,
   ) {
-    return this.accountsService.update(id, body);
+    return this._service.store({ ...data, owner: req.user.id });
   }
 
-  @Delete(':id')
+  @Put('/:id')
+  async update(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() data: CreateAccountDTO,
+  ) {
+    return this._service.update(id, { ...data, owner: req.user.id });
+  }
+
+  @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.accountsService.delete(id);
+  async remove(@Param('id') id: string) {
+    return this._service.destroy(id);
   }
 }

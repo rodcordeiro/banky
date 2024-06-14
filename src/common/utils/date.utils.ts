@@ -46,14 +46,14 @@ export function convertDate(d: any) {
   return d.constructor === Date
     ? d
     : d.constructor === Array
-    ? new Date(d[0], d[1], d[2])
-    : d.constructor === Number
-    ? new Date(d as any)
-    : d.constructor === String
-    ? new Date(d as string)
-    : typeof d === 'object'
-    ? new Date(d.year, d.month, d.date)
-    : NaN;
+      ? new Date(d[0], d[1], d[2])
+      : d.constructor === Number
+        ? new Date(d as any)
+        : d.constructor === String
+          ? new Date(d as string)
+          : typeof d === 'object'
+            ? new Date(d.year, d.month, d.date)
+            : NaN;
 }
 
 /**
