@@ -991,11 +991,11 @@
     webpack "5.90.1"
     webpack-node-externals "3.0.0"
 
-"@nestjs/common@^10.3.1":
-  version "10.3.1"
-  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-10.3.1.tgz#7aa5a0ffbd0123533adc1cfee8fd184b74bc2fc1"
-  integrity sha512-YuxeIlVemVQCuXMkNbBpNlmwZgp/Cu6dwCOjki63mhyYHEFX48GNNA4zZn5MFRjF4h7VSceABsScROuzsxs9LA==
 
+"@nestjs/common@^10.3.9":
+  version "10.3.9"
+  resolved "https://registry.yarnpkg.com/@nestjs/common/-/common-10.3.9.tgz#4e85d8fa6ae201a1c5f49d4d09b205bc3672ed1f"
+  integrity sha512-JAQONPagMa+sy/fcIqh/Hn3rkYQ9pQM51vXCFNOM5ujefxUVqn3gwFRMN8Y1+MxdUHipV+8daEj2jEm0IqJzOA==
   dependencies:
     uid "2.0.2"
     iterare "1.2.1"
@@ -1119,10 +1119,10 @@
   dependencies:
     tslib "2.6.2"
 
-"@nestjs/throttler@^5.1.2":
-  version "5.1.2"
-  resolved "https://registry.yarnpkg.com/@nestjs/throttler/-/throttler-5.1.2.tgz#dc65634153c8b887329b1cc6061db2e556517dcb"
-  integrity sha512-60MqhSLYUqWOgc38P6C6f76JIpf6mVjly7gpuPBCKtVd0p5e8Fq855j7bJuO4/v25vgaOo1OdVs0U1qtgYioGw==
+"@nestjs/throttler@^5.2.0":
+  version "5.2.0"
+  resolved "https://registry.yarnpkg.com/@nestjs/throttler/-/throttler-5.2.0.tgz#9a70f1e13b3015977ed0fe740e23e3c5cba2d49a"
+  integrity sha512-G/G/MV3xf6sy1DwmnJsgeL+d2tQ/xGRNa9ZhZjm9Kyxp+3+ylGzwJtcnhWlN82PMEp3TiDQpTt+9waOIg/bpPg==
 
 "@nestjs/typeorm@^10.0.2":
   version "10.0.2"
