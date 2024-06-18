@@ -10,6 +10,11 @@ export class CategoriesEntity extends BaseEntity {
   @Column()
   name: string;
 
+  @Column({
+    type: 'bool',
+  })
+  positive: boolean;
+
   /** Joins */
   @ManyToOne(() => UsersEntity, {
     eager: false,

@@ -17,7 +17,6 @@ export class AccountsEntity extends BaseEntity {
 
   @Column({
     type: 'double',
-    default: 0,
   })
   threshold: number;
 
