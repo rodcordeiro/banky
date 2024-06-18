@@ -48,7 +48,7 @@ export class TransactionsController {
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() data: CreateTransactionDTO,
+    @Body() data: Partial<CreateTransactionDTO>,
   ) {
     return this._service.update(id, { ...data, owner: req.user.id });
   }

@@ -16,7 +16,7 @@ export class UsersEntity extends BaseEntity {
   @Column({ select: false })
   password: string;
 
-  @Column()
+  @Column({ select: false })
   refreshToken: string;
 
   /** Joins */

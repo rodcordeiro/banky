@@ -15,9 +15,15 @@ export class AccountsEntity extends BaseEntity {
   })
   ammount: number;
 
+  @Column({
+    type: 'double',
+    default: 0,
+  })
+  threshold: number;
+
   /** Joins */
   @ManyToOne(() => UsersEntity, {
-    eager: true,
+    eager: false,
     nullable: false,
   })
   @JoinColumn({

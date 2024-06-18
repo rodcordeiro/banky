@@ -34,11 +34,11 @@ export class JwtWsGuard implements CanActivate {
       const decode = this._jwt.decode(token) as JwtPayload;
 
       const data = EncryptUtils.decrypt(
-        decode.payload as string,
+        decode.payload,
         ENV_VARIABLES.ENC_SECRET,
       );
       console.log(data);
-      //   context.switchToHttp().getRequest().user = decode;
+      context.switchToHttp().getRequest().user = decode;
       return true;
     } catch (error) {
       console.error(error);
