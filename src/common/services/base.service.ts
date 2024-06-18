@@ -1,9 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
-import { FindOneOptions, Repository } from 'typeorm';
+import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
 
 export abstract class BaseService<Entity = any> {
   protected repository: Repository<Entity>;
-  constructor() {}
 
   async findAll() {
     return await this.repository.find();
@@ -26,11 +25,11 @@ export abstract class BaseService<Entity = any> {
     }
   }
 
-  async store(data: any) {
+  async store(data: Entity) {
     const details = this.repository.create(data);
     return await this.repository.save(details);
   }
-  async update(id: string, data: any) {
+  async update(id: string, data: DeepPartial<Entity>) {
     const details = await this.findOneBy({ id } as any);
     this.repository.merge(details, data);
     return await this.repository.save(details);

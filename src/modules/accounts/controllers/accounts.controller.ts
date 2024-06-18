@@ -48,7 +48,7 @@ export class AccountsController {
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() data: CreateAccountDTO,
+    @Body() data: Partial<CreateAccountDTO>,
   ) {
     return this._service.update(id, { ...data, owner: req.user.id });
   }

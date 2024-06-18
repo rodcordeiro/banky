@@ -12,7 +12,7 @@ export class CategoriesEntity extends BaseEntity {
 
   /** Joins */
   @ManyToOne(() => UsersEntity, {
-    eager: true,
+    eager: false,
     nullable: false,
   })
   @JoinColumn({
