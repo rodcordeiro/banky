@@ -31,10 +31,6 @@ export class BkTbTransactions1718321464748 implements MigrationInterface {
             type: 'varchar',
           },
           {
-            name: 'paymentType',
-            type: 'varchar',
-          },
-          {
             name: 'category',
             type: 'varchar',
           },
@@ -68,17 +64,7 @@ export class BkTbTransactions1718321464748 implements MigrationInterface {
         name: 'FK_transaction_owner',
       }),
     );
-    await queryRunner.createForeignKey(
-      'bk_tb_transactions',
-      new TableForeignKey({
-        columnNames: ['paymentType'],
-        referencedColumnNames: ['id'],
-        referencedTableName: 'bk_tb_payments',
-        onDelete: 'CASCADE',
-        onUpdate: 'CASCADE',
-        name: 'FK_transaction_payment_type',
-      }),
-    );
+
     await queryRunner.createForeignKey(
       'bk_tb_transactions',
       new TableForeignKey({
@@ -108,10 +94,7 @@ export class BkTbTransactions1718321464748 implements MigrationInterface {
       'bk_tb_transactions',
       'FK_transaction_owner',
     );
-    await queryRunner.dropForeignKey(
-      'bk_tb_transactions',
-      'FK_transaction_paument_type',
-    );
+
     await queryRunner.dropForeignKey(
       'bk_tb_transactions',
       'FK_transaction_category',

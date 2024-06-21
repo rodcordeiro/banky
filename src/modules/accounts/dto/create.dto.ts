@@ -5,6 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 const CreateAccountSchema = z.object({
   name: z.string(),
   ammount: z.number(),
+  paymentType: z.string(),
   threshold: z.number(),
 });
 
@@ -16,6 +17,10 @@ export class CreateAccountDTO extends createZodDto(CreateAccountSchema) {
   /** Account ammount */
   @ApiProperty()
   ammount: number;
+
+  /** Account payment type */
+  @ApiProperty()
+  paymentType: string;
 
   /** Account limit threshold */
   @ApiProperty()
