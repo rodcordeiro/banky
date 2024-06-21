@@ -1,4 +1,4 @@
-import { Column, Entity, ManyToOne, JoinColumn } from 'typeorm';
+import { Column, Entity, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 import { UsersEntity } from '@/modules/users/entities/users.entity';
@@ -25,6 +25,18 @@ export class CategoriesEntity extends BaseEntity {
     referencedColumnName: 'id',
   })
   owner: string;
+  @ManyToOne(() => CategoriesEntity, category => category.subcategories, {
+    nullable: true,
+  })
+  @JoinColumn({
+    name: 'category',
+    referencedColumnName: 'id',
+  })
+  category?: string;
 
+  @OneToMany(() => CategoriesEntity, category => category.category, {
+    nullable: true,
+  })
+  subcategories: CategoriesEntity[];
   /** Methods */
 }

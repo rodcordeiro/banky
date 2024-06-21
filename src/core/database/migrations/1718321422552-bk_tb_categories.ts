@@ -23,6 +23,11 @@ export class BkTbCategories1718321422552 implements MigrationInterface {
             type: 'varchar',
           },
           {
+            name: 'category',
+            type: 'varchar',
+            isNullable: true,
+          },
+          {
             name: 'owner',
             type: 'varchar',
           },
@@ -52,10 +57,22 @@ export class BkTbCategories1718321422552 implements MigrationInterface {
         name: 'FK_category_owner',
       }),
     );
+    await queryRunner.createForeignKey(
+      'bk_tb_categories',
+      new TableForeignKey({
+        columnNames: ['category'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'bk_tb_categories',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        name: 'FK_category_group',
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropForeignKey('bk_tb_categories', 'FK_category_owner');
+    await queryRunner.dropForeignKey('bk_tb_categories', 'FK_category_group');
     await queryRunner.dropTable('bk_tb_categories');
   }
 }

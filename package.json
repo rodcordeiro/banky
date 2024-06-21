@@ -1,6 +1,6 @@
 {
   "name": "@rodcordeiro/banky-api",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "",
   "author": "Rodrigo Cordeiro (http://rodcordeiro.com.br) <rodrigomendoncca@gmail.com>",
   "private": true,
@@ -28,7 +28,6 @@
     "@fastify/multipart": "^8.2.0",
     "@fastify/oauth2": "^7.8.1",
     "@fastify/secure-session": "^7.1.0",
-
     "@fastify/static": "^7.0.0",
     "@nest-lab/fastify-multer": "^1.2.0",
     "@nestjs/axios": "^3.0.2",

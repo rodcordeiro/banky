@@ -27,6 +27,10 @@ export class BkTbAccounts1718321413380 implements MigrationInterface {
             type: 'double',
           },
           {
+            name: 'paymentType',
+            type: 'varchar',
+          },
+          {
             name: 'owner',
             type: 'varchar',
           },
@@ -56,10 +60,25 @@ export class BkTbAccounts1718321413380 implements MigrationInterface {
         name: 'FK_account_owner',
       }),
     );
+    await queryRunner.createForeignKey(
+      'bk_tb_accounts',
+      new TableForeignKey({
+        columnNames: ['paymentType'],
+        referencedColumnNames: ['id'],
+        referencedTableName: 'bk_tb_payments',
+        onDelete: 'CASCADE',
+        onUpdate: 'CASCADE',
+        name: 'FK_account_payment_type',
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropForeignKey('bk_tb_accounts', 'FK_account_owner');
+    await queryRunner.dropForeignKey(
+      'bk_tb_accounts',
+      'FK_account_payment_type',
+    );
     await queryRunner.dropTable('bk_tb_accounts');
   }
 }
