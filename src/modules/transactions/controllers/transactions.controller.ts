@@ -10,7 +10,7 @@ import {
   Put,
   Req,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 
@@ -19,6 +19,7 @@ import { CreateTransactionDTO } from '../dto/create.dto';
 
 @Auth()
 @ApiTags('Transactions')
+@ApiBearerAuth()
 @Controller({
   version: '1',
   path: '/transactions',
