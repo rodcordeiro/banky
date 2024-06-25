@@ -12,6 +12,9 @@ import fastifyCsrf from '@fastify/csrf-protection';
 
 import { AppModule } from '@/app.module';
 import { AppUtils } from '@/common/utils/app.util';
+import { DataBaseInterceptor } from '@/common/interceptors/databaseError.interceptor';
+import { BadRequestInterceptor } from '@/common/interceptors/badRequestError.interceptor';
+
 import { version } from '../package.json';
 
 async function bootstrap() {
@@ -58,6 +61,14 @@ async function bootstrap() {
     defaultVersion: '1',
     type: VersioningType.URI,
   });
+
+  /**
+   * -----------------------------------------------------------------------------
+   * HTTP Interceptor
+   * -----------------------------------------------------------------------------
+   */
+  app.useGlobalInterceptors(new DataBaseInterceptor());
+  app.useGlobalInterceptors(new BadRequestInterceptor());
 
   /**
    * ------------------------------------------------------

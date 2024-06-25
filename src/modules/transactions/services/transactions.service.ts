@@ -7,6 +7,8 @@ import { CategoriesService } from '@/modules/categories/services/categories.serv
 
 import { TransactionsEntity } from '@/modules/transactions/entities/transactions.entity';
 import { CreateTransactionDTO } from '@/modules/transactions/dto/create.dto';
+import { PaginationService } from '@/core/paginate/paginate.service';
+import { QueryTransactionsDTO } from '../dto/query.dto';
 
 @Injectable()
 export class TransactionsService extends BaseService {
@@ -16,8 +18,15 @@ export class TransactionsService extends BaseService {
     private _repository: Repository<TransactionsEntity>,
     private readonly _accountsService: AccountsService,
     private readonly _categoriesService: CategoriesService,
+    private readonly _paginateService: PaginationService,
   ) {
     super();
+  }
+  async listAll(query: QueryTransactionsDTO) {
+    return this._paginateService.paginate(this._repository, {
+      limit: query.limit,
+      page: query.page,
+    });
   }
 
   async store(data: CreateTransactionDTO & { owner: string }) {

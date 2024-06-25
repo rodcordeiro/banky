@@ -8,6 +8,7 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ import { Auth } from '@/common/decorators/auth.decorator';
 
 import { TransactionsService } from '../services/transactions.service';
 import { CreateTransactionDTO } from '../dto/create.dto';
+import { QueryTransactionsDTO } from '../dto/query.dto';
 
 @Auth()
 @ApiTags('Transactions')
@@ -28,8 +30,8 @@ export class TransactionsController {
   constructor(private readonly _service: TransactionsService) {}
 
   @Get()
-  async index() {
-    return await this._service.findAll();
+  async index(@Query() query: QueryTransactionsDTO) {
+    return await this._service.listAll(query);
   }
 
   @Get('/:id')

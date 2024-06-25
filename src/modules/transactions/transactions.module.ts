@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 
+import { PaginationModule } from '@/core/paginate/paginate.module';
 import { AccountsModule } from '@/modules/accounts/accounts.module';
+import { CategoriesModule } from '@/modules/categories/categories.module';
 
-import { TransactionsController } from '@/modules/transactions/controllers/transactions.controller';
-import { TransactionsService } from '@/modules/transactions/services/transactions.service';
+import { TransactionsController } from './controllers/transactions.controller';
+import { TransactionsService } from './services/transactions.service';
 import { transactionsProviders } from './providers/transactions.provider';
-import { CategoriesModule } from '../categories/categories.module';
 
 @Module({
-  imports: [AccountsModule, CategoriesModule],
+  imports: [PaginationModule, AccountsModule, CategoriesModule],
   controllers: [TransactionsController],
   providers: [...transactionsProviders, TransactionsService],
   exports: [TransactionsService],
