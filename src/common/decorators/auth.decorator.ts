@@ -11,7 +11,6 @@ export function Auth() {
   return applyDecorators(UseGuards(AccessTokenGuard));
 }
 
-
 export function Reauth() {
   return applyDecorators(UseGuards(RefreshTokenGuard));
 }

@@ -29,7 +29,7 @@ export class CategoriesController {
 
   @Get()
   async index() {
-    return await this._service.findAll();
+    return this._service.listAll();
   }
 
   @Get('/:id')
