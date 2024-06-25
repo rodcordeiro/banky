@@ -30,7 +30,7 @@ export class TransactionsService extends BaseService {
       const category = await this._categoriesService.findOneBy({
         id: data.category,
       });
-      this.accountsService.update(account.id, {
+      this._accountsService.update(account.id, {
         ammount: account.ammount + data.value * (category.positive ? 1 : -1),
       });
       return transaction;
