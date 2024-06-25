@@ -10,7 +10,7 @@ import {
   Put,
   Req,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 
@@ -19,6 +19,7 @@ import { CreateCategoryDTO } from '../dto/create.dto';
 
 @Auth()
 @ApiTags('Categories')
+@ApiBearerAuth()
 @Controller({
   version: '1',
   path: '/categories',
@@ -28,7 +29,7 @@ export class CategoriesController {
 
   @Get()
   async index() {
-    return await this._service.findAll();
+    return this._service.listAll();
   }
 
   @Get('/:id')
