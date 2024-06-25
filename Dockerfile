@@ -9,7 +9,8 @@ ENV NEW_RELIC_LOG=stdout
 
 COPY . .
 
-RUN yarn && yarn build
+RUN yarn
+RUN yarn build
 
 EXPOSE 80
 
