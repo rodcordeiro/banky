@@ -9,9 +9,9 @@ ENV NEW_RELIC_LOG=stdout
 
 COPY . .
 
-RUN yarn
-RUN yarn build
+RUN npm i
+RUN npm run build
 
 EXPOSE 80
 
-CMD [ "yarn", "start:prod" ]
+CMD [ "node","dist/src/main" ]
