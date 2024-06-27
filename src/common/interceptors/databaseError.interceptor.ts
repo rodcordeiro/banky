@@ -15,9 +15,10 @@ export class DataBaseInterceptor implements NestInterceptor {
   intercept(_context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       catchError(error => {
-        if (error instanceof QueryFailedError) {
-          throw new ConflictException(error.message);
-        } else if (error instanceof DataBaseError) {
+        if (
+          error instanceof QueryFailedError ||
+          error instanceof DataBaseError
+        ) {
           throw new ConflictException(error.message);
         }
         throw error;
