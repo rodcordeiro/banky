@@ -1,11 +1,12 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'nestjs-zod/z';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 const CreateCategorySchema = z.object({
   name: z.string(),
   category: z.string().optional(),
   positive: z.boolean(),
+  internal: z.boolean().optional(),
 });
 
 export class CreateCategoryDTO extends createZodDto(CreateCategorySchema) {
@@ -14,10 +15,14 @@ export class CreateCategoryDTO extends createZodDto(CreateCategorySchema) {
   name: string;
 
   /** Category group */
-  @ApiProperty({ required: false })
+  @ApiPropertyOptional()
   category?: string;
 
   /** Category is credit or debit */
   @ApiProperty()
   positive: boolean;
+
+  /** Category is internal and must be ignored in transactions reports. */
+  @ApiPropertyOptional()
+  internal?: boolean;
 }

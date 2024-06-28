@@ -15,6 +15,14 @@ export class CategoriesEntity extends BaseEntity {
   })
   positive: boolean;
 
+  @Column({
+    type: 'bool',
+    comment:
+      'Internal category, like transfer between accounts. Not to be used in reports.',
+    default: false,
+  })
+  internal: boolean;
+
   /** Joins */
   @ManyToOne(() => UsersEntity, {
     eager: false,
