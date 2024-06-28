@@ -1,12 +1,10 @@
-import { ZodError } from 'nestjs-zod/z';
+import { z, ZodError } from 'nestjs-zod/z';
 import { Injectable } from '@nestjs/common';
-import { z } from 'nestjs-zod/z';
 import {
   type ObjectLiteral,
   Repository,
   type FindOptionsWhere,
   type FindManyOptions,
-  //   SelectQueryBuilder,
 } from 'typeorm';
 import { BadRequestError } from '@/common/interceptors/badRequestError.interceptor';
 
@@ -81,23 +79,7 @@ export class PaginationService {
         totalItems: total,
         totalPages,
         hasNext: page < totalPages,
-        //   items.length * totalPages < total ? totalPages + 1 : totalPages,
       },
     };
   }
-  //   public async paginateWithQueryBuilder<T extends ObjectLiteral>(
-  //     queryBuilder: SelectQueryBuilder<T>,
-  //     options: PaginationArgs,
-  //   ): Promise<Pagination<T>> {
-  //     const { parsedLimit, parsedPage } = this.parseLimitAndPage(
-  //       options.limit,
-  //       options.page,
-  //     );
-
-  //     return paginate<T>(queryBuilder, {
-  //       ...options,
-  //       limit: parsedLimit,
-  //       page: parsedPage,
-  //     });
-  //   }
 }

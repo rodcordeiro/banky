@@ -43,18 +43,16 @@ interface DateOptions {
  *                   attributes.  **NOTE** month is 0-11.
  */
 export function convertDate(d: any) {
-  return d.constructor === Date
-    ? d
-    : d.constructor === Array
-      ? new Date(d[0], d[1], d[2])
-      : d.constructor === Number
-        ? new Date(d as any)
-        : d.constructor === String
-          ? new Date(d as string)
-          : typeof d === 'object'
-            ? new Date(d.year, d.month, d.date)
-            : NaN;
+  if (d.constructor === Date) return d;
+  if (d.constructor === Array) return new Date(d[0], d[1], d[2]);
+  if (d.constructor === Number) return new Date(+d);
+  if (d.constructor === String) return new Date(String(d));
+  if (typeof d === 'object') new Date(d.year, d.month, d.date);
+
+  return NaN;
 }
+
+type DateCompare = string | Date | number | DateOptions;
 
 /**
 Compare two dates (could be of any type supported by the convert
@@ -70,10 +68,7 @@ function above) and returns:
 
  NOTE: The code inside isFinite does an assignment (=).
  */
-export function compareDates(
-  a: string | Date | number | DateOptions,
-  b: string | Date | number | DateOptions,
-) {
+export function compareDates(a: DateCompare, b: DateCompare) {
   // eslint-disable-next-line no-return-assign
   return Number.isFinite((a = convertDate(a).valueOf())) &&
     Number.isFinite((b = convertDate(b).valueOf()))
