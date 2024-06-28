@@ -47,7 +47,7 @@ export function convertDate(d: any) {
   if (d.constructor === Array) return new Date(d[0], d[1], d[2]);
   if (d.constructor === Number) return new Date(+d);
   if (d.constructor === String) return new Date(String(d));
-  if (typeof d === 'object') new Date(d.year, d.month, d.date);
+  if (typeof d === 'object') return new Date(d.year, d.month, d.date);
 
   return NaN;
 }
