@@ -16,6 +16,9 @@ export const envSchema = z.object({
   DB_PWD: z.string(),
   DB_NAME: z.string(),
 
+  RABBIT_URL: z.string(),
+  RABBIT_QUEUE: z.string(),
+
   DEBUG: z.boolean().optional().default(false),
 });
 

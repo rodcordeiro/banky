@@ -47,4 +47,12 @@ export class TransactionsService extends BaseService {
       throw new NotImplementedException();
     }
   }
+
+  async uncategorized() {
+    return this._repository
+      .createQueryBuilder('a')
+      .where({ category: { id: '5aadea0f-ded0-44d0-a3d0-898058765dfc' } })
+      .orWhere({ category: { id: 'e5061295-aa75-467c-aa1e-0ac97018edce' } })
+      .getMany();
+  }
 }
