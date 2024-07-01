@@ -4,7 +4,6 @@ import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { DatabaseModule } from './core/database/database.module';
 import { NestJwtModule } from './core/jwt/jwt.module';
