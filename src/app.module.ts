@@ -4,10 +4,12 @@ import { APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 
 import { DatabaseModule } from './core/database/database.module';
 import { NestJwtModule } from './core/jwt/jwt.module';
 import { CronModule } from './core/cron/cron.module';
+import { RabbitModule } from './core/rabbitmq/rabbitmq.module';
 
 import { SharedModule } from './modules/shared.module';
 
@@ -21,6 +23,7 @@ import { SharedModule } from './modules/shared.module';
       },
     ]),
     DatabaseModule,
+    RabbitModule,
     CronModule,
     PassportModule,
     NestJwtModule,
