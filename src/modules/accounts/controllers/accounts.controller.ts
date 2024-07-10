@@ -30,7 +30,7 @@ export class AccountsController {
   @Get()
   async index(@Req() req: AuthenticatedRequest) {
     return await this._service.findBy({
-      owner: {id: req.user.id},
+      owner: { id: req.user.id },
     });
   }
 

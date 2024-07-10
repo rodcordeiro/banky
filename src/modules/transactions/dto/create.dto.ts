@@ -6,6 +6,7 @@ const CreateTransactionSchema = z.object({
   description: z.string(),
   account: z.string(),
   category: z.string(),
+  date: z.string(),
   value: z.number(),
 });
 
@@ -19,6 +20,10 @@ export class CreateTransactionDTO extends createZodDto(
   /** Transaction description */
   @ApiProperty()
   account: string;
+
+  /** Transaction date */
+  @ApiProperty()
+  date: string;
 
   /** Transaction description */
   @ApiProperty()
