@@ -50,7 +50,7 @@ export class TransactionsService extends BaseService {
         },
         where: {
           owner: { id: query.owner },
-          category: { id: query.category } || undefined,
+          category: query.category ? { id: query.category } : undefined,
         },
       } as unknown as FindManyOptions<TransactionsEntity>,
     );
