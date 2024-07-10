@@ -34,7 +34,10 @@ export class TransactionsController {
     @Req() req: AuthenticatedRequest,
     @Query() query: QueryTransactionsDTO,
   ) {
-    return await this._service.listAll({ ...query, owner: req.user.id });
+    return await this._service.listAll({
+      ...query,
+      owner: req.user.id,
+    });
   }
 
   @Get('/:id')

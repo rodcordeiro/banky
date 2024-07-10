@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 
 import { BaseService } from '@/common/services/base.service';
 import { AccountsService } from '@/modules/accounts/services/accounts.service';
@@ -23,6 +23,7 @@ export class TransactionsService extends BaseService {
     super();
   }
   async listAll(query: QueryTransactionsDTO & { owner: string }) {
+    console.log(query);
     return this._paginateService.paginate(
       this._repository,
       {
@@ -30,10 +31,28 @@ export class TransactionsService extends BaseService {
         page: query.page,
       },
       {
-        where: {
-          owner: query.owner,
+        select: [
+          'id',
+          'date',
+          'account',
+          'category',
+          'createdAt',
+          'updatedAt',
+          'description',
+          'value',
+        ],
+        relations: {
+          account: true,
+          category: true,
         },
-      },
+        order: {
+          date: 'desc',
+        },
+        where: {
+          owner: { id: query.owner },
+          category: query.category ? { id: query.category } : undefined,
+        },
+      } as unknown as FindManyOptions<TransactionsEntity>,
     );
   }
 

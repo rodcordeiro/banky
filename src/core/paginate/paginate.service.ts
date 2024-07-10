@@ -1,11 +1,6 @@
 import { z, ZodError } from 'nestjs-zod/z';
 import { Injectable } from '@nestjs/common';
-import {
-  type ObjectLiteral,
-  Repository,
-  type FindOptionsWhere,
-  type FindManyOptions,
-} from 'typeorm';
+import { type ObjectLiteral, Repository, type FindManyOptions } from 'typeorm';
 import { BadRequestError } from '@/common/interceptors/badRequestError.interceptor';
 
 const paginationParamSchema = z

@@ -12,6 +12,9 @@ export class TransactionsEntity extends BaseEntity {
   @Column()
   description: string;
 
+  @Column()
+  date: string;
+
   @Column({
     type: 'double',
   })
