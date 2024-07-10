@@ -14,11 +14,12 @@ export class CategoriesService extends BaseService {
     super();
   }
 
-  async listAll() {
+  async listAll(owner: string) {
     return this._repository
       .createQueryBuilder('category')
       .leftJoinAndSelect('category.subcategories', 'subcategory')
       .where('category.category IS NULL')
+      .andWhere(`category.owner = '${owner}'`)
       .getMany();
   }
 }

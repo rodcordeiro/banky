@@ -30,8 +30,11 @@ export class TransactionsController {
   constructor(private readonly _service: TransactionsService) {}
 
   @Get()
-  async index(@Query() query: QueryTransactionsDTO) {
-    return await this._service.listAll(query);
+  async index(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QueryTransactionsDTO,
+  ) {
+    return await this._service.listAll({ ...query, owner: req.user.id });
   }
 
   @Get('/:id')
