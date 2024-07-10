@@ -10,7 +10,7 @@ import {
   Put,
   Req,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 
@@ -19,6 +19,7 @@ import { CreateAccountDTO } from '../dto/create.dto';
 
 @Auth()
 @ApiTags('Accounts')
+@ApiBearerAuth()
 @Controller({
   version: '1',
   path: '/accounts',
@@ -29,7 +30,7 @@ export class AccountsController {
   @Get()
   async index(@Req() req: AuthenticatedRequest) {
     return await this._service.findBy({
-      owner: req.user.id,
+      owner: {id: req.user.id},
     });
   }
 
