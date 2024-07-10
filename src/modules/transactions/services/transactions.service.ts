@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
-import { FindManyOptions, FindOptions, Repository, Transaction } from 'typeorm';
+import { FindManyOptions, Repository } from 'typeorm';
 
 import { BaseService } from '@/common/services/base.service';
 import { AccountsService } from '@/modules/accounts/services/accounts.service';
