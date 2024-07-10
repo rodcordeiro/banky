@@ -49,7 +49,7 @@ export class PaginationService {
   public async paginate<T extends ObjectLiteral>(
     entityRepository: Repository<T>,
     options: IPaginationOptions,
-    searchOptions?: FindOptionsWhere<T> | FindManyOptions<T>,
+    searchOptions?: FindManyOptions<T>,
   ): Promise<Pagination<T>> {
     const { limit, page, countQueries } = this.resolveOptions(options);
 

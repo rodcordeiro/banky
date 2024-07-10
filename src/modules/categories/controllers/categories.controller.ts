@@ -28,8 +28,9 @@ export class CategoriesController {
   constructor(private readonly _service: CategoriesService) {}
 
   @Get()
-  async index() {
-    return this._service.listAll();
+  @Get()
+  async index(@Req() req: AuthenticatedRequest) {
+    return this._service.listAll(req.user.id);
   }
 
   @Get('/:id')

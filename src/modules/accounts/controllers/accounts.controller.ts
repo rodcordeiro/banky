@@ -27,8 +27,10 @@ export class AccountsController {
   constructor(private readonly _service: AccountsService) {}
 
   @Get()
-  async index() {
-    return await this._service.findAll();
+  async index(@Req() req: AuthenticatedRequest) {
+    return await this._service.findBy({
+      owner: req.user.id,
+    });
   }
 
   @Get('/:id')

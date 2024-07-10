@@ -22,11 +22,19 @@ export class TransactionsService extends BaseService {
   ) {
     super();
   }
-  async listAll(query: QueryTransactionsDTO) {
-    return this._paginateService.paginate(this._repository, {
-      limit: query.limit,
-      page: query.page,
-    });
+  async listAll(query: QueryTransactionsDTO & { owner: string }) {
+    return this._paginateService.paginate(
+      this._repository,
+      {
+        limit: query.limit,
+        page: query.page,
+      },
+      {
+        where: {
+          owner: query.owner,
+        },
+      },
+    );
   }
 
   async store(data: CreateTransactionDTO & { owner: string }) {
