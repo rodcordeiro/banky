@@ -5474,9 +5474,9 @@ nestjs-zod@^3.0.0:
     merge-deep "^3.0.3"
 
 newrelic@latest:
-  version "11.22.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-11.22.0.tgz#f9d62c3653084d14709b01adccf9c1a95777050d"
-  integrity sha512-TRk7HogUoYFTkvdE7cEu5J63byK88I/peWdtVCWiuSU2KCSzJWA3gcNO7Q4sN94vEINK1H773ttTj8jwYoSQZQ==
+  version "11.23.1"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-11.23.1.tgz#7ab617d8fb718b5c440a2f9edb3babadd42ac0ce"
+  integrity sha512-WMlQgFOFF5bjmqRvgiw6bTCSahQrrXWjqR/23Qd3pRXBNvlhgzPhDRAz1Eeq3+iVqa/Rck2uMUE0nwsLAgq60Q==
   dependencies:
     "@grpc/grpc-js" "^1.9.4"
     "@grpc/proto-loader" "^0.7.5"
