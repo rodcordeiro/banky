@@ -534,10 +534,10 @@
     secure-json-parse "^2.4.0"
     stream-wormhole "^1.1.0"
 
-"@fastify/oauth2@^7.8.1":
-  version "7.8.1"
-  resolved "https://registry.yarnpkg.com/@fastify/oauth2/-/oauth2-7.8.1.tgz#975071b63fb283bf500dc57b625ab7f17e2a260f"
-  integrity sha512-PBIMizzgEOcUcttyfX1hC6CR9vESoI1lfNucBywgcqrxvknVg+zvBCgH2+oU8NvrpSDMtlY6nyuEYYZtVhDT7Q==
+"@fastify/oauth2@^7.9.0":
+  version "7.9.0"
+  resolved "https://registry.yarnpkg.com/@fastify/oauth2/-/oauth2-7.9.0.tgz#b3ff22f52f0a57d020a55a02c8ad942f5e2bb9a2"
+  integrity sha512-OsMr+M2FI7ib/UKZ8hC4SRnUBQqgJ0EsvAhn1qrdYJ9K/U5OwaM2sQM8fLEYbKYQRlH0oxC7lvdTm8Ncd5+ukA==
   dependencies:
     "@fastify/cookie" "^9.0.4"
     fastify-plugin "^4.5.1"
@@ -1134,10 +1134,10 @@
   dependencies:
     tslib "2.6.2"
 
-"@nestjs/throttler@^5.2.0":
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/@nestjs/throttler/-/throttler-5.2.0.tgz#9a70f1e13b3015977ed0fe740e23e3c5cba2d49a"
-  integrity sha512-G/G/MV3xf6sy1DwmnJsgeL+d2tQ/xGRNa9ZhZjm9Kyxp+3+ylGzwJtcnhWlN82PMEp3TiDQpTt+9waOIg/bpPg==
+"@nestjs/throttler@^6.0.0":
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/@nestjs/throttler/-/throttler-6.0.0.tgz#4f602ce5c584dd21b728eee612baf5d8118bac5f"
+  integrity sha512-2mccn9uCMuDiZBG1c+tIHlNIhkyVJAg167wK66GcNNoj6+6qf8fCOxBZbAHUSyOJeoIxcZAhT9wjJRSXqbWY4w==
 
 "@nestjs/typeorm@^10.0.2":
   version "10.0.2"
@@ -5474,9 +5474,9 @@ nestjs-zod@^3.0.0:
     merge-deep "^3.0.3"
 
 newrelic@latest:
-  version "11.22.0"
-  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-11.22.0.tgz#f9d62c3653084d14709b01adccf9c1a95777050d"
-  integrity sha512-TRk7HogUoYFTkvdE7cEu5J63byK88I/peWdtVCWiuSU2KCSzJWA3gcNO7Q4sN94vEINK1H773ttTj8jwYoSQZQ==
+  version "11.23.1"
+  resolved "https://registry.yarnpkg.com/newrelic/-/newrelic-11.23.1.tgz#7ab617d8fb718b5c440a2f9edb3babadd42ac0ce"
+  integrity sha512-WMlQgFOFF5bjmqRvgiw6bTCSahQrrXWjqR/23Qd3pRXBNvlhgzPhDRAz1Eeq3+iVqa/Rck2uMUE0nwsLAgq60Q==
   dependencies:
     "@grpc/grpc-js" "^1.9.4"
     "@grpc/proto-loader" "^0.7.5"
