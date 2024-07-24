@@ -12,5 +12,7 @@ export class BatchId1721862157388 implements MigrationInterface {
     );
   }
 
-  public async down(queryRunner: QueryRunner): Promise<void> {}
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.dropColumn('bk_tb_transactions', 'batch_id');
+  }
 }
