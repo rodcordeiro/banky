@@ -20,6 +20,12 @@ export class TransactionsEntity extends BaseEntity {
   })
   value: number;
 
+  @Column({
+    name: 'batch_id',
+    nullable: true,
+  })
+  batchId?: string;
+
   /** Joins */
   @ManyToOne(() => UsersEntity, {
     eager: false,
