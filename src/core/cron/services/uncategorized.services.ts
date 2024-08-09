@@ -19,8 +19,8 @@ export class UncategorizedService {
     this._logger.log('UncategorizedService Initialized');
   }
 
-  @Cron('0/30 * * * * *')
-  // @Cron('0 0 0 * * *')
+  // @Cron('0/30 * * * * *')
+  @Cron('0 0 0 * * *')
   async notifyUncategorized() {
     this._logger.verbose('Starting Uncategorized service');
     const uncategorized = await this._transactions.uncategorized();
