@@ -69,10 +69,11 @@ function above) and returns:
  NOTE: The code inside isFinite does an assignment (=).
  */
 export function compareDates(a: DateCompare, b: DateCompare) {
-  // eslint-disable-next-line no-return-assign
-  return Number.isFinite((a = convertDate(a).valueOf())) &&
-    Number.isFinite((b = convertDate(b).valueOf()))
-    ? (((a as any) > b) as any) - (((a as any) < b) as any)
+  const firstDate = convertDate(a).valueOf();
+  const secondDate = convertDate(b).valueOf();
+  return Number.isFinite(firstDate) && Number.isFinite(secondDate)
+    ? (((((firstDate as any) > secondDate) as any) -
+        (((firstDate as any) < secondDate) as any)) as number)
     : NaN;
 }
 
@@ -94,10 +95,13 @@ export function isInRange(
   start: string | Date | number | DateOptions,
   end: string | Date | number | DateOptions,
 ) {
-  return Number.isFinite((d = convertDate(d).valueOf())) &&
-    Number.isFinite((start = convertDate(start).valueOf())) &&
-    Number.isFinite((end = convertDate(end).valueOf()))
-    ? start <= d && d <= end
+  const date = convertDate(d).valueOf();
+  const startDate = convertDate(start).valueOf();
+  const endDate = convertDate(end).valueOf();
+  return Number.isFinite(date) &&
+    Number.isFinite(startDate) &&
+    Number.isFinite(endDate)
+    ? startDate <= date && date <= endDate
     : NaN;
 }
 
