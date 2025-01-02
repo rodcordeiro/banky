@@ -78,8 +78,8 @@ export class TransactionsService extends BaseService {
   async uncategorized() {
     return this._repository
       .createQueryBuilder('a')
-      .where({ category: { id: '5aadea0f-ded0-44d0-a3d0-898058765dfc' } })
-      .orWhere({ category: { id: 'e5061295-aa75-467c-aa1e-0ac97018edce' } })
+      .where({ category: { id: 'b5c6184e-7e7a-44bf-a60d-919fb1be1ed0' } })
+      .orWhere({ category: { id: 'da842e12-9627-4636-85e9-b833bb9adf93' } })
       .getMany();
   }
 }
