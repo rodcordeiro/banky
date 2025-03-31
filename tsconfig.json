@@ -21,6 +21,6 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "typeRoots": ["src/@types","./src/@types"]
+    "typeRoots": ["@/@types","./src/@types"]
   }
 }

@@ -7,6 +7,11 @@ const CreateParameterSchema = z.object({
   key: z.string(),
 });
 
+const CreateParameterValueSchema = z.object({
+  parameter: z.string(),
+  value: z.string(),
+});
+
 export class CreateParameterDTO extends createZodDto(CreateParameterSchema) {
   /** Parameter name */
   @ApiProperty()
@@ -15,4 +20,16 @@ export class CreateParameterDTO extends createZodDto(CreateParameterSchema) {
   /** Parameter identification key */
   @ApiProperty()
   key: string;
+}
+
+export class CreateParameterValueDTO extends createZodDto(
+  CreateParameterValueSchema,
+) {
+  /** Parameter which this value is related to */
+  @ApiProperty()
+  parameter: string;
+
+  /** Parameter value */
+  @ApiProperty()
+  value: string;
 }

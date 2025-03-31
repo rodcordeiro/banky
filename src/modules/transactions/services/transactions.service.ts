@@ -1,14 +1,17 @@
 import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
 import { FindManyOptions, Repository } from 'typeorm';
+import { randomUUID } from 'crypto';
 
 import { BaseService } from '@/common/services/base.service';
 import { AccountsService } from '@/modules/accounts/services/accounts.service';
 import { CategoriesService } from '@/modules/categories/services/categories.service';
+import { ParameterValuesService } from '@/modules/parameters/services/parameters.service';
+import { PaginationService } from '@/core/paginate/paginate.service';
 
 import { TransactionsEntity } from '@/modules/transactions/entities/transactions.entity';
 import { CreateTransactionDTO } from '@/modules/transactions/dto/create.dto';
-import { PaginationService } from '@/core/paginate/paginate.service';
 import { QueryTransactionsDTO } from '../dto/query.dto';
+import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
 
 @Injectable()
 export class TransactionsService extends BaseService {
@@ -19,6 +22,7 @@ export class TransactionsService extends BaseService {
     private readonly _accountsService: AccountsService,
     private readonly _categoriesService: CategoriesService,
     private readonly _paginateService: PaginationService,
+    private readonly _parametersService: ParameterValuesService,
   ) {
     super();
   }
@@ -81,5 +85,59 @@ export class TransactionsService extends BaseService {
       .where({ category: { id: 'b5c6184e-7e7a-44bf-a60d-919fb1be1ed0' } })
       .orWhere({ category: { id: 'da842e12-9627-4636-85e9-b833bb9adf93' } })
       .getMany();
+  }
+  async createTransfer(data: CreateTransferTransactionDTO & { owner: string }) {
+    const originAccount = await this._accountsService.findOneBy({
+      id: 'data.account',
+    });
+    const destinyAccount = await this._accountsService.findOneBy({
+      id: 'data.account',
+    });
+    const originCategoryParam =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('parameter', 'b');
+        qb.where('b.key = :key', { name: 'transference_origin_category' });
+        return await qb.getOneOrFail();
+      });
+    const destinyCategoryParam =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('parameter', 'b');
+        qb.where('b.key = :key', { name: 'transference_destiny_category' });
+        return await qb.getOneOrFail();
+      });
+    const originCategory = await this._categoriesService.findOneBy({
+      id: originCategoryParam.value,
+    });
+    const destinyCategory = await this._categoriesService.findOneBy({
+      id: destinyCategoryParam.value,
+    });
+    const batchId = randomUUID();
+
+    const originTransaction = this._repository.create({
+      description: data.description,
+      value: data.value,
+      batchId,
+      owner: data.owner,
+      category: originCategory.id,
+      account: originAccount.id,
+      date: data.date || new Date().toISOString(),
+    });
+    const destinyTransaction = this._repository.create({
+      description: data.description,
+      value: data.value,
+      batchId,
+      owner: data.owner,
+      category: destinyCategory.id,
+      account: destinyAccount.id,
+      date: data.date || new Date().toISOString(),
+    });
+
+    await this._repository.save([originTransaction, destinyTransaction]);
+    await this._accountsService.update(originAccount.id, {
+      ammount: originAccount.ammount - data.value,
+    });
+    await this._accountsService.update(destinyAccount.id, {
+      ammount: destinyAccount.ammount + data.value,
+    });
   }
 }

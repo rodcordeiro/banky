@@ -16,11 +16,12 @@ export class ParameterEntity extends BaseEntity {
 
   /** Methods */
 }
+
 @Entity('bk_tb_parameter_values')
 export class ParameterValueEntity extends BaseEntity {
   /** Columns */
   @Column()
-  name: string;
+  value: string;
 
   /** Joins */
   @ManyToOne(() => UsersEntity, {
@@ -32,6 +33,16 @@ export class ParameterValueEntity extends BaseEntity {
     referencedColumnName: 'id',
   })
   owner: string;
+
+  @ManyToOne(() => ParameterEntity, {
+    eager: false,
+    nullable: false,
+  })
+  @JoinColumn({
+    name: 'parameter',
+    referencedColumnName: 'id',
+  })
+  parameter: string;
 
   /** Methods */
 }

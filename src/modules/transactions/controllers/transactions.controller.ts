@@ -18,6 +18,7 @@ import { Auth } from '@/common/decorators/auth.decorator';
 import { TransactionsService } from '../services/transactions.service';
 import { CreateTransactionDTO } from '../dto/create.dto';
 import { QueryTransactionsDTO } from '../dto/query.dto';
+import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
 
 @Auth()
 @ApiTags('Transactions')
@@ -46,6 +47,7 @@ export class TransactionsController {
   }
 
   @Post()
+  @HttpCode(HttpStatus.CREATED)
   async create(
     @Req() req: AuthenticatedRequest,
     @Body() data: CreateTransactionDTO,
@@ -66,5 +68,13 @@ export class TransactionsController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     return this._service.destroy(id);
+  }
+  @Post('transfer')
+  @HttpCode(HttpStatus.CREATED)
+  async createTransfer(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: CreateTransferTransactionDTO,
+  ) {
+    return this._service.createTransfer({ ...data, owner: req.user.id });
   }
 }
