@@ -9,7 +9,7 @@ export const RABBITMQ_CONFIG = {
     queueOptions: {
       durable: true,
     },
-    exchange: 'xxx',
+    exchange: 'banky',
     exchangeType: 'topic',
   },
 } as unknown as ClientProviderOptions;

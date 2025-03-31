@@ -39,7 +39,8 @@ export class ParametersController {
   }
   @Get('values')
   async index(@Req() req: AuthenticatedRequest) {
-    return await this._valuesService.findBy({ owner: req.user.id });
+    console.log(req.user);
+    return await this._valuesService.findAll();
   }
 
   @Get('/:id')
