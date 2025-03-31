@@ -1,50 +1,31 @@
 {
     "$schema": "https://docs.renovatebot.com/renovate-schema.json",
     "branchPrefix": "updates/",
-    "baseBranches": [
-        "develop"
-    ],
+    "baseBranches": ["develop"],
     "packageRules": [
         {
-            "updateTypes": [
-                "minor",
-                "patch",
-                "pin",
-                "digest"
-            ],
+            "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
             "automerge": true
         },
         {
-            "updateTypes": [
-                "major"
-            ],
+            "matchUpdateTypes": ["major"],
             "automerge": false
         }
     ],
     "assignAutomerge": true,
-    "assignees": [
-        "rodcordeiro"
-    ],
-    "labels": [
-        "dependencies"
-    ],
-    "recreateClosed": true,
+    "assignees": ["rodcordeiro"],
+    "labels": ["dependencies"],
+    "recreateWhen": "always",
     "rebaseWhen": "conflicted",
     "vulnerabilityAlerts": {
-        "labels": [
-            "security"
-        ],
-        "assignees": [
-            "@rodcordeiro"
-        ]
+        "labels": ["security"],
+        "assignees": ["@rodcordeiro"]
     },
     "extends": [
-        "config:base",
+        "config:recommended",
         ":dependencyDashboard",
-        "github>whitesource/merge-confidence:beta"
+        "mergeConfidence:all-badges"
     ],
-    "schedule": [
-        "before 3am on the first day of the month"
-    ],
+    "schedule": ["before 3am on the first day of the month"],
     "timezone": "America/Sao_Paulo"
 }
