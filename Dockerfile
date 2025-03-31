@@ -1,4 +1,8 @@
-FROM node:20 AS builder
+FROM node:22 AS builder
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN npm install -g pnpm
 
 WORKDIR /banky
 
@@ -9,8 +13,8 @@ ENV NEW_RELIC_LOG=stdout
 
 COPY . .
 
-RUN npm i
-RUN npm run build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+RUN pnpm run build
 
 EXPOSE 80
 

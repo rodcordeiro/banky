@@ -8,7 +8,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { DatabaseModule } from './core/database/database.module';
 import { NestJwtModule } from './core/jwt/jwt.module';
 import { CronModule } from './core/cron/cron.module';
-import { RabbitModule } from './core/rabbitmq/rabbitmq.module';
+// import { RabbitModule } from './core/rabbitmq/rabbitmq.module';
 
 import { SharedModule } from './modules/shared.module';
 
@@ -22,7 +22,7 @@ import { SharedModule } from './modules/shared.module';
       },
     ]),
     DatabaseModule,
-    RabbitModule,
+    // RabbitModule,
     CronModule,
     PassportModule,
     NestJwtModule,
