@@ -75,7 +75,9 @@ async function bootstrap() {
   /**
    * MICROSERVICES
    */
-  app.connectMicroservice<MicroserviceOptions>(RABBITMQ_CONFIG);
+  app.connectMicroservice<MicroserviceOptions>(
+    RABBITMQ_CONFIG as MicroserviceOptions,
+  );
   await app.startAllMicroservices();
 
   /**
