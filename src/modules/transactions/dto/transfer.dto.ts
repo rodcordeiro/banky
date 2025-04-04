@@ -30,9 +30,5 @@ export class CreateTransferTransactionDTO extends createZodDto(
 
   /** Transaction description */
   @ApiProperty()
-  category: string;
-
-  /** Transaction description */
-  @ApiProperty()
   value: number;
 }

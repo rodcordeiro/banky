@@ -88,29 +88,35 @@ export class TransactionsService extends BaseService {
   }
   async createTransfer(data: CreateTransferTransactionDTO & { owner: string }) {
     const originAccount = await this._accountsService.findOneBy({
-      id: 'data.account',
+      id: data.origin,
     });
     const destinyAccount = await this._accountsService.findOneBy({
-      id: 'data.account',
+      id: data.destiny,
     });
+    console.log({ originAccount, destinyAccount });
+
     const originCategoryParam =
       await this._parametersService.findOneByQueryBuilder(async qb => {
-        qb.innerJoin('parameter', 'b');
-        qb.where('b.key = :key', { name: 'transference_origin_category' });
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key = :key', { key: 'transference_origin_category' });
         return await qb.getOneOrFail();
       });
     const destinyCategoryParam =
       await this._parametersService.findOneByQueryBuilder(async qb => {
-        qb.innerJoin('parameter', 'b');
-        qb.where('b.key = :key', { name: 'transference_destiny_category' });
+        qb.innerJoin('bk_tb_parameters', 'b');
+        qb.where('b.key = :key', { key: 'transference_destiny_category' });
         return await qb.getOneOrFail();
       });
+
+    console.log({ originCategoryParam, destinyCategoryParam });
+
     const originCategory = await this._categoriesService.findOneBy({
       id: originCategoryParam.value,
     });
     const destinyCategory = await this._categoriesService.findOneBy({
       id: destinyCategoryParam.value,
     });
+
     const batchId = randomUUID();
 
     const originTransaction = this._repository.create({
