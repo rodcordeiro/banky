@@ -18,7 +18,7 @@ import {
   ParametersService,
   ParameterValuesService,
 } from '../services/parameters.service';
-import { CreateParameterDTO } from '../dto/create.dto';
+import { CreateParameterDTO, CreateParameterValueDTO } from '../dto/create.dto';
 
 @Auth()
 @ApiTags('Parameters')
@@ -39,7 +39,7 @@ export class ParametersController {
   }
   @Get('values')
   async index(@Req() req: AuthenticatedRequest) {
-    return await this._valuesService.findBy({ owner: req.user.id });
+    return await this._valuesService.findAll(req.user.id);
   }
 
   @Get('/:id')
@@ -47,9 +47,26 @@ export class ParametersController {
     return this._service.findOneBy({ id });
   }
 
+  @Get('values/:id')
+  async viewValue(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this._valuesService.findByQueryBuilder(async qb => {
+      qb.innerJoinAndSelect('a.parameter', 'b');
+      qb.where(`a.parameter = '${id}'`);
+      qb.andWhere(`a.owner = '${req.user.id}'`);
+      return await qb.getMany();
+    });
+  }
+
   @Post()
   async create(@Body() data: CreateParameterDTO) {
     return this._service.store(data);
+  }
+  @Post('values')
+  async createValue(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: CreateParameterValueDTO,
+  ) {
+    return this._valuesService.store({ ...data, owner: req.user.id });
   }
 
   @Put('/:id')
@@ -60,10 +77,23 @@ export class ParametersController {
   ) {
     return this._service.update(id, data);
   }
+  @Put('values/:id')
+  async updateValue(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+    @Body() data: Partial<CreateParameterValueDTO>,
+  ) {
+    return this._valuesService.update(id, data);
+  }
 
   @Delete('/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async remove(@Param('id') id: string) {
     return this._service.destroy(id);
+  }
+  @Delete('values/:id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async removeValue(@Param('id') id: string) {
+    return this._valuesService.destroy(id);
   }
 }

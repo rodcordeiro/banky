@@ -6,7 +6,7 @@ import { RABBITMQ_CONFIG } from '../constants/rabbitmq.contants';
 
 @Injectable()
 export class RabbitMQService {
-  private client: ClientProxy;
+  private readonly client: ClientProxy;
 
   constructor() {
     this.client = ClientProxyFactory.create(RABBITMQ_CONFIG);
