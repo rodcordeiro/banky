@@ -1,0 +1,463 @@
+[
+    {
+        "name": "Presentes",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Rendimento de Investimento",
+        "positive": true,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Interesse tax-exempt",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Juros",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Ganhos de Capital",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Dividendos",
+                "positive": true,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Pet Care",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Alimentos",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Veterinário",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Suprimentos",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Encargos bancários",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Juros",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Taxa de Serviço",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Honorários",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Impostos",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Outros Impostos",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Darf",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Ano Receita Federal Tax-Anterior",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Casa",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Home Improvement",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Transferência entre contas (Origem)",
+        "positive": false,
+        "internal": true
+    },
+    {
+        "name": "Outras receitas",
+        "positive": true,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Dons recebidos",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Restituição Imposto Estadual e Municipal",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Principal empréstimo recebido",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Loterias",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Employee Stock Option",
+                "positive": true,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Hobbies e Lazer",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Entertaining",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Viagens / Hospedagem",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Livros e Revistas",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Esporte e Lazer",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Brinquedos e Games",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Cinema e Video Rentals",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Eventos Esportivos",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Eventos Culturais",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Ajuste de saldo [positivo]",
+        "positive": true,
+        "internal": true
+    },
+    {
+        "name": "_A categorizar [negative]",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Ajuste de saldo [negativo]",
+        "positive": false,
+        "internal": true
+    },
+    {
+        "name": "Educação",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Mensalidade",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Taxas",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Livros e Materiais",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Certificação",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Cuidados de saúde",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Dental",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Oftalmo",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Médico",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Hospital",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Farmácia",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Comida",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Café da manhã",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Bebidas",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Lanche",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Almoço",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Mercearia",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Transferência entre contas (Destino)",
+        "positive": true,
+        "internal": true
+    },
+    {
+        "name": "Variado",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Cuidados Pessoais",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Notas",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Electricidade",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Uber",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Água e Esgoto",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Celular",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Diário",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Taxas de Associação",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Serviços de streaming",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Investimento (Entrada)",
+                "positive": true,
+                "internal": true
+            },
+            {
+                "name": "Transportes",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Investimento (saída)",
+                "positive": false,
+                "internal": true
+            },
+            {
+                "name": "Cartão de crédito",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Gás Natural / Óleo",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Serviço de On-line/Internet",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Aluguel",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Doações",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "_A categorizar [positive]",
+        "positive": true,
+        "internal": false
+    },
+    {
+        "name": "Vestuário",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Salário",
+        "positive": true,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Overtime",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Comissão",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Bonus",
+                "positive": true,
+                "internal": false
+            },
+            {
+                "name": "Remuneração Bruta",
+                "positive": true,
+                "internal": false
+            }
+        ]
+    },
+    {
+        "name": "Retirar Dinheiro",
+        "positive": false,
+        "internal": false
+    },
+    {
+        "name": "Empréstimo",
+        "positive": false,
+        "internal": false,
+        "subcategories": [
+            {
+                "name": "Juros de empréstimos",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Interesse Mortgage",
+                "positive": false,
+                "internal": false
+            },
+            {
+                "name": "Juros do empréstimo de estudante",
+                "positive": false,
+                "internal": false
+            }
+        ]
+    }
+]
