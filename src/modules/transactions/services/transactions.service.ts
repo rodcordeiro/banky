@@ -80,10 +80,32 @@ export class TransactionsService extends BaseService {
   }
 
   async uncategorized() {
+    const uncategorizedPositiveParams =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key in :key', {
+          key: 'unknown_positive_category',
+        });
+        return await qb.getOneOrFail();
+      });
+    const uncategorizedNegativeParams =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key in :key', {
+          key: 'unknown_negative_category',
+        });
+        return await qb.getOneOrFail();
+      });
     return this._repository
       .createQueryBuilder('a')
-      .where({ category: { id: 'b5c6184e-7e7a-44bf-a60d-919fb1be1ed0' } })
-      .orWhere({ category: { id: 'da842e12-9627-4636-85e9-b833bb9adf93' } })
+      .where({
+        category: {
+          id: [
+            uncategorizedPositiveParams.value,
+            uncategorizedNegativeParams.value,
+          ],
+        },
+      })
       .getMany();
   }
   async createTransfer(data: CreateTransferTransactionDTO & { owner: string }) {
@@ -93,7 +115,6 @@ export class TransactionsService extends BaseService {
     const destinyAccount = await this._accountsService.findOneBy({
       id: data.destiny,
     });
-    console.log({ originAccount, destinyAccount });
 
     const originCategoryParam =
       await this._parametersService.findOneByQueryBuilder(async qb => {
@@ -101,14 +122,13 @@ export class TransactionsService extends BaseService {
         qb.where('b.key = :key', { key: 'transference_origin_category' });
         return await qb.getOneOrFail();
       });
+
     const destinyCategoryParam =
       await this._parametersService.findOneByQueryBuilder(async qb => {
-        qb.innerJoin('bk_tb_parameters', 'b');
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
         qb.where('b.key = :key', { key: 'transference_destiny_category' });
         return await qb.getOneOrFail();
       });
-
-    console.log({ originCategoryParam, destinyCategoryParam });
 
     const originCategory = await this._categoriesService.findOneBy({
       id: originCategoryParam.value,
