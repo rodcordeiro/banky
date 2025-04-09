@@ -18,7 +18,7 @@ export class TransactionsService extends BaseService {
   override repository = this._repository;
   constructor(
     @Inject('TRANSACTIONS_REPOSITORY')
-    private _repository: Repository<TransactionsEntity>,
+    private readonly _repository: Repository<TransactionsEntity>,
     private readonly _accountsService: AccountsService,
     private readonly _categoriesService: CategoriesService,
     private readonly _paginateService: PaginationService,
