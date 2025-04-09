@@ -1,7 +1,7 @@
 FROM node:23 AS builder
 
-RUN addgroup -S nonroot \
-    && adduser -S nonroot -G nonroot
+RUN groupadd -r nonroot \
+    && useradd -m -r -g nonroot nonroot
 
 USER nonroot
 
@@ -14,8 +14,8 @@ ENV NEW_RELIC_LOG=stdout
 COPY . .
 
 RUN npm install --ignore-scripts \
- && npm run build
+    && npm run build
 
 EXPOSE 80
 
-CMD [ "node","dist/src/main" ]
+CMD [ "node", "dist/src/main" ]

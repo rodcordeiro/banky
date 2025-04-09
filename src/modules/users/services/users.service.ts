@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { FindOneOptions, Repository } from 'typeorm';
 import { BaseService } from '@/common/services/base.service';
 
@@ -9,20 +9,16 @@ export class UsersService extends BaseService {
   override repository = this._repository;
   constructor(
     @Inject('USER_REPOSITORY')
-    private _repository: Repository<UsersEntity>,
+    private readonly _repository: Repository<UsersEntity>,
   ) {
     super();
   }
 
   async validate(options: FindOneOptions<UsersEntity>['where']) {
-    try {
-      return await this._repository.findOneOrFail({
-        select: ['password', 'username', 'id'],
-        where: options,
-      });
-    } catch (err) {
-      throw new NotFoundException('User not found');
-    }
+    return await this._repository.findOneOrFail({
+      select: ['password', 'username', 'id'],
+      where: options,
+    });
   }
 
   async updateToken(id: string, refreshToken: string) {

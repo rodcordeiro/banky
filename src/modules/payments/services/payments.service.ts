@@ -9,7 +9,7 @@ export class PaymentsService extends BaseService {
   override repository = this._repository;
   constructor(
     @Inject('PAYMENTS_REPOSITORY')
-    private _repository: Repository<PaymentsEntity>,
+    private readonly _repository: Repository<PaymentsEntity>,
   ) {
     super();
   }

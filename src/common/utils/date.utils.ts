@@ -68,15 +68,16 @@ function above) and returns:
 
  NOTE: The code inside isFinite does an assignment (=).
  */
-export function compareDates(a: DateCompare, b: DateCompare) {
+export function compareDates(a: DateCompare, b: DateCompare): number {
   const firstDate = convertDate(a).valueOf();
   const secondDate = convertDate(b).valueOf();
-  return Number.isFinite(firstDate) && Number.isFinite(secondDate)
-    ? (((((firstDate as any) > secondDate) as any) -
-        (((firstDate as any) < secondDate) as any)) as number)
-    : NaN;
-}
 
+  if (!Number.isFinite(firstDate) || !Number.isFinite(secondDate)) {
+    return NaN;
+  }
+
+  return firstDate > secondDate ? 1 : firstDate < secondDate ? -1 : 0;
+}
 /**
 Checks if date in d is between dates in start and end.
  Returns a boolean or NaN:
