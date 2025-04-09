@@ -15,7 +15,7 @@ import {
 export class ParametersService {
   constructor(
     @Inject('PARAMETERS_REPOSITORY')
-    private _repository: Repository<ParameterEntity>,
+    private readonly _repository: Repository<ParameterEntity>,
   ) {}
 
   async findAllParams() {
@@ -59,9 +59,9 @@ export class ParametersService {
 export class ParameterValuesService {
   constructor(
     @Inject('PARAMETERS_REPOSITORY')
-    private _repository: Repository<ParameterEntity>,
+    private readonly _repository: Repository<ParameterEntity>,
     @Inject('PARAMETER_VALUES_REPOSITORY')
-    private _paramValuesRepository: Repository<ParameterValueEntity>,
+    private readonly _paramValuesRepository: Repository<ParameterValueEntity>,
   ) {}
 
   async findAll(owner: string) {

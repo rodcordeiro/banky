@@ -9,7 +9,7 @@ export class CategoriesService extends BaseService {
   override repository = this._repository;
   constructor(
     @Inject('CATEGORIES_REPOSITORY')
-    private _repository: Repository<CategoriesEntity>,
+    private readonly _repository: Repository<CategoriesEntity>,
   ) {
     super();
   }

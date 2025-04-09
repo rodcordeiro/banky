@@ -9,7 +9,7 @@ export class AccountsService extends BaseService {
   override repository = this._repository;
   constructor(
     @Inject('ACCOUNTS_REPOSITORY')
-    private _repository: Repository<AccountsEntity>,
+    private readonly _repository: Repository<AccountsEntity>,
   ) {
     super();
   }
