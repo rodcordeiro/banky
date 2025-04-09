@@ -1,4 +1,4 @@
-import { z, ZodError } from 'nestjs-zod/z';
+import { z, ZodError } from 'zod';
 import { Injectable } from '@nestjs/common';
 import { type ObjectLiteral, Repository, type FindManyOptions } from 'typeorm';
 import { BadRequestError } from '@/common/interceptors/badRequestError.interceptor';

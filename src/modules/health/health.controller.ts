@@ -14,8 +14,8 @@ import { version } from '@/../package.json';
 })
 export class HealthController {
   constructor(
-    private _health: HealthCheckService,
-    private _memory: MemoryHealthIndicator,
+    private readonly _health: HealthCheckService,
+    private readonly _memory: MemoryHealthIndicator,
   ) {}
 
   @Get('/')

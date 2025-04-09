@@ -91,9 +91,9 @@ Checks if date in d is between dates in start and end.
  */
 
 export function isInRange(
-  d: string | Date | number | DateOptions,
-  start: string | Date | number | DateOptions,
-  end: string | Date | number | DateOptions,
+  d: DateCompare,
+  start: DateCompare,
+  end: DateCompare,
 ) {
   const date = convertDate(d).valueOf();
   const startDate = convertDate(start).valueOf();

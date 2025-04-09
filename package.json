@@ -1,6 +1,6 @@
 {
   "name": "@rodcordeiro/banky-api",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "",
   "author": "Rodrigo Cordeiro (http://rodcordeiro.com.br) <rodrigomendoncca@gmail.com>",
   "private": true,
@@ -53,7 +53,7 @@
     "dotenv": "^16.4.7",
     "jsonwebtoken": "^9.0.2",
     "mysql": "^2.18.1",
-    "nestjs-zod": "^3.0.0",
+    "nestjs-zod": "^4.3.1",
     "newrelic": "latest",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",

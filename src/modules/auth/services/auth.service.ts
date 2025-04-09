@@ -29,6 +29,7 @@ export class AuthService {
 
       return user;
     } catch (err) {
+      console.error(err);
       return null;
     }
   }

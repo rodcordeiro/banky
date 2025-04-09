@@ -1,8 +1,9 @@
-FROM node:22 AS builder
+FROM node:23 AS builder
 
-ENV PNPM_HOME="/pnpm"
-ENV PATH="$PNPM_HOME:$PATH"
-RUN npm install -g pnpm --ignore-scripts
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+
+USER nonroot
 
 WORKDIR /banky
 
@@ -10,11 +11,10 @@ ENV NEW_RELIC_NO_CONFIG_FILE=true
 ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 ENV NEW_RELIC_LOG=stdout
 
-
 COPY . .
 
-RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile --ignore-scripts
-RUN pnpm run build
+RUN npm install --ignore-scripts \
+ && npm run build
 
 EXPOSE 80
 
