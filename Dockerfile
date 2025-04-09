@@ -8,7 +8,7 @@ ENV NEW_RELIC_LOG=stdout
 
 COPY . .
 
-RUN npm install
+RUN npm install --ignore-scripts
 RUN npm run build
 
 EXPOSE 80
