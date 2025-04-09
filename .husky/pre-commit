@@ -1,0 +1,5 @@
+# .husky/pre-commit
+# pnpm test
+prettier $(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts)$' | sed 's| |\\ |g') --write --ignore-unknown
+eslint $(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.(ts)$' | sed 's| |\\ |g') --max-warnings 5  --fix
+git update-index --again
