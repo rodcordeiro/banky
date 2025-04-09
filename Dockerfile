@@ -1,5 +1,10 @@
 FROM node:23 AS builder
 
+RUN addgroup -S nonroot \
+    && adduser -S nonroot -G nonroot
+
+USER nonroot
+
 WORKDIR /banky
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
