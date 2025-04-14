@@ -80,33 +80,34 @@ export class TransactionsService extends BaseService {
   }
 
   async uncategorized() {
-    const uncategorizedPositiveParams =
-      await this._parametersService.findOneByQueryBuilder(async qb => {
-        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
-        qb.where('b.key in :key', {
-          key: 'unknown_positive_category',
-        });
-        return await qb.getOneOrFail();
-      });
-    const uncategorizedNegativeParams =
-      await this._parametersService.findOneByQueryBuilder(async qb => {
-        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
-        qb.where('b.key in :key', {
-          key: 'unknown_negative_category',
-        });
-        return await qb.getOneOrFail();
-      });
-    return this._repository
-      .createQueryBuilder('a')
-      .where({
-        category: {
-          id: [
-            uncategorizedPositiveParams.value,
-            uncategorizedNegativeParams.value,
-          ],
-        },
-      })
-      .getMany();
+    // const uncategorizedPositiveParams =
+    //   await this._parametersService.findOneByQueryBuilder(async qb => {
+    //     qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+    //     qb.where('b.key in :key', {
+    //       key: 'unknown_positive_category',
+    //     });
+    //     return await qb.getOneOrFail();
+    //   });
+    // const uncategorizedNegativeParams =
+    //   await this._parametersService.findOneByQueryBuilder(async qb => {
+    //     qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+    //     qb.where('b.key in :key', {
+    //       key: 'unknown_negative_category',
+    //     });
+    //     return await qb.getOneOrFail();
+    //   });
+    // return this._repository
+    //   .createQueryBuilder('a')
+    //   .where({
+    //     category: {
+    //       id: [
+    //         uncategorizedPositiveParams.value,
+    //         uncategorizedNegativeParams.value,
+    //       ],
+    //     },
+    //   })
+    //   .getMany();
+    return [];
   }
   async createTransfer(data: CreateTransferTransactionDTO & { owner: string }) {
     const originAccount = await this._accountsService.findOneBy({
