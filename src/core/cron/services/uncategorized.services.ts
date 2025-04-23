@@ -27,7 +27,7 @@ export class UncategorizedService {
     this._logger.verbose(
       `${uncategorized.length} transactions pending categorization.`,
     );
-    this._rabbitService.sendMessage('banky', {
+    this._rabbitService.sendMessage('uncategorized_notification', {
       type: 'notification',
       title: 'Uncategorized Transactions',
       description: `${uncategorized.length} transactions pending categorization.`,

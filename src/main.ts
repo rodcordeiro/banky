@@ -16,8 +16,8 @@ import { DataBaseInterceptor } from '@/common/interceptors/databaseError.interce
 import { BadRequestInterceptor } from '@/common/interceptors/badRequestError.interceptor';
 
 import { version } from '../package.json';
-// import { RABBITMQ_CONFIG } from './core/rabbitmq/constants/rabbitmq.contants';
-// import { MicroserviceOptions } from '@nestjs/microservices';
+import { RABBITMQ_CONFIG } from './core/rabbitmq/constants/rabbitmq.contants';
+import { MicroserviceOptions } from '@nestjs/microservices';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -75,8 +75,8 @@ async function bootstrap() {
   /**
    * MICROSERVICES
    */
-  // app.connectMicroservice<MicroserviceOptions>(RABBITMQ_CONFIG);
-  // await app.startAllMicroservices();
+  app.connectMicroservice<MicroserviceOptions>(RABBITMQ_CONFIG);
+  await app.startAllMicroservices();
 
   /**
    * ------------------------------------------------------

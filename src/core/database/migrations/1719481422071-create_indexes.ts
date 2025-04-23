@@ -13,14 +13,14 @@ export class CreateIndexes1719481422071 implements MigrationInterface {
       'bk_tb_transactions',
       new TableIndex({
         name: 'idx_account_transaction',
-        columnNames: ['id', 'account'],
+        columnNames: ['account'],
       }),
     );
     await queryRunner.createIndex(
       'bk_tb_transactions',
       new TableIndex({
         name: 'idx_category_transaction',
-        columnNames: ['id', 'category'],
+        columnNames: ['category'],
       }),
     );
     await queryRunner.createIndex(
@@ -30,10 +30,21 @@ export class CreateIndexes1719481422071 implements MigrationInterface {
         columnNames: ['account', 'category'],
       }),
     );
+    await queryRunner.createIndex(
+      'bk_tb_transactions',
+      new TableIndex({
+        name: 'idx_category_date_value',
+        columnNames: ['category', 'date DESC', 'value'],
+      }),
+    );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.dropIndex('bk_tb_categories', 'idx_category_positive');
+    await queryRunner.dropIndex(
+      'bk_tb_transactions',
+      'idx_category_date_value',
+    );
     await queryRunner.dropIndex(
       'bk_tb_transactions',
       'idx_account_transaction',
