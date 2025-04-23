@@ -16,7 +16,8 @@ WORKDIR /banky
 
 # Copia arquivos e instala deps com permissões adequadas
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --ignore-scripts
+RUN pnpm install --frozen-lockfile 
+# --ignore-scripts
 
 # Copia o restante da app
 COPY . .
