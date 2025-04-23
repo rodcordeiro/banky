@@ -10,9 +10,9 @@ ENV NEW_RELIC_LOG=stdout
 
 WORKDIR /banky
 
-USER nonroot
-
 RUN corepack enable && corepack prepare pnpm@latest --activate
+
+USER nonroot
 
 COPY --chown=nonroot:nonroot package.json pnpm-lock.yaml ./
 
