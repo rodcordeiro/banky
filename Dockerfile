@@ -1,4 +1,4 @@
-FROM node:23 AS builder
+FROM node:23-slim AS builder
 
 RUN groupadd -r nonroot \
     && useradd -m -r -g nonroot nonroot
@@ -13,7 +13,7 @@ ENV NEW_RELIC_LOG=stdout
 
 COPY . .
 
-RUN npm install --ignore-scripts \
+RUN npm ci --ignore-scripts \
     && npm run build
 
 EXPOSE 80
