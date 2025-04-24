@@ -6,17 +6,17 @@ ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 ENV NEW_RELIC_LOG=stdout
 
 # Instala ferramentas para compilar bcrypt
-RUN apt-get update && apt-get install -y python3 make g++ \
-    && groupadd -r nonroot && useradd -m -r -g nonroot nonroot
-
-# Ativa corepack e pnpm ainda como root
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apt-get update && apt-get --no-install-recommends install -y python3 make g++ \
+    && groupadd -r nonroot && useradd -m -r -g nonroot nonroot \
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*   \
+    # Ativa corepack e pnpm ainda como root
+    && corepack enable && corepack prepare pnpm@latest --activate
 
 WORKDIR /banky
 
 # Copia arquivos e instala deps com permissões adequadas
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile 
+RUN pnpm install --frozen-lockfile --ignore-scripts
 # --ignore-scripts
 
 # Copia o restante da app
