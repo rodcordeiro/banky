@@ -21,8 +21,8 @@ importers:
         specifier: ^9.0.3
         version: 9.0.3
       '@fastify/oauth2':
-        specifier: ^7.9.0
-        version: 7.9.0
+        specifier: ^8.1.2
+        version: 8.1.2
       '@fastify/secure-session':
         specifier: ^8.2.0
         version: 8.2.0
@@ -450,9 +450,6 @@ packages:
   '@fastify/cookie@11.0.2':
     resolution: {integrity: sha512-GWdwdGlgJxyvNv+QcKiGNevSspMQXncjMZ1J8IvuDQk0jvkzgWWZFNC2En3s+nHndZBGV8IbLwOI/sxCZw/mzA==}
 
-  '@fastify/cookie@9.4.0':
-    resolution: {integrity: sha512-Th+pt3kEkh4MQD/Q2q1bMuJIB5NX/D5SwSpOKu3G/tjoGbwfpurIMJsWSPS0SJJ4eyjtmQ8OipDQspf8RbUOlg==}
-
   '@fastify/cors@9.0.1':
     resolution: {integrity: sha512-YY9Ho3ovI+QHIL2hW+9X4XqQjXLjJqsU+sMV/xFsxZkE8p3GNnYVFpoOxF7SsP5ZL76gwvbo3V9L+FIekBGU4Q==}
 
@@ -489,8 +486,8 @@ packages:
   '@fastify/multipart@9.0.3':
     resolution: {integrity: sha512-pJogxQCrT12/6I5Fh6jr3narwcymA0pv4B0jbC7c6Bl9wnrxomEUnV0d26w6gUls7gSXmhG8JGRMmHFIPsxt1g==}
 
-  '@fastify/oauth2@7.9.0':
-    resolution: {integrity: sha512-OsMr+M2FI7ib/UKZ8hC4SRnUBQqgJ0EsvAhn1qrdYJ9K/U5OwaM2sQM8fLEYbKYQRlH0oxC7lvdTm8Ncd5+ukA==}
+  '@fastify/oauth2@8.1.2':
+    resolution: {integrity: sha512-XZWFRWTZE2fkZ2pjuHNGtpFn1tOFgcJbU0205kHbfd16dn9xRc/6HmG0gHtN/g/BNkEL3EsQ54+pYEdh8dnBgA==}
 
   '@fastify/secure-session@8.2.0':
     resolution: {integrity: sha512-E1linEHVV86c0Gt+ohujcuRsCeedhD2M3X5+a2aU9Ln0YDC0bbuA7bE6QQzf/HAacOpt9+CJqV5NqdlQr9ui0A==}
@@ -1792,10 +1789,6 @@ packages:
 
   cookie-signature@1.0.6:
     resolution: {integrity: sha512-QADzlaHc8icV8I7vbaJXJwod9HWYp8uCqf1xa4OfNu1T7JVxQIrUgOWtHdNDtPiywmFbiS12VjotIXLrKM3orQ==}
-
-  cookie-signature@1.2.2:
-    resolution: {integrity: sha512-D76uU73ulSXrD1UXF4KE2TMxVVwhsnCgfAyTg9k8P6KGZjlXKrOLe4dJQKI3Bxi5wjesZoFXJWElNWBjPZMbhg==}
-    engines: {node: '>=6.6.0'}
 
   cookie@0.7.1:
     resolution: {integrity: sha512-6DnInpx7SJ2AK3+CTUE/ZM0vWTUboZCegxhC2xiIydHR9jNuTAASBrfEpHhiGOZw/nX51bHt6YQl8jsGo4y/0w==}
@@ -4545,11 +4538,6 @@ snapshots:
       cookie: 1.0.2
       fastify-plugin: 5.0.1
 
-  '@fastify/cookie@9.4.0':
-    dependencies:
-      cookie-signature: 1.2.2
-      fastify-plugin: 4.5.1
-
   '@fastify/cors@9.0.1':
     dependencies:
       fastify-plugin: 4.5.1
@@ -4602,10 +4590,10 @@ snapshots:
       fastify-plugin: 5.0.1
       secure-json-parse: 3.0.2
 
-  '@fastify/oauth2@7.9.0':
+  '@fastify/oauth2@8.1.2':
     dependencies:
-      '@fastify/cookie': 9.4.0
-      fastify-plugin: 4.5.1
+      '@fastify/cookie': 11.0.2
+      fastify-plugin: 5.0.1
       simple-oauth2: 5.1.0
     transitivePeerDependencies:
       - supports-color
@@ -6120,8 +6108,6 @@ snapshots:
   convert-source-map@2.0.0: {}
 
   cookie-signature@1.0.6: {}
-
-  cookie-signature@1.2.2: {}
 
   cookie@0.7.1: {}
 
