@@ -2,7 +2,7 @@ name: Docker Image CI
 
 on:
   push:
-    branches: [ "main"]
+    branches: [ "main" ]
   
 jobs:
   build:
@@ -14,7 +14,7 @@ jobs:
         id: version
         run: |
           version=$(jq '.version' package.json | sed "s/\"//g")
-          echo "PKG_VERSION=v$version" >> "$GITHUB_OUTPUT"
+          echo "PKG_VERSION=$version" >> "$GITHUB_OUTPUT"
       # PREPARE DOCKER ENVIRONMENT
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3

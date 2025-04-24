@@ -1,5 +1,5 @@
 import { Column, Entity, BeforeInsert } from 'typeorm';
-import { hashSync } from 'bcrypt';
+import { hashSync } from 'bcryptjs';
 
 import { BaseEntity } from '@/common/entities/base.entity';
 
