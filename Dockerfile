@@ -1,21 +1,32 @@
-FROM node:23 AS builder
 
-RUN groupadd -r nonroot \
-    && useradd -m -r -g nonroot nonroot
-
-USER nonroot
-
-WORKDIR /banky
+FROM node:23-slim AS builder
 
 ENV NEW_RELIC_NO_CONFIG_FILE=true
 ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 ENV NEW_RELIC_LOG=stdout
 
+# Instala ferramentas para compilar bcrypt
+RUN apt-get update && apt-get install -y python3 make g++ \
+    && groupadd -r nonroot && useradd -m -r -g nonroot nonroot
+
+# Ativa corepack e pnpm ainda como root
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
+WORKDIR /banky
+
+# Copia arquivos e instala deps com permissões adequadas
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile 
+# --ignore-scripts
+
+# Copia o restante da app
 COPY . .
 
-RUN npm install --ignore-scripts \
-    && npm run build
+# Ajusta permissões e troca para nonroot
+RUN chown -R nonroot:nonroot /banky
+USER nonroot
 
-EXPOSE 80
+RUN pnpm run build
 
-CMD [ "node", "dist/src/main" ]
+EXPOSE 3333
+CMD ["node", "dist/src/main"]
