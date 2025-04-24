@@ -6,7 +6,7 @@ ENV NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true
 ENV NEW_RELIC_LOG=stdout
 
 # Instala ferramentas para compilar bcrypt
-RUN apt-get update && apt-get --no-install-recommends install -y python3 make g++ \
+RUN apt-get update \
     && groupadd -r nonroot && useradd -m -r -g nonroot nonroot \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*   \
     # Ativa corepack e pnpm ainda como root
