@@ -19,6 +19,7 @@ import { TransactionsService } from '../services/transactions.service';
 import { CreateTransactionDTO } from '../dto/create.dto';
 import { QueryTransactionsDTO } from '../dto/query.dto';
 import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
+import { CreditPaymentTransactionDTO } from '../dto/credit.dto';
 
 @Auth()
 @ApiTags('Transactions')
@@ -37,6 +38,12 @@ export class TransactionsController {
   ) {
     return await this._service.listAll({
       ...query,
+      owner: req.user.id,
+    });
+  }
+  @Get('uncategorized')
+  async uncategorized(@Req() req: AuthenticatedRequest) {
+    return await this._service.uncategorized({
       owner: req.user.id,
     });
   }
@@ -69,6 +76,7 @@ export class TransactionsController {
   async remove(@Param('id') id: string) {
     return this._service.destroy(id);
   }
+
   @Post('transfer')
   @HttpCode(HttpStatus.CREATED)
   async createTransfer(
@@ -76,5 +84,13 @@ export class TransactionsController {
     @Body() data: CreateTransferTransactionDTO,
   ) {
     return this._service.createTransfer({ ...data, owner: req.user.id });
+  }
+  @Post('credit-payment')
+  @HttpCode(HttpStatus.OK)
+  async creditPayment(
+    @Req() req: AuthenticatedRequest,
+    @Body() data: CreditPaymentTransactionDTO,
+  ) {
+    return this._service.payCreditcart({ ...data, owner: req.user.id });
   }
 }
