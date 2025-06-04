@@ -22,7 +22,7 @@ import { SharedModule } from './modules/shared.module';
       },
     ]),
     DatabaseModule,
-    RabbitModule,
+    // RabbitModule,
     CronModule,
     PassportModule,
     NestJwtModule,

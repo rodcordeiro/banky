@@ -12,6 +12,7 @@ import { TransactionsEntity } from '@/modules/transactions/entities/transactions
 import { CreateTransactionDTO } from '@/modules/transactions/dto/create.dto';
 import { QueryTransactionsDTO } from '../dto/query.dto';
 import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
+import { CreditPaymentTransactionDTO } from '../dto/credit.dto';
 
 @Injectable()
 export class TransactionsService extends BaseService {
@@ -79,36 +80,42 @@ export class TransactionsService extends BaseService {
     }
   }
 
-  async uncategorized() {
-    // const uncategorizedPositiveParams =
-    //   await this._parametersService.findOneByQueryBuilder(async qb => {
-    //     qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
-    //     qb.where('b.key in :key', {
-    //       key: 'unknown_positive_category',
-    //     });
-    //     return await qb.getOneOrFail();
-    //   });
-    // const uncategorizedNegativeParams =
-    //   await this._parametersService.findOneByQueryBuilder(async qb => {
-    //     qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
-    //     qb.where('b.key in :key', {
-    //       key: 'unknown_negative_category',
-    //     });
-    //     return await qb.getOneOrFail();
-    //   });
-    // return this._repository
-    //   .createQueryBuilder('a')
-    //   .where({
-    //     category: {
-    //       id: [
-    //         uncategorizedPositiveParams.value,
-    //         uncategorizedNegativeParams.value,
-    //       ],
-    //     },
-    //   })
-    //   .getMany();
-    return [];
+  async uncategorized({ owner }: { owner: string }) {
+    const uncategorizedPositiveParams =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key in (:key)', {
+          key: 'unknown_positive_category',
+        });
+        qb.andWhere('a.owner = :owner', {
+          owner,
+        });
+        return await qb.getOneOrFail();
+      });
+
+    const uncategorizedNegativeParams =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key in (:key)', {
+          key: 'unknown_negative_category',
+        });
+        qb.andWhere('a.owner = :owner', {
+          owner,
+        });
+        return await qb.getOneOrFail();
+      });
+
+    return this._repository
+      .createQueryBuilder('a')
+      .where('a.category in (:category)', {
+        category: [
+          uncategorizedPositiveParams.value,
+          uncategorizedNegativeParams.value,
+        ],
+      })
+      .getMany();
   }
+
   async createTransfer(data: CreateTransferTransactionDTO & { owner: string }) {
     const originAccount = await this._accountsService.findOneBy({
       id: data.origin,
@@ -121,6 +128,9 @@ export class TransactionsService extends BaseService {
       await this._parametersService.findOneByQueryBuilder(async qb => {
         qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
         qb.where('b.key = :key', { key: 'transference_origin_category' });
+        qb.andWhere('a.owner = :owner', {
+          owner: data.owner,
+        });
         return await qb.getOneOrFail();
       });
 
@@ -128,6 +138,9 @@ export class TransactionsService extends BaseService {
       await this._parametersService.findOneByQueryBuilder(async qb => {
         qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
         qb.where('b.key = :key', { key: 'transference_destiny_category' });
+        qb.andWhere('a.owner = :owner', {
+          owner: data.owner,
+        });
         return await qb.getOneOrFail();
       });
 
@@ -160,6 +173,42 @@ export class TransactionsService extends BaseService {
     });
 
     await this._repository.save([originTransaction, destinyTransaction]);
+    await this._accountsService.update(originAccount.id, {
+      ammount: originAccount.ammount - data.value,
+    });
+    await this._accountsService.update(destinyAccount.id, {
+      ammount: destinyAccount.ammount + data.value,
+    });
+  }
+  async payCreditcart(data: CreditPaymentTransactionDTO & { owner: string }) {
+    const originAccount = await this._accountsService.findOneBy({
+      id: data.origin,
+    });
+    const destinyAccount = await this._accountsService.findOneBy({
+      id: data.destiny,
+    });
+
+    const originCategoryParam =
+      await this._parametersService.findOneByQueryBuilder(async qb => {
+        qb.innerJoin('bk_tb_parameters', 'b', 'a.parameter = b.id');
+        qb.where('b.key = :key', { key: 'credit_payment_category' });
+        qb.andWhere('a.owner = :owner', {
+          owner: data.owner,
+        });
+        return await qb.getOneOrFail();
+      });
+
+    const originTransaction = this._repository.create({
+      description: 'Pagamento cartão de crédito',
+      value: data.value,
+      owner: data.owner,
+      category: originCategoryParam.value,
+      account: originAccount.id,
+      date: data.date || new Date().toISOString(),
+    });
+
+    await this._repository.save([originTransaction]);
+
     await this._accountsService.update(originAccount.id, {
       ammount: originAccount.ammount - data.value,
     });
