@@ -1,6 +1,6 @@
 {
   "name": "@rodcordeiro/banky-api",
-  "version": "1.2.7",
+  "version": "1.3.0",
   "description": "",
   "author": "Rodrigo Cordeiro (http://rodcordeiro.com.br) <rodrigomendoncca@gmail.com>",
   "private": true,
@@ -24,8 +24,8 @@
   },
   "dependencies": {
     "@fastify/compress": "^7.0.3",
-    "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^13.0.1",
+    "@fastify/csrf-protection": "^7.1.0",
     "@fastify/multipart": "^9.0.3",
     "@fastify/oauth2": "^8.1.2",
     "@fastify/secure-session": "^8.2.0",
@@ -41,7 +41,7 @@
     "@nestjs/platform-express": "^10.4.17",
     "@nestjs/platform-fastify": "^10.4.17",
     "@nestjs/platform-socket.io": "^10.4.17",
-    "@nestjs/schedule": "^4.1.2",
+    "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^7.4.2",
     "@nestjs/terminus": "^10.3.0",
     "@nestjs/throttler": "^6.4.0",
