@@ -50,7 +50,7 @@ export class CategoriesController {
   async update(
     @Req() req: AuthenticatedRequest,
     @Param('id') id: string,
-    @Body() data: CreateCategoryDTO,
+    @Body() data: Partial<CreateCategoryDTO>,
   ) {
     return this._service.update(id, { ...data, owner: req.user.id });
   }
