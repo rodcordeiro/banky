@@ -23,7 +23,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@fastify/compress": "^7.0.3",
+    "@fastify/compress": "^8.1.0",
     "@fastify/csrf-protection": "^6.4.1",
     "@fastify/helmet": "^11.1.1",
     "@fastify/multipart": "^9.0.3",
