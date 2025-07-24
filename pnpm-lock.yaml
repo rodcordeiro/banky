@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@fastify/compress':
-        specifier: ^7.0.3
-        version: 7.0.3
+        specifier: ^8.1.0
+        version: 8.1.0
       '@fastify/csrf-protection':
         specifier: ^6.4.1
         version: 6.4.1
@@ -106,7 +106,7 @@ importers:
         version: 3.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/swagger@7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2))(zod@3.25.76)
       newrelic:
         specifier: latest
-        version: 12.25.0
+        version: 13.0.0
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -434,6 +434,9 @@ packages:
     resolution: {integrity: sha512-OIHZrb2ImZ7XG85HXOONLcJWGosv7sIvM2ifAPQVhg9Lv7qdmMBNVaai4QTdyuaqbKM5eO6sLSQOYI7wEQeCJQ==}
     engines: {node: '>=14'}
 
+  '@fastify/accept-negotiator@2.0.1':
+    resolution: {integrity: sha512-/c/TW2bO/v9JeEgoD/g1G5GxGeCF1Hafdf79WPmUlgYiBXummY0oX3VVq4yFkKKVBKDNlaDUYoab7g38RpPqCQ==}
+
   '@fastify/ajv-compiler@3.6.0':
     resolution: {integrity: sha512-LwdXQJjmMD+GwLOkP7TVC68qa+pSSogeWWmznRJ/coyTcfe9qA05AHFSe1eZFwK6q+xVRpChnvFUkf1iYaSZsQ==}
 
@@ -444,8 +447,8 @@ packages:
   '@fastify/busboy@3.1.1':
     resolution: {integrity: sha512-5DGmA8FTdB2XbDeEwc/5ZXBl6UbBAyBOOLlPuBnZ/N1SwdH9Ii+cOX3tBROlDgcTXxjOYnLMVoKk9+FXAw0CJw==}
 
-  '@fastify/compress@7.0.3':
-    resolution: {integrity: sha512-xa9fo5/DgK1s0bkS6xrYgNn8HmofO5tJvbCDk8QuXshSgLd2cFZANv1ox/Qv7zswS7JroHwTlCVv/XGTVO98tg==}
+  '@fastify/compress@8.1.0':
+    resolution: {integrity: sha512-wX3I5u/SYQXxbqjG7CysvzeaCe4Sv8y13MnvnaGTpqfKkJbTLpwvdIDgqrwp/+UGvXOW7OLDLoTAQCDMJJRjDQ==}
 
   '@fastify/cookie@11.0.2':
     resolution: {integrity: sha512-GWdwdGlgJxyvNv+QcKiGNevSspMQXncjMZ1J8IvuDQk0jvkzgWWZFNC2En3s+nHndZBGV8IbLwOI/sxCZw/mzA==}
@@ -924,9 +927,9 @@ packages:
     resolution: {integrity: sha512-VgoXZp3zqP1167XvrA772EHDFUNuYGQh14whFq1d2sE6dC3ZL46tXI9JY0yZdAAeyCERi7mhq7CPx9BYiTOl/A==}
     engines: {node: '>=16.9.1'}
 
-  '@newrelic/native-metrics@11.1.0':
-    resolution: {integrity: sha512-V+FRgRgv6R8LAnVsix8d1bL5SMmBONURaT/6F//rOgycvU7PfPoVEocacpSRzPFxMI27e46iAf3W5fGosbQ8yQ==}
-    engines: {node: '>=18', npm: '>=6'}
+  '@newrelic/native-metrics@12.0.0':
+    resolution: {integrity: sha512-l0MTkuazDMaEDWJk4ufHVgco4ssWhk/uSUYTn33dFOHAqpHLyxZHxxzKJb4vyZkhRy11UaKNhmNiAiXH557SJQ==}
+    engines: {node: '>=20', npm: '>=6'}
 
   '@newrelic/security-agent@2.4.2':
     resolution: {integrity: sha512-gfqcM1hO/FF8oEfiyByN+XerctJZ9w3h2EtL6xCU6ccq3YWi6wFtJ6/AaA/6LTN3JEvT9sLf9Vd9MVHWIYj7lQ==}
@@ -3171,9 +3174,9 @@ packages:
       '@nestjs/swagger':
         optional: true
 
-  newrelic@12.25.0:
-    resolution: {integrity: sha512-WqYv7EvOcOQhvnMbPvjhZzcihO36qj2iNOO6jTfaixku+f558KFawXdNjw3Gl3kL1ycrTfO7N0ywrIZ1ggKGbA==}
-    engines: {node: '>=18', npm: '>=6.0.0'}
+  newrelic@13.0.0:
+    resolution: {integrity: sha512-8V90FJLfC/8J7O4fob0e4cTjR3R4cdQkXrilP6idvdvPas6Zv/pWxcfy0xvtdxpYSxHzKPZSutPsynMlq0D9sA==}
+    engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
   node-abi@3.75.0:
@@ -4583,6 +4586,8 @@ snapshots:
 
   '@fastify/accept-negotiator@1.1.0': {}
 
+  '@fastify/accept-negotiator@2.0.1': {}
+
   '@fastify/ajv-compiler@3.6.0':
     dependencies:
       ajv: 8.17.1
@@ -4595,10 +4600,10 @@ snapshots:
 
   '@fastify/busboy@3.1.1': {}
 
-  '@fastify/compress@7.0.3':
+  '@fastify/compress@8.1.0':
     dependencies:
-      '@fastify/accept-negotiator': 1.1.0
-      fastify-plugin: 4.5.1
+      '@fastify/accept-negotiator': 2.0.1
+      fastify-plugin: 5.0.1
       mime-db: 1.54.0
       minipass: 7.1.2
       peek-stream: 1.1.3
@@ -5200,7 +5205,7 @@ snapshots:
       prebuildify: 6.0.1
     optional: true
 
-  '@newrelic/native-metrics@11.1.0':
+  '@newrelic/native-metrics@12.0.0':
     dependencies:
       nan: 2.23.0
       node-gyp-build: 4.8.4
@@ -7834,7 +7839,7 @@ snapshots:
       '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/swagger': 7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)
 
-  newrelic@12.25.0:
+  newrelic@13.0.0:
     dependencies:
       '@grpc/grpc-js': 1.13.4
       '@grpc/proto-loader': 0.7.15
@@ -7858,7 +7863,7 @@ snapshots:
       winston-transport: 4.9.0
     optionalDependencies:
       '@newrelic/fn-inspect': 4.4.0
-      '@newrelic/native-metrics': 11.1.0
+      '@newrelic/native-metrics': 12.0.0
       '@prisma/prisma-fmt-wasm': 4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085
     transitivePeerDependencies:
       - bufferutil
