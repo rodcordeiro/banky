@@ -106,7 +106,7 @@ importers:
         version: 3.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/swagger@7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2))(zod@3.25.76)
       newrelic:
         specifier: latest
-        version: 12.25.0
+        version: 13.0.0
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -176,10 +176,10 @@ importers:
         version: 8.57.1
       eslint-config-prettier:
         specifier: ^9.1.0
-        version: 9.1.0(eslint@8.57.1)
+        version: 9.1.2(eslint@8.57.1)
       eslint-plugin-prettier:
         specifier: ^5.5.1
-        version: 5.5.1(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
+        version: 5.5.1(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2)
       husky:
         specifier: ^9.1.7
         version: 9.1.7
@@ -924,9 +924,9 @@ packages:
     resolution: {integrity: sha512-VgoXZp3zqP1167XvrA772EHDFUNuYGQh14whFq1d2sE6dC3ZL46tXI9JY0yZdAAeyCERi7mhq7CPx9BYiTOl/A==}
     engines: {node: '>=16.9.1'}
 
-  '@newrelic/native-metrics@11.1.0':
-    resolution: {integrity: sha512-V+FRgRgv6R8LAnVsix8d1bL5SMmBONURaT/6F//rOgycvU7PfPoVEocacpSRzPFxMI27e46iAf3W5fGosbQ8yQ==}
-    engines: {node: '>=18', npm: '>=6'}
+  '@newrelic/native-metrics@12.0.0':
+    resolution: {integrity: sha512-l0MTkuazDMaEDWJk4ufHVgco4ssWhk/uSUYTn33dFOHAqpHLyxZHxxzKJb4vyZkhRy11UaKNhmNiAiXH557SJQ==}
+    engines: {node: '>=20', npm: '>=6'}
 
   '@newrelic/security-agent@2.4.2':
     resolution: {integrity: sha512-gfqcM1hO/FF8oEfiyByN+XerctJZ9w3h2EtL6xCU6ccq3YWi6wFtJ6/AaA/6LTN3JEvT9sLf9Vd9MVHWIYj7lQ==}
@@ -2092,8 +2092,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-config-prettier@9.1.0:
-    resolution: {integrity: sha512-NSWl5BFQWEPi1j4TjVNItzYV7dZXZ+wP6I6ZhrBGpChQhZRUaElihE9uRRkcbRnNb76UMKDF3r+WTmNcGPKsqw==}
+  eslint-config-prettier@9.1.2:
+    resolution: {integrity: sha512-iI1f+D2ViGn+uvv5HuHVUamg8ll4tN+JRHGc6IJi4TP9Kl976C57fzPXgseXNs8v0iA8aSJpHsTWjDb9QJamGQ==}
     hasBin: true
     peerDependencies:
       eslint: '>=7.0.0'
@@ -3171,9 +3171,9 @@ packages:
       '@nestjs/swagger':
         optional: true
 
-  newrelic@12.25.0:
-    resolution: {integrity: sha512-WqYv7EvOcOQhvnMbPvjhZzcihO36qj2iNOO6jTfaixku+f558KFawXdNjw3Gl3kL1ycrTfO7N0ywrIZ1ggKGbA==}
-    engines: {node: '>=18', npm: '>=6.0.0'}
+  newrelic@13.0.0:
+    resolution: {integrity: sha512-8V90FJLfC/8J7O4fob0e4cTjR3R4cdQkXrilP6idvdvPas6Zv/pWxcfy0xvtdxpYSxHzKPZSutPsynMlq0D9sA==}
+    engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
   node-abi@3.75.0:
@@ -5200,7 +5200,7 @@ snapshots:
       prebuildify: 6.0.1
     optional: true
 
-  '@newrelic/native-metrics@11.1.0':
+  '@newrelic/native-metrics@12.0.0':
     dependencies:
       nan: 2.23.0
       node-gyp-build: 4.8.4
@@ -6468,11 +6468,11 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-config-prettier@9.1.0(eslint@8.57.1):
+  eslint-config-prettier@9.1.2(eslint@8.57.1):
     dependencies:
       eslint: 8.57.1
 
-  eslint-plugin-prettier@5.5.1(@types/eslint@9.6.1)(eslint-config-prettier@9.1.0(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2):
+  eslint-plugin-prettier@5.5.1(@types/eslint@9.6.1)(eslint-config-prettier@9.1.2(eslint@8.57.1))(eslint@8.57.1)(prettier@3.6.2):
     dependencies:
       eslint: 8.57.1
       prettier: 3.6.2
@@ -6480,7 +6480,7 @@ snapshots:
       synckit: 0.11.8
     optionalDependencies:
       '@types/eslint': 9.6.1
-      eslint-config-prettier: 9.1.0(eslint@8.57.1)
+      eslint-config-prettier: 9.1.2(eslint@8.57.1)
 
   eslint-scope@5.1.1:
     dependencies:
@@ -7834,7 +7834,7 @@ snapshots:
       '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/swagger': 7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)
 
-  newrelic@12.25.0:
+  newrelic@13.0.0:
     dependencies:
       '@grpc/grpc-js': 1.13.4
       '@grpc/proto-loader': 0.7.15
@@ -7858,7 +7858,7 @@ snapshots:
       winston-transport: 4.9.0
     optionalDependencies:
       '@newrelic/fn-inspect': 4.4.0
-      '@newrelic/native-metrics': 11.1.0
+      '@newrelic/native-metrics': 12.0.0
       '@prisma/prisma-fmt-wasm': 4.17.0-16.27eb2449f178cd9fe1a4b892d732cc4795f75085
     transitivePeerDependencies:
       - bufferutil
