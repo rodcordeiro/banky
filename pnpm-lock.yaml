@@ -43,13 +43,13 @@ importers:
         version: 3.3.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@nestjs/core':
         specifier: ^10.4.19
-        version: 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/jwt':
         specifier: ^11.0.0
         version: 11.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))
       '@nestjs/microservices':
         specifier: ^10.4.19
-        version: 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/websockets@10.4.17)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+        version: 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/passport':
         specifier: ^10.0.3
         version: 10.0.3(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(passport@0.7.0)
@@ -60,8 +60,8 @@ importers:
         specifier: ^10.4.19
         version: 10.4.19(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)
       '@nestjs/platform-socket.io':
-        specifier: ^10.4.19
-        version: 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/websockets@10.4.17)(rxjs@7.8.2)
+        specifier: ^11.1.8
+        version: 11.1.8(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@nestjs/schedule':
         specifier: ^6.0.0
         version: 6.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)
@@ -106,7 +106,7 @@ importers:
         version: 3.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/swagger@7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2))(zod@3.25.76)
       newrelic:
         specifier: latest
-        version: 13.3.2
+        version: 13.5.0
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -235,12 +235,11 @@ packages:
     resolution: {integrity: sha512-I5wviiIqiFwar9Pdk30Lujk8FczEEc18i22A5c6Z9lbmhPQdTroDnEQdsfXjy404wPe8H62s0I15o4pmMGfTYQ==}
     engines: {node: ^18.13.0 || >=20.9.0, npm: ^6.11.0 || ^7.5.6 || >=8.0.0, yarn: '>= 1.13.0'}
 
-  '@apm-js-collab/code-transformer@0.7.2':
-    resolution: {integrity: sha512-waZeIZFmPCf5/nD3O1gMHlHEPMRwgnaTfVTaDbkclg5OByy8IowR/dUDij5tC77VYH/ieXIujSx9vPFvhx35Fg==}
+  '@apm-js-collab/code-transformer@0.8.2':
+    resolution: {integrity: sha512-YRjJjNq5KFSjDUoqu5pFUWrrsvGOxl6c3bu+uMFc9HNNptZ2rNU/TI2nLw4jnhQNtka972Ee2m3uqbvDQtPeCA==}
 
-  '@apm-js-collab/tracing-hooks@0.1.1':
-    resolution: {integrity: sha512-4s8fUde6La3n09m10Ol3zQXUaiDZyuzFKwvdEgbZVKT/XXqycFbqaKfut+UWOAs/yyiocK87MAC9C2JV51CpKg==}
-    engines: {node: '>=20'}
+  '@apm-js-collab/tracing-hooks@0.3.1':
+    resolution: {integrity: sha512-Vu1CbmPURlN5fTboVuKMoJjbO5qcq9fA5YXpskx3dXe/zTBvjODFoerw+69rVBlRLrJpwPqSDqEuJDEKIrTldw==}
 
   '@babel/code-frame@7.27.1':
     resolution: {integrity: sha512-cjQ7ZlQ0Mv3b47hABuTevyTuYN4i+loJKGeV9flcCgIK37cCXRh+L1bd3iBHlynerhQ7BhCkn2BPbQUL+rGqFg==}
@@ -803,11 +802,11 @@ packages:
       '@fastify/view':
         optional: true
 
-  '@nestjs/platform-socket.io@10.4.19':
-    resolution: {integrity: sha512-Pfz9dBcXaoUFdVpA/I96NoOTiTQ7eYfDNhQ2sZdQzne3oISEvts5G2SWyQNouoyjqkUPt6X5r/CQ++M4AzSlEQ==}
+  '@nestjs/platform-socket.io@11.1.8':
+    resolution: {integrity: sha512-nMUvwcdztso8BjN9czRl4sm0Ewc5xrCcgLvy+QPt6VAnTdu06KcZqtA6Cl3MKxViSQsQ8NBN5foKvZehNt/tug==}
     peerDependencies:
-      '@nestjs/common': ^10.0.0
-      '@nestjs/websockets': ^10.0.0
+      '@nestjs/common': ^11.0.0
+      '@nestjs/websockets': ^11.0.0
       rxjs: ^7.1.0
 
   '@nestjs/schedule@6.0.0':
@@ -914,18 +913,6 @@ packages:
       reflect-metadata: ^0.1.13 || ^0.2.0
       rxjs: ^7.2.0
       typeorm: ^0.3.0
-
-  '@nestjs/websockets@10.4.17':
-    resolution: {integrity: sha512-p+C5nxGguSNqXHUyiyuG7308dcgi5toRAf5WphVCchyiO8Wq5Bu/+v4oJ1tQxd54E9azYGmD7anBbaykI4JSow==}
-    peerDependencies:
-      '@nestjs/common': ^10.0.0
-      '@nestjs/core': ^10.0.0
-      '@nestjs/platform-socket.io': ^10.0.0
-      reflect-metadata: ^0.1.12 || ^0.2.0
-      rxjs: ^7.1.0
-    peerDependenciesMeta:
-      '@nestjs/platform-socket.io':
-        optional: true
 
   '@newrelic/fn-inspect@4.4.0':
     resolution: {integrity: sha512-VgoXZp3zqP1167XvrA772EHDFUNuYGQh14whFq1d2sE6dC3ZL46tXI9JY0yZdAAeyCERi7mhq7CPx9BYiTOl/A==}
@@ -3197,8 +3184,8 @@ packages:
       '@nestjs/swagger':
         optional: true
 
-  newrelic@13.3.2:
-    resolution: {integrity: sha512-eiQ3YalkXrQJIYGStX99atqR2+GvG2/rQUlsXc+KvsQttfY8qN94AiUBA6Pfsx05qNbcT3z2FozLBwkclb32+w==}
+  newrelic@13.5.0:
+    resolution: {integrity: sha512-BSRQy6RAbhufvVh34YgjnnbDV0xfjAvxaWaAxn4BopY6Kr4ypUXI0Nk6zcQFiQjrTYuM0TdSZyQzO1iRgN/4YQ==}
     engines: {node: '>=20', npm: '>=6.0.0'}
     hasBin: true
 
@@ -3246,10 +3233,6 @@ packages:
   object-assign@4.1.1:
     resolution: {integrity: sha512-rJgTQnkUnH1sFw8yT6VSU3zD3sWmu6sZhIseY8VX+GRu3P6F7Fu+JNDoXfklElbLJSnc3FUQHVe4cU5hj+BcUg==}
     engines: {node: '>=0.10.0'}
-
-  object-hash@3.0.0:
-    resolution: {integrity: sha512-RSn9F68PjH9HqtltsSnqYC1XXoWe9Bju5+213R98cNGttag9q9yAOTzdbsqvIa7aNm5WffBZFpWYr2aWrklWAw==}
-    engines: {node: '>= 6'}
 
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
@@ -4386,11 +4369,11 @@ snapshots:
     transitivePeerDependencies:
       - chokidar
 
-  '@apm-js-collab/code-transformer@0.7.2': {}
+  '@apm-js-collab/code-transformer@0.8.2': {}
 
-  '@apm-js-collab/tracing-hooks@0.1.1':
+  '@apm-js-collab/tracing-hooks@0.3.1':
     dependencies:
-      '@apm-js-collab/code-transformer': 0.7.2
+      '@apm-js-collab/code-transformer': 0.8.2
       debug: 4.4.3
       module-details-from-path: 1.0.4
     transitivePeerDependencies:
@@ -5049,7 +5032,7 @@ snapshots:
       lodash: 4.17.21
       rxjs: 7.8.2
 
-  '@nestjs/core@10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/core@10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nuxtjs/opencollective': 0.3.2
@@ -5061,9 +5044,8 @@ snapshots:
       tslib: 2.8.1
       uid: 2.0.2
     optionalDependencies:
-      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/websockets@10.4.17)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)
-      '@nestjs/websockets': 10.4.17(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/platform-socket.io@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
     transitivePeerDependencies:
       - encoding
 
@@ -5078,17 +5060,16 @@ snapshots:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
 
-  '@nestjs/microservices@10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/websockets@10.4.17)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
+  '@nestjs/microservices@10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       iterare: 1.2.1
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       tslib: 2.8.1
     optionalDependencies:
       '@grpc/grpc-js': 1.13.4
-      '@nestjs/websockets': 10.4.17(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/platform-socket.io@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       amqp-connection-manager: 4.1.14(amqplib@0.10.8)
       amqplib: 0.10.8
 
@@ -5100,7 +5081,7 @@ snapshots:
   '@nestjs/platform-express@10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       body-parser: 1.20.3
       cors: 2.8.5
       express: 4.21.2
@@ -5115,7 +5096,7 @@ snapshots:
       '@fastify/formbody': 7.4.0
       '@fastify/middie': 8.3.3
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       fastify: 4.28.1
       light-my-request: 6.3.0
       path-to-regexp: 3.3.0
@@ -5123,10 +5104,9 @@ snapshots:
     optionalDependencies:
       '@fastify/static': 7.0.4
 
-  '@nestjs/platform-socket.io@10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/websockets@10.4.17)(rxjs@7.8.2)':
+  '@nestjs/platform-socket.io@11.1.8(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/websockets': 10.4.17(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/platform-socket.io@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       rxjs: 7.8.2
       socket.io: 4.8.1
       tslib: 2.8.1
@@ -5138,7 +5118,7 @@ snapshots:
   '@nestjs/schedule@6.0.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       cron: 4.3.0
 
   '@nestjs/schematics@10.2.3(chokidar@3.6.0)(typescript@5.7.2)':
@@ -5167,7 +5147,7 @@ snapshots:
     dependencies:
       '@microsoft/tsdoc': 0.15.1
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/mapped-types': 2.0.5(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(reflect-metadata@0.2.2)
       js-yaml: 4.1.0
       lodash: 4.17.21
@@ -5180,7 +5160,7 @@ snapshots:
   '@nestjs/terminus@11.0.0(@grpc/grpc-js@1.13.4)(@grpc/proto-loader@0.7.15)(@nestjs/axios@3.1.3(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.12.0)(rxjs@7.8.2))(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/microservices@10.4.19)(@nestjs/typeorm@10.0.2(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3))))(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3)))':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       boxen: 5.1.2
       check-disk-space: 3.4.0
       reflect-metadata: 0.2.2
@@ -5189,45 +5169,33 @@ snapshots:
       '@grpc/grpc-js': 1.13.4
       '@grpc/proto-loader': 0.7.15
       '@nestjs/axios': 3.1.3(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(axios@1.12.0)(rxjs@7.8.2)
-      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/websockets@10.4.17)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/typeorm': 10.0.2(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3)))
       typeorm: 0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3))
 
   '@nestjs/testing@10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       tslib: 2.8.1
     optionalDependencies:
-      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/websockets@10.4.17)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/microservices': 10.4.19(@grpc/grpc-js@1.13.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(amqp-connection-manager@4.1.14(amqplib@0.10.8))(amqplib@0.10.8)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/platform-express': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)
 
   '@nestjs/throttler@6.4.0(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
 
   '@nestjs/typeorm@10.0.2(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3)))':
     dependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       reflect-metadata: 0.2.2
       rxjs: 7.8.2
       typeorm: 0.3.25(reflect-metadata@0.2.2)(ts-node@10.9.2(@types/node@20.19.9)(typescript@5.8.3))
       uuid: 9.0.1
-
-  '@nestjs/websockets@10.4.17(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(@nestjs/platform-socket.io@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)':
-    dependencies:
-      '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      iterare: 1.2.1
-      object-hash: 3.0.0
-      reflect-metadata: 0.2.2
-      rxjs: 7.8.2
-      tslib: 2.8.1
-    optionalDependencies:
-      '@nestjs/platform-socket.io': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/websockets@10.4.17)(rxjs@7.8.2)
 
   '@newrelic/fn-inspect@4.4.0':
     dependencies:
@@ -5441,7 +5409,7 @@ snapshots:
 
   '@tokenizer/inflate@0.2.7':
     dependencies:
-      debug: 4.4.1
+      debug: 4.4.3
       fflate: 0.8.2
       token-types: 6.0.3
     transitivePeerDependencies:
@@ -7882,12 +7850,12 @@ snapshots:
       zod: 3.25.76
     optionalDependencies:
       '@nestjs/common': 10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(@nestjs/websockets@10.4.17)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      '@nestjs/core': 10.4.19(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/microservices@10.4.19)(@nestjs/platform-express@10.4.19)(reflect-metadata@0.2.2)(rxjs@7.8.2)
       '@nestjs/swagger': 7.4.2(@fastify/static@7.0.4)(@nestjs/common@10.4.19(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.19)(reflect-metadata@0.2.2)
 
-  newrelic@13.3.2:
+  newrelic@13.5.0:
     dependencies:
-      '@apm-js-collab/tracing-hooks': 0.1.1
+      '@apm-js-collab/tracing-hooks': 0.3.1
       '@grpc/grpc-js': 1.13.4
       '@grpc/proto-loader': 0.7.15
       '@newrelic/security-agent': 2.4.2
@@ -7954,8 +7922,6 @@ snapshots:
       path-key: 3.1.1
 
   object-assign@4.1.1: {}
-
-  object-hash@3.0.0: {}
 
   object-inspect@1.13.4: {}
 
