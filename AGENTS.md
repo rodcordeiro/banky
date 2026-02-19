@@ -1,9 +1,8 @@
-# AGENTS.md
+﻿# AGENTS.md
 
 ## Escopo
 Este guia vale apenas para `banky_api` (API principal).
-
-Antes de editar, confirme se a tarefa realmente pertence a este projeto e não ao `banky-nlp` ou `banky_app`.
+Antes de editar, confirme se a tarefa pertence a este projeto e nao ao `banky-nlp` ou `banky_app`.
 
 ## Stack e Estrutura
 - Framework: NestJS + Fastify.
@@ -28,7 +27,7 @@ Execute dentro de `banky_api/`.
 
 ## Integracoes e Observacoes
 - Existe integracao RabbitMQ no codigo, mas `RabbitModule` esta comentado em `src/app.module.ts`.
-- Ao alterar contratos de API (rotas/DTO/schema), sincronize consumidores impactados.
+- Ao alterar contrato de API (rota/DTO/schema), sincronizar consumidores impactados.
 
 ## Diretrizes de Mudanca
 - Nao editar `dist/`, `node_modules/` ou arquivos gerados.
@@ -42,4 +41,4 @@ Execute dentro de `banky_api/`.
 4. Comitar seguindo o padrao de commit adotado no repositorio.
 
 ## Referencia Cruzada
-Para regras gerais do workspace, seguir tambem `../AGENTS.md`.
+Seguir tambem as regras gerais em `../AGENTS.md`.
