@@ -4,13 +4,13 @@ import { BaseEntity } from '@/common/entities/base.entity';
 import { UsersEntity } from '@/modules/users/entities/users.entity';
 
 export enum CategoryClassification {
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Essencial = 'essencial',
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Important = 'importante',
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   Optional = 'opcional',
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   NotControllable = 'nao_controlavel',
 }
 

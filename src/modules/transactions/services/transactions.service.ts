@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotImplementedException } from '@nestjs/common';
-import { FindManyOptions, Repository } from 'typeorm';
+import { FindManyOptions, MoreThan, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 
 import { BaseService } from '@/common/services/base.service';
@@ -29,6 +29,7 @@ export class TransactionsService extends BaseService {
   }
   async listAll(query: QueryTransactionsDTO & { owner: string }) {
     console.log(query);
+
     return this._paginateService.paginate(
       this._repository,
       {
@@ -56,6 +57,9 @@ export class TransactionsService extends BaseService {
         where: {
           owner: { id: query.owner },
           category: query.category ? { id: query.category } : undefined,
+          updatedAt: query.lastUpdated
+            ? MoreThan(new Date(query.lastUpdated))
+            : undefined,
         },
       } as unknown as FindManyOptions<TransactionsEntity>,
     );
