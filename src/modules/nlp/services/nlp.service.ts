@@ -1,4 +1,7 @@
-import { TrainingSample } from '@/common/classifiers/base.classifier';
+import {
+  BaseClassifier,
+  TrainingSample,
+} from '@/common/classifiers/base.classifier';
 import { PaginationService } from '@/core/paginate/paginate.service';
 import { AccountsClassifier } from '@/modules/nlp/classifiers/account.classifier';
 import { CategoryClassifier } from '@/modules/nlp/classifiers/category.classifier';
@@ -21,6 +24,8 @@ import {
   Repository,
   MoreThan,
 } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { SearchFeedbackDto } from '../dtos/search.dto';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackStatus } from '../interfaces';
@@ -170,6 +175,24 @@ export class NlpService {
       } as unknown as FindManyOptions<FeedbackEntity>,
     );
   }
+
+  async getClassifierModels() {
+    const classifiers: Record<string, BaseClassifier> = {
+      intent: this.intentProcessor,
+      account: this.accountProcessor,
+      category: this.categoriesProcessor,
+      value: this.valueProcessor,
+    };
+
+    const entries = await Promise.all(
+      Object.entries(classifiers).map(async ([name, classifier]) => {
+        return [name, await this.readClassifierModel(classifier)];
+      }),
+    );
+
+    return Object.fromEntries(entries);
+  }
+
   async Review(payload: Partial<FeedbackEntity>) {
     const existing = await this._repository.findOne({
       where: { id: payload.id },
@@ -309,6 +332,33 @@ export class NlpService {
     return {
       text: feedback.originalText,
       label: value.toString(),
+    };
+  }
+
+  private async readClassifierModel(classifier: BaseClassifier) {
+    const modelPath = classifier.getModelPath();
+
+    if (!fs.existsSync(modelPath)) {
+      return {
+        exists: false,
+        file: path.basename(modelPath),
+        updatedAt: null,
+        size: 0,
+        model: null,
+      };
+    }
+
+    const [stats, content] = await Promise.all([
+      fs.promises.stat(modelPath),
+      fs.promises.readFile(modelPath, 'utf8'),
+    ]);
+
+    return {
+      exists: true,
+      file: path.basename(modelPath),
+      updatedAt: stats.mtime.toISOString(),
+      size: stats.size,
+      model: JSON.parse(content),
     };
   }
 }

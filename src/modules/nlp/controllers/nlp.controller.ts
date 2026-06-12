@@ -27,6 +27,11 @@ export class NlpController {
     return this._service.parse(payload.text, req.user.id);
   }
 
+  @Get('/models')
+  async models() {
+    return await this._service.getClassifierModels();
+  }
+
   @Get()
   async index(
     @Req() req: AuthenticatedRequest,
