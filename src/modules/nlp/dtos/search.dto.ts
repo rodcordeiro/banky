@@ -17,4 +17,9 @@ export class SearchFeedbackDto extends PaginateDto {
     type: 'string',
   })
   id?: string;
+
+  @ApiPropertyOptional({
+    type: 'string,',
+  })
+  lastUpdated?: Date;
 }

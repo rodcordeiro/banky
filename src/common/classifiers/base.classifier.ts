@@ -1,6 +1,6 @@
 import { BayesClassifier, PorterStemmerPt } from 'natural';
-import fs from 'fs';
-import path from 'path';
+import * as fs from 'fs';
+import * as path from 'path';
 
 export interface TrainingSample {
   text: string;
@@ -24,9 +24,7 @@ export class BaseClassifier {
 
   async init(): Promise<BayesClassifier> {
     if (this.classifier) return this.classifier;
-
     const modelPath = this.getModelPath();
-
     if (fs.existsSync(modelPath)) {
       return new Promise((resolve, reject) => {
         BayesClassifier.load(modelPath, PorterStemmerPt, (err, classifier) => {

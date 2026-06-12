@@ -1,6 +1,5 @@
+import { TrainingSample } from '@/common/classifiers/base.classifier';
 import { PaginationService } from '@/core/paginate/paginate.service';
-import { AccountsEntity } from '@/modules/accounts/entities/accounts.entity';
-import { CategoriesEntity } from '@/modules/categories/entities/categories.entity';
 import { AccountsClassifier } from '@/modules/nlp/classifiers/account.classifier';
 import { CategoryClassifier } from '@/modules/nlp/classifiers/category.classifier';
 import {
@@ -15,9 +14,15 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { pt } from 'chrono-node';
-import { FindManyOptions, FindOptionsWhere, Repository } from 'typeorm';
-import { FeedbackEntity } from '../entities/feedback.entity';
+import {
+  FindManyOptions,
+  FindOptionsWhere,
+  Not,
+  Repository,
+  MoreThan,
+} from 'typeorm';
 import { SearchFeedbackDto } from '../dtos/search.dto';
+import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackStatus } from '../interfaces';
 
 @Injectable()
@@ -30,10 +35,7 @@ export class NlpService {
   constructor(
     @Inject('FEEDBACK_REPOSITORY')
     private readonly _repository: Repository<FeedbackEntity>,
-    @Inject('ACCOUNT_REPOSITORY')
-    private readonly _accountRepository: Repository<AccountsEntity>,
-    @Inject('CATEGORY_REPOSITORY')
-    private readonly _categoryRepository: Repository<CategoriesEntity>,
+
     private readonly _paginateService: PaginationService,
   ) {
     this.intentProcessor = new IntentClassifier();
@@ -142,6 +144,11 @@ export class NlpService {
 
   async findAll(owner: string, queries: SearchFeedbackDto) {
     const { page, limit, ...filters } = queries;
+
+    if (filters.lastUpdated) {
+      filters['updatedAt'] = MoreThan(new Date(filters.lastUpdated));
+    }
+
     return this._paginateService.paginate(
       this._repository,
       {
@@ -163,6 +170,10 @@ export class NlpService {
 
     if (!existing) {
       throw new NotFoundException('Feedback nao encontrado para aprovacao.');
+    }
+
+    if (!Object.values(FeedbackStatus).includes(payload.status)) {
+      throw new BadRequestException('Status inválido');
     }
 
     if (
@@ -189,12 +200,19 @@ export class NlpService {
     return await this._repository.save(feedback);
   }
 
-  async trainClassifiers(fullTraining?: boolean, owner?: string) {
-    const feeds = await this.getUntrainedFeedback(fullTraining, owner);
+  async trainClassifiers(fullTraining: boolean = false, owner: string) {
+    const filter: FindOptionsWhere<FeedbackEntity> = { owner };
+    if (!fullTraining) {
+      filter.status = Not(FeedbackStatus.pending);
+      filter.usedForTraining = false;
+    }
+    const feeds = await this._repository.find({
+      where: filter,
+    });
 
     if (!feeds.length) return;
 
-    const intents: IntentTrainingSample[] = [];
+    const intents: TrainingSample[] = [];
     const categories: TrainingSample[] = [];
     const accounts: TrainingSample[] = [];
     const origin: TrainingSample[] = [];
@@ -202,29 +220,56 @@ export class NlpService {
     const values: TrainingSample[] = [];
 
     for (const feed of feeds) {
-      const intentSample = this.buildIntentSample(feed);
+      const intentSample = this.mapFieldSample(
+        feed,
+        'predictedIntent',
+        'correctedIntent',
+      );
       if (!intentSample) continue;
 
       intents.push(intentSample);
 
       if (intentSample.label === Intents.CREATE) {
-        const accountSample = await this.buildAccountSample(feed, 'account');
+        const accountSample = await this.mapFieldSample(
+          feed,
+          'predictedAccount',
+          'correctedAccount',
+        );
         if (accountSample) accounts.push(accountSample);
 
-        const categorySample = await this.buildCategorySample(feed);
+        const categorySample = await this.mapFieldSample(
+          feed,
+          'predictedCategory',
+          'correctedCategory',
+        );
         if (categorySample) categories.push(categorySample);
       }
 
       if (intentSample.label === Intents.TRANSFER) {
-        const originSample = await this.buildAccountSample(feed, 'origin');
+        const originSample = await this.mapFieldSample(
+          feed,
+          'predictedOriginAccount',
+          'correctedOriginAccount',
+        );
         if (originSample) origin.push(originSample);
 
-        const destinySample = await this.buildAccountSample(feed, 'destiny');
+        const destinySample = await this.mapFieldSample(
+          feed,
+          'predictedDestinyAccount',
+          'correctedDestinyAccount',
+        );
         if (destinySample) destiny.push(destinySample);
       }
 
-      const valueSample = this.buildValueSample(feed);
+      const valueSample = await this.mapFieldSample(
+        feed,
+        'predictedValue',
+        'correctedValue',
+      );
       if (valueSample) values.push(valueSample);
+
+      feed.usedForTraining = true;
+      feed.updatedAt = new Date().toISOString();
     }
 
     if (intents.length) await this.intentProcessor.train(intents);
@@ -232,8 +277,19 @@ export class NlpService {
     if (origin.length) await this.accountProcessor.train(origin);
     if (destiny.length) await this.accountProcessor.train(destiny);
     if (categories.length) await this.categoriesProcessor.train(categories);
-    if (values.length) await this.valuesProcessor.train(values);
+    if (values.length) await this.valueProcessor.train(values);
 
-    await this.markAsTrained(feeds);
+    await this._repository.save(feeds);
+  }
+
+  private mapFieldSample(
+    feedback: FeedbackEntity,
+    field: keyof FeedbackEntity,
+    correctedField: keyof FeedbackEntity,
+  ): TrainingSample {
+    return {
+      label: feedback[correctedField ?? field]?.toString(),
+      text: feedback.originalText,
+    };
   }
 }

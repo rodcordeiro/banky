@@ -1,12 +1,17 @@
-import { BaseClassifier } from '@/common/classifiers/base.classifier';
+import {
+  BaseClassifier,
+  TrainingSample,
+} from '@/common/classifiers/base.classifier';
 
 export enum Intents {
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   TRANSFER = 'transfer',
-  // eslint-disable-next-line no-unused-vars
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CREATE = 'create',
 }
-
+export interface IntentTrainingSample extends TrainingSample {
+  label: Intents;
+}
 export class IntentClassifier extends BaseClassifier {
   constructor() {
     super('intent.model');

@@ -39,3 +39,7 @@ lerna-debug.log*
 uploaded/
 *.drawio.bkp
 .qodo
+
+
+*.model.json
+*.csv
