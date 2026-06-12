@@ -51,7 +51,7 @@ const EVALUATION_CASES: EvaluationCase[] = [
     text: '43.40 do booster de Magic na Nubank yah crédito dia 09/10',
     expected: {
       predictedIntent: 'create',
-      predictedAccount: 'Nubank yah',
+      predictedAccount: 'Crédito yah',
       predictedCategory: 'Magic',
       predictedValue: 43.4,
     },
@@ -72,6 +72,150 @@ const EVALUATION_CASES: EvaluationCase[] = [
       predictedOriginAccount: 'santander',
       predictedDestinyAccount: 'nubank digo',
       predictedValue: 2900,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 29/08, 53.9 do youtube premium',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Serviços de streaming',
+      predictedValue: 53.9,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 29/09, 53.9 do yt premium',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Serviços de streaming',
+      predictedValue: 53.9,
+    },
+  },
+  {
+    text: 'Paguei 76 de internet com o Nubank digo dia 04/10/2025',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Serviço de Internet',
+      predictedValue: 76,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 14/11, 120.39 de Mercado',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Mercado',
+      predictedValue: 120.39,
+    },
+  },
+  {
+    text: 'Na conta nubank digo, dia 16/11, paguei 43,67 na farmácia',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Farmácia',
+      predictedValue: 43.67,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 10/11, 30 de recarga bilhete único',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Bilhete único',
+      predictedValue: 30,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 07/11, 40 de tarifa do banco',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Taxa de serviço',
+      predictedValue: 40,
+    },
+  },
+  {
+    text: 'Paguei 1251 de aluguel no santander',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Aluguel',
+      predictedValue: 1251,
+    },
+  },
+  {
+    text: 'Na conta nubank yah, dia 06/11, 263.68 de Luz',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank yah',
+      predictedCategory: 'Luz',
+      predictedValue: 263.68,
+    },
+  },
+  {
+    text: 'Na conta nubank yah, dia 06/11, 140.84 de agua',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank yah',
+      predictedCategory: 'Água e esgoto',
+      predictedValue: 140.84,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 13/11, 26.9 de almoço',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Almoço',
+      predictedValue: 26.9,
+    },
+  },
+  {
+    text: '13.69 de lanche no Smartbreak no Nubank digo 4/11',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Smartbreak',
+      predictedValue: 13.69,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 16/10, 155.92 de parcela empréstimo',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Parcela de Empréstimo',
+      predictedValue: 155.92,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 09/11, 60 de troca da bateria dos relógios',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Variado',
+      predictedValue: 60,
+    },
+  },
+  {
+    text: 'Transferi 50 do Nubank Digo para o C6 dia 2025-12-16',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'nubank digo',
+      predictedDestinyAccount: 'c6',
+      predictedValue: 50,
+    },
+  },
+  {
+    text: 'Mandei 850 do Itaú para o Mercado Pago no dia 05/10/2025 para cobrir despesas',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'Itaú',
+      predictedDestinyAccount: 'mercado pago',
+      predictedValue: 850,
     },
   },
 ];
