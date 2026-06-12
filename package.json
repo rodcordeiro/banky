@@ -110,6 +110,10 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/$1",
+      "^natural$": "<rootDir>/test/mocks/natural.mock.ts"
+    }
   }
 }
