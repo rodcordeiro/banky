@@ -1,37 +1,37 @@
-import { IntentClassifier, Intents } from '../classifiers/intent.classifier';
 import { AccountsClassifier } from '../classifiers/account.classifier';
 import { CategoryClassifier } from '../classifiers/category.classifier';
+import { IntentClassifier, Intents } from '../classifiers/intent.classifier';
 import { ValueClassifier } from '../classifiers/value.classifier';
 import { NlpService } from './nlp.service';
 
 const owner = '1c48d2bf-2d52-4764-98df-d81be158b01b';
 
 const accounts = [
-  { name: 'nubank digo' },
-  { name: 'Nubank yah' },
-  { name: 'Crédito yah' },
-  { name: 'Crédito digo' },
-  { name: 'santander' },
-  { name: 'mercado pago' },
-  { name: 'nubank nick' },
-  { name: 'c6' },
+  { id: 'account-nubank-digo', name: 'nubank digo' },
+  { id: 'account-nubank-yah', name: 'Nubank yah' },
+  { id: 'account-credito-yah', name: 'Crédito yah' },
+  { id: 'account-credito-digo', name: 'Crédito digo' },
+  { id: 'account-santander', name: 'santander' },
+  { id: 'account-mercado-pago', name: 'mercado pago' },
+  { id: 'account-nubank-nick', name: 'nubank nick' },
+  { id: 'account-c6', name: 'c6' },
 ];
 
 const categories = [
-  { name: 'Magic' },
-  { name: 'Mercado' },
-  { name: 'Serviços de streaming' },
-  { name: 'Serviço de Internet' },
-  { name: 'Farmácia' },
-  { name: 'Bilhete único' },
-  { name: 'Taxa de serviço' },
-  { name: 'Aluguel' },
-  { name: 'Água e esgoto' },
-  { name: 'Luz' },
-  { name: 'Almoço' },
-  { name: 'Smartbreak' },
-  { name: 'Parcela de Empréstimo' },
-  { name: 'Variado' },
+  { id: 'category-magic', name: 'Magic' },
+  { id: 'category-mercado', name: 'Mercado' },
+  { id: 'category-streaming', name: 'Serviços de streaming' },
+  { id: 'category-internet', name: 'Serviço de Internet' },
+  { id: 'category-farmacia', name: 'Farmácia' },
+  { id: 'category-bilhete-unico', name: 'Bilhete único' },
+  { id: 'category-taxa', name: 'Taxa de serviço' },
+  { id: 'category-aluguel', name: 'Aluguel' },
+  { id: 'category-agua', name: 'Água e esgoto' },
+  { id: 'category-luz', name: 'Luz' },
+  { id: 'category-almoco', name: 'Almoço' },
+  { id: 'category-smartbreak', name: 'Smartbreak' },
+  { id: 'category-emprestimo', name: 'Parcela de Empréstimo' },
+  { id: 'category-variado', name: 'Variado' },
 ];
 
 const valuesByText = new Map<string, number>([
@@ -58,6 +58,10 @@ describe('NlpService classifier orchestration', () => {
   const paginateService = {
     paginate: jest.fn(),
   };
+  const transactionsService = {
+    store: jest.fn(),
+    createTransfer: jest.fn(),
+  };
 
   let service: NlpService;
 
@@ -81,6 +85,7 @@ describe('NlpService classifier orchestration', () => {
       accountRepository as never,
       categoryRepository as never,
       paginateService as never,
+      transactionsService as never,
     );
   });
 
@@ -152,5 +157,103 @@ describe('NlpService classifier orchestration', () => {
     expect(result.predictedDestinyAccount).toBe('Nubank yah');
     expect(result.predictedValue).toBe(30);
     expect(AccountsClassifier.prototype.classify).not.toHaveBeenCalled();
+  });
+
+  it('creates a regular transaction from corrected feedback data', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner,
+      originalText: 'Mercado no santander',
+      predictedIntent: Intents.CREATE,
+      predictedAccount: 'mercado pago',
+      correctedAccount: 'santander',
+      predictedCategory: 'Serviços de casa',
+      correctedCategory: 'Mercado',
+      predictedValue: 10,
+      correctedValue: 120.39,
+      predictedDate: '2026-06-10T00:00:00.000Z',
+      correctedDate: '2026-06-12T00:00:00.000Z',
+    };
+    const transaction = { id: 'transaction-id' };
+    feedbackRepository.findOne.mockResolvedValue(feedback);
+    transactionsService.store.mockResolvedValue(transaction);
+
+    await expect(
+      service.createTransactionFromFeedback('feedback-id', owner),
+    ).resolves.toBe(transaction);
+
+    expect(feedbackRepository.findOne).toHaveBeenCalledWith({
+      where: { id: 'feedback-id', owner },
+    });
+    expect(transactionsService.store).toHaveBeenCalledWith({
+      description: feedback.originalText,
+      account: 'account-santander',
+      category: 'category-mercado',
+      value: 120.39,
+      date: '2026-06-12T00:00:00.000Z',
+      owner,
+    });
+  });
+
+  it('creates transfer transactions from transfer feedback data', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner,
+      originalText: 'Transferi 30 do santander para nubank yah',
+      predictedIntent: Intents.TRANSFER,
+      predictedOriginAccount: 'santander',
+      predictedDestinyAccount: 'nubank yah',
+      predictedCategory: 'transferencia',
+      predictedValue: 30,
+      predictedDate: '2026-06-12T00:00:00.000Z',
+    };
+    feedbackRepository.findOne.mockResolvedValue(feedback);
+    transactionsService.createTransfer.mockResolvedValue(undefined);
+
+    await expect(
+      service.createTransactionFromFeedback('feedback-id', owner),
+    ).resolves.toEqual({
+      type: Intents.TRANSFER,
+      feedbackId: 'feedback-id',
+    });
+
+    expect(transactionsService.createTransfer).toHaveBeenCalledWith({
+      description: feedback.originalText,
+      origin: 'account-santander',
+      destiny: 'account-nubank-yah',
+      value: 30,
+      date: '2026-06-12T00:00:00.000Z',
+      owner,
+    });
+  });
+
+  it('throws when feedback does not exist for owner', async () => {
+    feedbackRepository.findOne.mockResolvedValue(null);
+
+    await expect(
+      service.createTransactionFromFeedback('missing-id', owner),
+    ).rejects.toThrow('Feedback nao encontrado.');
+
+    expect(transactionsService.store).not.toHaveBeenCalled();
+    expect(transactionsService.createTransfer).not.toHaveBeenCalled();
+  });
+
+  it('throws when feedback account or category cannot be resolved', async () => {
+    feedbackRepository.findOne.mockResolvedValue({
+      id: 'feedback-id',
+      owner,
+      originalText: 'Texto sem conta conhecida',
+      predictedIntent: Intents.CREATE,
+      predictedAccount: 'conta inexistente',
+      predictedCategory: 'Mercado',
+      predictedValue: 10,
+      predictedDate: '2026-06-12T00:00:00.000Z',
+    });
+
+    await expect(
+      service.createTransactionFromFeedback('feedback-id', owner),
+    ).rejects.toThrow('Conta ou categoria nao encontrada para o feedback.');
+
+    expect(transactionsService.store).not.toHaveBeenCalled();
   });
 });
