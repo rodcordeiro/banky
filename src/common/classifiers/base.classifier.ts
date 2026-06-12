@@ -7,6 +7,11 @@ export interface TrainingSample {
   label: string;
 }
 
+export interface ModelBackup {
+  exists: boolean;
+  content?: Buffer;
+}
+
 export class BaseClassifier {
   public classifier: BayesClassifier | null = null;
   private model: string;
@@ -15,11 +20,39 @@ export class BaseClassifier {
     this.model = model;
   }
 
-  private getModelPath(): string {
+  public getModelPath(): string {
     return path.join(
       'src/modules/nlp/classifiers/models',
       `${this.model}.json`,
     );
+  }
+
+  async backupModel(): Promise<ModelBackup> {
+    const modelPath = this.getModelPath();
+    if (!fs.existsSync(modelPath)) return { exists: false };
+    return {
+      exists: true,
+      content: await fs.promises.readFile(modelPath),
+    };
+  }
+
+  async restoreModel(backup: ModelBackup): Promise<void> {
+    const modelPath = this.getModelPath();
+    this.classifier = null;
+
+    if (!backup.exists) {
+      if (fs.existsSync(modelPath)) {
+        await fs.promises.unlink(modelPath);
+      }
+      return;
+    }
+
+    await fs.promises.mkdir(path.dirname(modelPath), { recursive: true });
+    await fs.promises.writeFile(modelPath, backup.content!);
+  }
+
+  reset(): void {
+    this.classifier = null;
   }
 
   async init(): Promise<BayesClassifier> {
@@ -68,15 +101,22 @@ export class BaseClassifier {
     return this.classifier!.classify(this.preprocess(text));
   }
 
-  async train(samples?: TrainingSample[]): Promise<void> {
-    const classifier = await this.init();
+  async train(
+    samples?: TrainingSample[],
+    options?: { reset?: boolean },
+  ): Promise<void> {
+    const classifier = options?.reset
+      ? new BayesClassifier(PorterStemmerPt)
+      : await this.init();
+
+    this.classifier = classifier;
 
     for (const sample of samples ?? []) {
+      if (!sample.text || !sample.label) continue;
       classifier.addDocument(this.preprocess(sample.text), sample.label);
     }
 
     classifier.train();
-
     await this.save();
   }
 

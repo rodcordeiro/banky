@@ -44,6 +44,13 @@ export class NlpService {
     this.valueProcessor = new ValueClassifier();
   }
 
+  resetClassifiers(): void {
+    this.intentProcessor = new IntentClassifier();
+    this.accountProcessor = new AccountsClassifier();
+    this.categoriesProcessor = new CategoryClassifier();
+    this.valueProcessor = new ValueClassifier();
+  }
+
   private cleanAccountChunk(value: string | undefined): string | undefined {
     if (!value) return undefined;
     return value
@@ -201,11 +208,14 @@ export class NlpService {
   }
 
   async trainClassifiers(fullTraining: boolean = false, owner: string) {
-    const filter: FindOptionsWhere<FeedbackEntity> = { owner };
+    const filter: FindOptionsWhere<FeedbackEntity> = {
+      owner,
+      status: Not(FeedbackStatus.pending),
+    };
     if (!fullTraining) {
-      filter.status = Not(FeedbackStatus.pending);
       filter.usedForTraining = false;
     }
+
     const feeds = await this._repository.find({
       where: filter,
     });
@@ -268,28 +278,37 @@ export class NlpService {
       );
       if (valueSample) values.push(valueSample);
 
-      feed.usedForTraining = true;
-      feed.updatedAt = new Date().toISOString();
+      if (!fullTraining) {
+        feed.usedForTraining = true;
+        feed.updatedAt = new Date().toISOString();
+      }
     }
 
+    const accountSamples = [...accounts, ...origin, ...destiny];
+
     if (intents.length) await this.intentProcessor.train(intents);
-    if (accounts.length) await this.accountProcessor.train(accounts);
-    if (origin.length) await this.accountProcessor.train(origin);
-    if (destiny.length) await this.accountProcessor.train(destiny);
+    if (accountSamples.length)
+      await this.accountProcessor.train(accountSamples);
     if (categories.length) await this.categoriesProcessor.train(categories);
     if (values.length) await this.valueProcessor.train(values);
 
-    await this._repository.save(feeds);
+    if (!fullTraining) {
+      await this._repository.save(feeds);
+    }
   }
 
   private mapFieldSample(
     feedback: FeedbackEntity,
     field: keyof FeedbackEntity,
     correctedField: keyof FeedbackEntity,
-  ): TrainingSample {
+  ): TrainingSample | null {
+    const value = feedback[correctedField] ?? feedback[field];
+
+    if (!value) return null;
+
     return {
-      label: feedback[correctedField ?? field]?.toString(),
       text: feedback.originalText,
+      label: value.toString(),
     };
   }
 }
