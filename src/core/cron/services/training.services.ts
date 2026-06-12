@@ -218,6 +218,205 @@ const EVALUATION_CASES: EvaluationCase[] = [
       predictedValue: 850,
     },
   },
+
+  {
+    text: 'Na conta Mercado Pago, dia 29/11, 53.9 do yt premium',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Serviços de streaming',
+      predictedValue: 53.9,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 2025-12-29, R$ 53.9 do youtube premium',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Serviços de streaming',
+      predictedValue: 53.9,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 02/12, 152.94 reais com conta de agua',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Água e esgoto',
+      predictedValue: 152.94,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 2025-12-05, R$ 17.13 no mercadinho',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Mercearia e Açougue (Dia-a-dia)',
+      predictedValue: 17.13,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 30/10, 20.93 no mercadinho',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Mercearia e Açougue (Dia-a-dia)',
+      predictedValue: 20.93,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 2025-12-05, R$ 17.13 no padaria',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Mercearia e Açougue (Dia-a-dia)',
+      predictedValue: 17.13,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 30/10, 20.93 no padaria',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Mercearia e Açougue (Dia-a-dia)',
+      predictedValue: 20.93,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 09/11, 186.8 com lanches',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Lanches',
+      predictedValue: 186.8,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 2025-12-17, R$ 69.4 de Almoço',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Almoço',
+      predictedValue: 69.4,
+    },
+  },
+  {
+    text: 'Na conta nubank digo, dia 15/11, 180 da parcela 2/10 do pc',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Variado',
+      predictedValue: 180,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 17/11, 552.74 do empréstimo',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Parcela de Empréstimo',
+      predictedValue: 552.74,
+    },
+  },
+  {
+    text: 'Na conta Nubank digo, dia 2025-12-16, R$ 416.6 de emprestimo',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Parcela de Empréstimo',
+      predictedValue: 416.6,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 23/11, 355 do empréstimo',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Parcela de Empréstimo',
+      predictedValue: 355,
+    },
+  },
+  {
+    text: 'Na conta Mercado Pago, dia 13/10, 30 de recarga do Bilhete único',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'mercado pago',
+      predictedCategory: 'Bilhete único',
+      predictedValue: 30,
+    },
+  },
+  {
+    text: 'Na conta santander, dia 11/12, 25 reais com bilhete unico',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'santander',
+      predictedCategory: 'Bilhete único',
+      predictedValue: 25,
+    },
+  },
+  {
+    text: 'Na conta nubank yah, dia 05/11, 4183.36 de cartao de credito',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank yah',
+      predictedCategory: 'Cartão de crédito',
+      predictedValue: 4183.36,
+    },
+  },
+  {
+    text: 'Na conta Crédito digo, dia 11/11, 191.54 do assaí',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'Crédito digo',
+      predictedCategory: 'Mercado',
+      predictedValue: 191.54,
+    },
+  },
+  {
+    text: 'Na conta Nubank yah, dia 15/11, 775.38 da Poly de setembro',
+    expected: {
+      predictedIntent: 'create',
+      predictedAccount: 'nubank yah',
+      predictedCategory: 'Mensalidade Educação',
+      predictedValue: 775.38,
+    },
+  },
+  {
+    text: 'Santander para mercado pago, 18/02, 606.74',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'santander',
+      predictedDestinyAccount: 'mercado pago',
+      predictedValue: 606.74,
+    },
+  },
+  {
+    text: 'Na conta Nubank Digo, dia 15/11, transferi 606.64 para o Mercado Pago',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'nubank digo',
+      predictedDestinyAccount: 'mercado pago',
+      predictedValue: 606.64,
+    },
+  },
+  {
+    text: 'Na conta Nubank yah, dia 08/11, transferi 180 para o nubank digo',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'nubank yah',
+      predictedDestinyAccount: 'nubank digo',
+      predictedValue: 180,
+    },
+  },
+  {
+    text: 'Transferi 100 do nubank digo para o nubank nick para presente dia 20/10',
+    expected: {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'nubank digo',
+      predictedDestinyAccount: 'nubank nick',
+      predictedValue: 100,
+    },
+  },
 ];
 
 @Injectable()
@@ -340,6 +539,7 @@ export class TrainingService {
     for (const evaluationCase of EVALUATION_CASES) {
       const actual = (await this._nlpService.extractEntities(
         evaluationCase.text,
+        DEFAULT_OWNER,
       )) as unknown as Record<string, unknown>;
 
       for (const [field, expected] of Object.entries(evaluationCase.expected)) {

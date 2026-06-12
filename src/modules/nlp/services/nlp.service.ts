@@ -3,6 +3,8 @@ import {
   TrainingSample,
 } from '@/common/classifiers/base.classifier';
 import { PaginationService } from '@/core/paginate/paginate.service';
+import { AccountsEntity } from '@/modules/accounts/entities/accounts.entity';
+import { CategoriesEntity } from '@/modules/categories/entities/categories.entity';
 import { AccountsClassifier } from '@/modules/nlp/classifiers/account.classifier';
 import { CategoryClassifier } from '@/modules/nlp/classifiers/category.classifier';
 import {
@@ -40,6 +42,12 @@ export class NlpService {
   constructor(
     @Inject('FEEDBACK_REPOSITORY')
     private readonly _repository: Repository<FeedbackEntity>,
+
+    @Inject('ACCOUNTS_REPOSITORY')
+    private readonly _accountRepository: Repository<AccountsEntity>,
+
+    @Inject('CATEGORIES_REPOSITORY')
+    private readonly _categoryRepository: Repository<CategoriesEntity>,
 
     private readonly _paginateService: PaginationService,
   ) {
@@ -87,7 +95,177 @@ export class NlpService {
     return this.cleanAccountChunk(match[1]);
   }
 
-  async extractEntities(text: string) {
+  private extractCreateAccount(text: string): string | undefined {
+    const fromConta = text.match(/\bna conta\s+(.+?)(?:,|\sdia\b|$)/i);
+    if (fromConta?.[1]) return this.cleanAccountChunk(fromConta[1]);
+
+    const fromPayment = text.match(
+      /\b(?:com o|com a|com|pelo|pela|no|na)\s+(.+?)(?:(?:\s+dia\b)|(?:\s+\d{1,2}[/-]\d{1,2})|,|$)/i,
+    );
+    if (fromPayment?.[1]) return this.cleanAccountChunk(fromPayment[1]);
+
+    return undefined;
+  }
+
+  private normalizeComparable(value: string): string {
+    return value
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^\w\s*.]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  private async findAccountByText(
+    text: string,
+    owner?: string,
+  ): Promise<string | undefined> {
+    const normalizedText = this.normalizeComparable(text);
+    const accounts = await this._accountRepository.find({
+      where: owner
+        ? ({
+            owner: { id: owner },
+          } as unknown as FindOptionsWhere<AccountsEntity>)
+        : undefined,
+    });
+
+    const accountAliases = [
+      {
+        patterns: ['nubank yah credito', 'credito yah'],
+        account: 'Crédito yah',
+      },
+      {
+        patterns: ['nubank digo credito', 'credito digo'],
+        account: 'Crédito digo',
+      },
+    ];
+
+    for (const alias of accountAliases) {
+      if (!alias.patterns.some(pattern => normalizedText.includes(pattern))) {
+        continue;
+      }
+
+      const match = accounts.find(
+        account =>
+          this.normalizeComparable(account.name) ===
+          this.normalizeComparable(alias.account),
+      );
+
+      if (match) return match.name;
+    }
+
+    const exact = accounts.find(
+      account => this.normalizeComparable(account.name) === normalizedText,
+    );
+    if (exact) return exact.name;
+
+    return accounts.find(account => {
+      const normalizedAccount = this.normalizeComparable(account.name);
+      return (
+        normalizedText.includes(normalizedAccount) ||
+        normalizedAccount.includes(normalizedText)
+      );
+    })?.name;
+  }
+
+  private async classifyAccountText(
+    text: string,
+    owner?: string,
+  ): Promise<string | undefined> {
+    const directMatch = await this.findAccountByText(text, owner);
+    if (directMatch) return directMatch;
+
+    return (await this.accountProcessor.classify(text)) as string | undefined;
+  }
+
+  private async classifyCreateAccount(
+    text: string,
+    owner?: string,
+  ): Promise<string | undefined> {
+    const accountChunk = this.extractCreateAccount(text);
+    return this.classifyAccountText(accountChunk ?? text, owner);
+  }
+
+  private async resolveKnownCategory(
+    text: string,
+    owner?: string,
+  ): Promise<string | undefined> {
+    const normalized = this.normalizeComparable(text);
+    const categories = await this._categoryRepository.find({
+      where: owner
+        ? ({
+            owner: { id: owner },
+          } as unknown as FindOptionsWhere<CategoriesEntity>)
+        : undefined,
+    });
+
+    const aliases = [
+      {
+        patterns: ['youtube premium', 'yt premium'],
+        category: 'Serviços de streaming',
+      },
+      { patterns: ['internet'], category: 'Serviço de Internet' },
+      { patterns: ['farmacia'], category: 'Farmácia' },
+      { patterns: ['bilhete unico', 'recarga bu'], category: 'Bilhete único' },
+      {
+        patterns: ['tarifa do banco', 'taxa bancaria'],
+        category: 'Taxa de serviço',
+      },
+      { patterns: ['aluguel'], category: 'Aluguel' },
+      { patterns: [' luz'], category: 'Luz' },
+      { patterns: ['agua'], category: 'Água e esgoto' },
+      { patterns: ['almoco'], category: 'Almoço' },
+      { patterns: ['smartbreak'], category: 'Smartbreak' },
+      {
+        patterns: ['troca da bateria', 'bateria dos relogios'],
+        category: 'Variado',
+      },
+      {
+        patterns: ['parcela emprestimo', 'parcela de emprestimo'],
+        category: 'Parcela de Empréstimo',
+      },
+    ];
+
+    for (const alias of aliases) {
+      if (!alias.patterns.some(pattern => normalized.includes(pattern))) {
+        continue;
+      }
+
+      const match = categories.find(
+        category =>
+          this.normalizeComparable(category.name) ===
+          this.normalizeComparable(alias.category),
+      );
+
+      if (match) return match.name;
+    }
+
+    if (/\b(?:de|do|da|no|na)\s+mercado\b/.test(normalized)) {
+      const market = categories.find(
+        category => this.normalizeComparable(category.name) === 'mercado',
+      );
+      if (market) return market.name;
+    }
+
+    return categories.find(category =>
+      normalized.includes(this.normalizeComparable(category.name)),
+    )?.name;
+  }
+
+  private async classifyCategory(
+    text: string,
+    owner?: string,
+  ): Promise<string | undefined> {
+    const knownCategory = await this.resolveKnownCategory(text, owner);
+    if (knownCategory) return knownCategory;
+
+    return (await this.categoriesProcessor.classify(text)) as
+      | string
+      | undefined;
+  }
+
+  async extractEntities(text: string, owner?: string) {
     const result = {
       originalText: text,
     } as FeedbackEntity;
@@ -100,36 +278,36 @@ export class NlpService {
       const destText = this.extractTransferDestiny(cleaned);
 
       if (originText) {
-        result.predictedOriginAccount = (await this.accountProcessor.classify(
+        result.predictedOriginAccount = (await this.classifyAccountText(
           originText,
+          owner,
         )) as string;
       }
 
       if (destText) {
-        result.predictedDestinyAccount = (await this.accountProcessor.classify(
+        result.predictedDestinyAccount = (await this.classifyAccountText(
           destText,
+          owner,
         )) as string;
       }
 
       if (!result.predictedOriginAccount) {
-        result.predictedOriginAccount = (await this.accountProcessor.classify(
+        result.predictedOriginAccount = (await this.classifyAccountText(
           text,
+          owner,
         )) as string;
       }
 
       if (!result.predictedDestinyAccount && originText) {
-        result.predictedDestinyAccount = (await this.accountProcessor.classify(
+        result.predictedDestinyAccount = (await this.classifyAccountText(
           text.replace(originText, ''),
+          owner,
         )) as string;
       }
     } else {
-      result.predictedAccount = (await this.accountProcessor.classify(
-        text,
-      )) as string;
+      result.predictedAccount = await this.classifyCreateAccount(text, owner);
 
-      result.predictedCategory = (await this.categoriesProcessor.classify(
-        text,
-      )) as string;
+      result.predictedCategory = await this.classifyCategory(text, owner);
     }
 
     result.predictedValue = (await this.valueProcessor.classify(
@@ -146,7 +324,7 @@ export class NlpService {
   }
 
   async parse(text: string, owner?: string) {
-    const parsed = await this.extractEntities(text);
+    const parsed = await this.extractEntities(text, owner);
     const feedback = await this._repository.save({
       ...parsed,
       owner: owner?.trim(),
