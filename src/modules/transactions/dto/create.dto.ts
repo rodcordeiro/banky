@@ -1,8 +1,9 @@
 import { createZodDto } from 'nestjs-zod';
 import { z } from 'zod';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 const CreateTransactionSchema = z.object({
+  id: z.string().optional(),
   description: z.string(),
   account: z.string(),
   category: z.string(),
@@ -13,6 +14,9 @@ const CreateTransactionSchema = z.object({
 export class CreateTransactionDTO extends createZodDto(
   CreateTransactionSchema,
 ) {
+  /** Transaction id */
+  @ApiPropertyOptional()
+  id: string;
   /** Transaction description */
   @ApiProperty()
   description: string;
