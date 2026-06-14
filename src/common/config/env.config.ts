@@ -2,9 +2,17 @@ import 'dotenv/config';
 import { z } from 'zod';
 
 export const envSchema = z.object({
-  NODE_ENV: z.string(),
-  HOST: z.string(),
-  PORT: z.string(),
+  NODE_ENV: z
+
+    .union([
+      z.literal('development'),
+      z.literal('preview'),
+      z.literal('production'),
+    ])
+    .optional()
+    .default('development'),
+  HOST: z.string().default('localhost'),
+  PORT: z.string().default('3333'),
   ENC_SECRET: z.string(),
   JWT_SECRET: z.string(),
   JWT_REFRESH_SECRET: z.string(),
