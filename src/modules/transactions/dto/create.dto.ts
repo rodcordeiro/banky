@@ -16,7 +16,7 @@ export class CreateTransactionDTO extends createZodDto(
 ) {
   /** Transaction id */
   @ApiPropertyOptional()
-  id: string;
+  id?: string;
   /** Transaction description */
   @ApiProperty()
   description: string;
