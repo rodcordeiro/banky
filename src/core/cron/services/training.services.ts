@@ -2,6 +2,7 @@ import {
   BaseClassifier,
   ModelBackup,
 } from '@/common/classifiers/base.classifier';
+import { ENV_VARIABLES } from '@/common/config/env.config';
 import { AccountsEntity } from '@/modules/accounts/entities/accounts.entity';
 import { CategoriesEntity } from '@/modules/categories/entities/categories.entity';
 import { AccountsClassifier } from '@/modules/nlp/classifiers/account.classifier';
@@ -34,6 +35,9 @@ interface EvaluationResult {
   score: number;
   failures: string[];
 }
+
+const PROD_CRON_TIME = '0 0 * * * * ';
+const DEV_CRON_TIME = '0 * * * * * ';
 
 const DEFAULT_OWNER = '1c48d2bf-2d52-4764-98df-d81be158b01b';
 
@@ -432,9 +436,17 @@ export class TrainingService {
   ) {
     this._logger.log('TrainingService Initialized');
   }
+  @Cron('0 0 0 * * * ', { waitForCompletion: true })
+  async daily_training() {
+    await this.train(true);
+  }
 
-  @Cron('0 * * * * *', { waitForCompletion: true })
-  async train() {
+  // @Cron('0 0 * * * *', { waitForCompletion: true })
+  @Cron(
+    ENV_VARIABLES.NODE_ENV === 'production' ? PROD_CRON_TIME : DEV_CRON_TIME,
+    { waitForCompletion: true },
+  )
+  async train(fullTraining: boolean = false) {
     this._logger.verbose('Starting training service');
 
     const classifiers = this.createModelClassifiers();
@@ -445,7 +457,7 @@ export class TrainingService {
       await this.trainCandidate(classifiers);
       this._nlpService.resetClassifiers();
 
-      await this._nlpService.trainClassifiers(true, DEFAULT_OWNER);
+      await this._nlpService.trainClassifiers(fullTraining, DEFAULT_OWNER);
       this._nlpService.resetClassifiers();
 
       const after = await this.evaluateModels();

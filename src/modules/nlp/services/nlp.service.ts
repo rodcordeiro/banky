@@ -12,6 +12,7 @@ import {
   Intents,
 } from '@/modules/nlp/classifiers/intent.classifier';
 import { ValueClassifier } from '@/modules/nlp/classifiers/value.classifier';
+import { TransactionsService } from '@/modules/transactions/services/transactions.service';
 import {
   BadRequestException,
   Inject,
@@ -50,6 +51,7 @@ export class NlpService {
     private readonly _categoryRepository: Repository<CategoriesEntity>,
 
     private readonly _paginateService: PaginationService,
+    private readonly _transactionsService: TransactionsService,
   ) {
     this.intentProcessor = new IntentClassifier();
     this.accountProcessor = new AccountsClassifier();
@@ -169,6 +171,34 @@ export class NlpService {
     })?.name;
   }
 
+  private async findAccountEntityByText(
+    text: string | undefined,
+    owner: string,
+  ): Promise<AccountsEntity | null> {
+    if (!text) return null;
+
+    const normalizedText = this.normalizeComparable(text);
+    const accounts = await this._accountRepository.find({
+      where: {
+        owner: { id: owner },
+      } as unknown as FindOptionsWhere<AccountsEntity>,
+    });
+
+    return (
+      accounts.find(
+        account => this.normalizeComparable(account.name) === normalizedText,
+      ) ??
+      accounts.find(account => {
+        const normalizedAccount = this.normalizeComparable(account.name);
+        return (
+          normalizedText.includes(normalizedAccount) ||
+          normalizedAccount.includes(normalizedText)
+        );
+      }) ??
+      null
+    );
+  }
+
   private async classifyAccountText(
     text: string,
     owner?: string,
@@ -251,6 +281,30 @@ export class NlpService {
     return categories.find(category =>
       normalized.includes(this.normalizeComparable(category.name)),
     )?.name;
+  }
+
+  private async findCategoryEntityByText(
+    text: string | undefined,
+    owner: string,
+  ): Promise<CategoriesEntity | null> {
+    if (!text) return null;
+
+    const normalizedText = this.normalizeComparable(text);
+    const categories = await this._categoryRepository.find({
+      where: {
+        owner: { id: owner },
+      } as unknown as FindOptionsWhere<CategoriesEntity>,
+    });
+
+    return (
+      categories.find(
+        category => this.normalizeComparable(category.name) === normalizedText,
+      ) ??
+      categories.find(category =>
+        normalizedText.includes(this.normalizeComparable(category.name)),
+      ) ??
+      null
+    );
   }
 
   private async classifyCategory(
@@ -369,6 +423,82 @@ export class NlpService {
     );
 
     return Object.fromEntries(entries);
+  }
+
+  async createTransactionFromFeedback(id: string, owner: string) {
+    const feedback = await this._repository.findOne({
+      where: {
+        id,
+        owner,
+      },
+    });
+
+    if (!feedback) {
+      throw new NotFoundException('Feedback nao encontrado.');
+    }
+
+    const intent = feedback.correctedIntent ?? feedback.predictedIntent;
+    const value = Number(feedback.correctedValue ?? feedback.predictedValue);
+    const date = feedback.correctedDate ?? feedback.predictedDate;
+
+    if (!Number.isFinite(value)) {
+      throw new BadRequestException('Valor do feedback invalido.');
+    }
+
+    if (intent === Intents.TRANSFER) {
+      const originAccount = await this.findAccountEntityByText(
+        feedback.correctedOriginAccount ?? feedback.predictedOriginAccount,
+        owner,
+      );
+      const destinyAccount = await this.findAccountEntityByText(
+        feedback.correctedDestinyAccount ?? feedback.predictedDestinyAccount,
+        owner,
+      );
+
+      if (!originAccount || !destinyAccount) {
+        throw new BadRequestException(
+          'Contas de origem ou destino nao encontradas para o feedback.',
+        );
+      }
+
+      await this._transactionsService.createTransfer({
+        description: feedback.originalText,
+        origin: originAccount.id,
+        destiny: destinyAccount.id,
+        value,
+        date,
+        owner,
+      });
+
+      return {
+        type: Intents.TRANSFER,
+        feedbackId: feedback.id,
+      };
+    }
+
+    const account = await this.findAccountEntityByText(
+      feedback.correctedAccount ?? feedback.predictedAccount,
+      owner,
+    );
+    const category = await this.findCategoryEntityByText(
+      feedback.correctedCategory ?? feedback.predictedCategory,
+      owner,
+    );
+
+    if (!account || !category) {
+      throw new BadRequestException(
+        'Conta ou categoria nao encontrada para o feedback.',
+      );
+    }
+
+    return this._transactionsService.store({
+      description: feedback.originalText,
+      account: account.id,
+      category: category.id,
+      value,
+      date,
+      owner,
+    });
   }
 
   async Review(payload: Partial<FeedbackEntity>) {
