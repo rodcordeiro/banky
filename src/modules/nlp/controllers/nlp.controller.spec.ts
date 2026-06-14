@@ -10,6 +10,7 @@ describe('NlpController', () => {
     findAll: jest.fn(),
     Review: jest.fn(),
     trainClassifiers: jest.fn(),
+    createTransactionFromFeedback: jest.fn(),
   };
 
   let controller: NlpController;
@@ -89,5 +90,19 @@ describe('NlpController', () => {
     await expect(controller.train(req, {})).resolves.toBeUndefined();
 
     expect(service.trainClassifiers).toHaveBeenCalledWith(undefined, owner);
+  });
+
+  it('creates transaction from feedback using route id and authenticated owner', async () => {
+    const transaction = { id: 'transaction-id' };
+    service.createTransactionFromFeedback.mockResolvedValue(transaction);
+
+    await expect(
+      controller.createTransactionFromFeedback(req, 'feedback-id'),
+    ).resolves.toBe(transaction);
+
+    expect(service.createTransactionFromFeedback).toHaveBeenCalledWith(
+      'feedback-id',
+      owner,
+    );
   });
 });

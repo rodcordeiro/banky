@@ -63,4 +63,12 @@ export class NlpController {
       req.user.id,
     );
   }
+
+  @Post('/:id/transaction')
+  async createTransactionFromFeedback(
+    @Req() req: AuthenticatedRequest,
+    @Param('id') id: string,
+  ) {
+    return await this._service.createTransactionFromFeedback(id, req.user.id);
+  }
 }
