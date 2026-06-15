@@ -175,14 +175,14 @@ Objetivo: criar a fundacao do autoavaliador sem autonomia real. Ao final, o sist
 
 #### AUTO-005 - Testar validacoes criticas
 
-- Testar `create` valido.
-- Testar `create` sem conta.
-- Testar `create` sem categoria.
-- Testar `transfer` valida.
-- Testar `transfer` sem origem.
-- Testar `transfer` sem destino.
-- Testar transferencia com origem igual ao destino.
-- Testar valor zero, negativo e nao numerico.
+- [x] Testar `create` valido.
+- [x] Testar `create` sem conta.
+- [x] Testar `create` sem categoria.
+- [x] Testar `transfer` valida.
+- [x] Testar `transfer` sem origem.
+- [x] Testar `transfer` sem destino.
+- [x] Testar transferencia com origem igual ao destino.
+- [x] Testar valor zero, negativo e nao numerico.
 
 ### Passo a passo
 

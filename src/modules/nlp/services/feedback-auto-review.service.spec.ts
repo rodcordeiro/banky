@@ -9,16 +9,26 @@ import { FeedbackAutoReviewService } from './feedback-auto-review.service';
 describe('FeedbackAutoReviewService', () => {
   const service = new FeedbackAutoReviewService();
 
-  it('approves a valid create feedback with known owner entities', () => {
-    const feedback = {
+  const validCreateFeedback = () =>
+    ({
       predictedIntent: 'create',
       predictedAccount: 'Nubank Digo',
       predictedCategory: 'Mercado',
       predictedValue: 120.39,
       predictedDate: '2026-06-15T00:00:00.000Z',
-    } as FeedbackEntity;
+    }) as FeedbackEntity;
 
-    const result = service.evaluate(feedback, {
+  const validTransferFeedback = () =>
+    ({
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'Santander',
+      predictedDestinyAccount: 'Nubank yah',
+      predictedValue: 30,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    }) as FeedbackEntity;
+
+  it('approves a valid create feedback with known owner entities', () => {
+    const result = service.evaluate(validCreateFeedback(), {
       ownerAccounts: [{ name: 'nubank digo' }],
       ownerCategories: [{ name: 'mercado' }],
     });
@@ -33,6 +43,54 @@ describe('FeedbackAutoReviewService', () => {
       value: 1,
       date: 1,
     });
+  });
+
+  it('rejects create feedback without account', () => {
+    const feedback = {
+      predictedIntent: 'create',
+      predictedCategory: 'Mercado',
+      predictedValue: 120.39,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'nubank digo' }],
+      ownerCategories: [{ name: 'mercado' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing_account',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
+  });
+
+  it('rejects create feedback without category', () => {
+    const feedback = {
+      predictedIntent: 'create',
+      predictedAccount: 'Nubank Digo',
+      predictedValue: 120.39,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'nubank digo' }],
+      ownerCategories: [{ name: 'mercado' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing_category',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
   });
 
   it('marks feedback as correct when explicit corrections are present and valid', () => {
@@ -53,6 +111,122 @@ describe('FeedbackAutoReviewService', () => {
     expect(result.suggestedCorrections).toEqual({
       account: 'Nubank Yah',
     });
+  });
+
+  it('approves a valid transfer feedback with known owner entities', () => {
+    const result = service.evaluate(validTransferFeedback(), {
+      ownerAccounts: [{ name: 'santander' }, { name: 'nubank yah' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.approve);
+    expect(result.reasons).toHaveLength(0);
+    expect(result.fieldScores).toMatchObject({
+      intent: 1,
+      originAccount: 1,
+      destinyAccount: 1,
+      value: 1,
+      date: 1,
+    });
+  });
+
+  it('rejects transfer feedback without origin account', () => {
+    const feedback = {
+      predictedIntent: 'transfer',
+      predictedDestinyAccount: 'Nubank yah',
+      predictedValue: 30,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'santander' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing_origin_account',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
+  });
+
+  it('rejects transfer feedback without destiny account', () => {
+    const feedback = {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'Santander',
+      predictedValue: 30,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'santander' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'missing_destiny_account',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
+  });
+
+  it('rejects transfer feedback when origin and destiny are equal', () => {
+    const feedback = {
+      predictedIntent: 'transfer',
+      predictedOriginAccount: 'Santander',
+      predictedDestinyAccount: 'santander',
+      predictedValue: 30,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'santander' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'same_transfer_accounts',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
+  });
+
+  it.each([
+    ['zero', 0],
+    ['negative', -1],
+    ['non numeric', Number.NaN],
+  ])('rejects feedback with %s value', (_, value) => {
+    const result = service.evaluate(
+      {
+        predictedIntent: 'create',
+        predictedAccount: 'Nubank Digo',
+        predictedCategory: 'Mercado',
+        predictedValue: value,
+        predictedDate: '2026-06-15T00:00:00.000Z',
+      } as FeedbackEntity,
+      {
+        ownerAccounts: [{ name: 'nubank digo' }],
+        ownerCategories: [{ name: 'mercado' }],
+      },
+    );
+
+    expect(result.decision).toBe(AutoReviewDecision.reject);
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'invalid_value',
+          severity: AutoReviewReasonSeverity.blocker,
+        }),
+      ]),
+    );
   });
 
   it('rejects feedback with an unsupported intent', () => {
