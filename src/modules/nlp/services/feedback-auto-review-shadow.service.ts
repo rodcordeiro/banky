@@ -1,10 +1,18 @@
 import { ENV_VARIABLES } from '@/common/config/env.config';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
-import { FeedbackStatus, AutoReviewMode } from '../interfaces';
+import {
+  AUTO_REVIEW_DECISION_STATUS_MAP,
+  AutoReviewDecision,
+  AutoReviewMode,
+  AutoReviewReportFilters,
+  AutoReviewReportResult,
+  AutoReviewReportItem,
+  FeedbackStatus,
+} from '../interfaces';
 import { NlpService } from './nlp.service';
 
 const PROD_SHADOW_CRON = '0 */15 * * * *';
@@ -101,6 +109,181 @@ export class FeedbackAutoReviewShadowService {
     });
 
     return this._feedbackAutoReviewRepository.save(history);
+  }
+
+  async buildOperationalReport(
+    owner: string,
+    filters: AutoReviewReportFilters = {},
+  ): Promise<AutoReviewReportResult> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 10;
+    const baseQuery = this.buildReportQuery(owner, filters);
+    const dataQuery = baseQuery.clone();
+
+    const [rows, total] = await Promise.all([
+      dataQuery
+        .skip(limit * (page - 1))
+        .take(limit)
+        .getRawMany(),
+      baseQuery.getCount(),
+    ]);
+
+    const items = rows.map(row => this.mapReportRow(row));
+    const totalPages = Math.ceil(total / limit) || undefined;
+
+    return {
+      items,
+      meta: {
+        currentPage: page,
+        itemCount: items.length,
+        itemsPerPage: limit,
+        totalItems: total,
+        totalPages,
+        hasNext: page < (totalPages ?? 1),
+      },
+    };
+  }
+
+  private buildReportQuery(
+    owner: string,
+    filters: AutoReviewReportFilters,
+  ): SelectQueryBuilder<FeedbackAutoReviewEntity> {
+    const query = this._feedbackAutoReviewRepository
+      .createQueryBuilder('autoReview')
+      .innerJoin(
+        FeedbackEntity,
+        'feedback',
+        'feedback.id = autoReview.feedbackId',
+      )
+      .select('autoReview.feedbackId', 'feedbackId')
+      .addSelect('feedback.originalText', 'originalText')
+      .addSelect('feedback.status', 'humanStatus')
+      .addSelect('autoReview.mode', 'mode')
+      .addSelect('autoReview.decision', 'decision')
+      .addSelect('autoReview.score', 'score')
+      .addSelect('autoReview.reasons', 'reasons')
+      .addSelect('autoReview.reviewVersion', 'reviewVersion')
+      .addSelect('autoReview.evaluatedAt', 'evaluatedAt')
+      .addSelect('autoReview.createdAt', 'createdAt')
+      .where('autoReview.owner = :owner', { owner });
+
+    if (filters.mode) {
+      query.andWhere('autoReview.mode = :mode', { mode: filters.mode });
+    }
+
+    if (filters.decision) {
+      query.andWhere('autoReview.decision = :decision', {
+        decision: filters.decision,
+      });
+    }
+
+    if (filters.minScore !== undefined) {
+      query.andWhere('autoReview.score >= :minScore', {
+        minScore: filters.minScore,
+      });
+    }
+
+    if (filters.maxScore !== undefined) {
+      query.andWhere('autoReview.score <= :maxScore', {
+        maxScore: filters.maxScore,
+      });
+    }
+
+    if (filters.from) {
+      query.andWhere('autoReview.evaluatedAt >= :from', { from: filters.from });
+    }
+
+    if (filters.to) {
+      query.andWhere('autoReview.evaluatedAt <= :to', { to: filters.to });
+    }
+
+    const divergenceExpression = this.buildDivergenceExpression();
+    query.addSelect(divergenceExpression, 'divergent');
+
+    if (filters.divergence !== undefined) {
+      query.andWhere(`${divergenceExpression} = :divergence`, {
+        divergence: filters.divergence ? 1 : 0,
+      });
+    }
+
+    const sortBy = filters.sortBy ?? 'createdAt';
+    const order = filters.order ?? 'DESC';
+
+    if (sortBy === 'divergence') {
+      query.orderBy('divergent', order);
+    } else if (sortBy === 'score') {
+      query.orderBy('autoReview.score', order);
+    } else {
+      query.orderBy('autoReview.createdAt', order);
+    }
+
+    return query;
+  }
+
+  private buildDivergenceExpression(): string {
+    const approvedStatus =
+      AUTO_REVIEW_DECISION_STATUS_MAP[AutoReviewDecision.approve];
+    const correctedStatus =
+      AUTO_REVIEW_DECISION_STATUS_MAP[AutoReviewDecision.correct];
+    const pendingStatus = FeedbackStatus.pending;
+
+    return `CASE
+      WHEN (
+        (autoReview.decision = '${AutoReviewDecision.approve}' AND feedback.status = '${approvedStatus}')
+        OR (autoReview.decision = '${AutoReviewDecision.correct}' AND feedback.status = '${correctedStatus}')
+        OR (
+          autoReview.decision IN ('${AutoReviewDecision.manualReview}', '${AutoReviewDecision.reject}')
+          AND feedback.status = '${pendingStatus}'
+        )
+      ) THEN 0
+      ELSE 1
+    END`;
+  }
+
+  private mapReportRow(row: Record<string, unknown>): AutoReviewReportItem {
+    const score = Number(row['score'] ?? 0);
+    const divergent = Number(row['divergent'] ?? 0) === 1;
+    const reasonsValue = row['reasons'];
+    const reasons = this.parseJson<AutoReviewReportItem['reasons']>(
+      reasonsValue,
+      [],
+    );
+    const humanStatus = String(
+      row['humanStatus'] ?? FeedbackStatus.pending,
+    ) as FeedbackStatus;
+    const decision = String(row['decision']) as AutoReviewDecision;
+    const shadowStatus = AUTO_REVIEW_DECISION_STATUS_MAP[decision];
+
+    return {
+      feedbackId: String(row['feedbackId'] ?? ''),
+      originalText: String(row['originalText'] ?? ''),
+      decision,
+      mode: String(row['mode']) as AutoReviewMode,
+      score,
+      reasons,
+      humanStatus,
+      shadowStatus,
+      divergent,
+      reviewVersion: String(row['reviewVersion'] ?? ''),
+      evaluatedAt: String(row['evaluatedAt'] ?? ''),
+      createdAt: String(row['createdAt'] ?? ''),
+    };
+  }
+
+  private parseJson<T>(value: unknown, fallback: T): T {
+    if (value && typeof value === 'object') {
+      return value as T;
+    }
+
+    if (typeof value !== 'string') {
+      return fallback;
+    }
+
+    try {
+      return JSON.parse(value) as T;
+    } catch {
+      return fallback;
+    }
   }
 
   private getErrorMessage(error: unknown): string {

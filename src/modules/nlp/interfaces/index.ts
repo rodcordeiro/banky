@@ -78,6 +78,49 @@ export interface AutoReviewResult {
   evaluatedAt: string;
 }
 
+export type AutoReviewReportSortBy = 'createdAt' | 'score' | 'divergence';
+
+export interface AutoReviewReportFilters {
+  page?: number;
+  limit?: number;
+  mode?: AutoReviewMode;
+  decision?: AutoReviewDecision;
+  minScore?: number;
+  maxScore?: number;
+  from?: string;
+  to?: string;
+  divergence?: boolean;
+  sortBy?: AutoReviewReportSortBy;
+  order?: 'ASC' | 'DESC';
+}
+
+export interface AutoReviewReportItem {
+  feedbackId: string;
+  originalText: string;
+  decision: AutoReviewDecision;
+  mode: AutoReviewMode;
+  score: number;
+  reasons: AutoReviewReason[];
+  humanStatus: FeedbackStatus;
+  shadowStatus: FeedbackStatus;
+  divergent: boolean;
+  reviewVersion: string;
+  evaluatedAt: string;
+  createdAt: string;
+}
+
+export interface AutoReviewReportResult {
+  items: AutoReviewReportItem[];
+  meta: {
+    currentPage: number;
+    itemCount: number;
+    itemsPerPage: number;
+    totalItems: number;
+    totalPages?: number;
+    hasNext: boolean;
+  };
+}
+
 export interface AutoReviewThresholds {
   approve: number;
   correct: number;

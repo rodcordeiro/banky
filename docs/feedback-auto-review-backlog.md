@@ -268,12 +268,18 @@ Persistencia e cron adotados:
 
 #### AUTO-010 - Criar relatorio operacional inicial
 
-- Definir filtros: periodo, owner, decisao, modo e score.
-- Retornar feedbackId, texto, decisao, score e reasons.
-- Expor diferenca entre decisao shadow e status humano.
-- Ordenar por menor score ou divergencia.
-- Restringir acesso a usuario autenticado.
-- Documentar contrato caso vire endpoint.
+- [x] Definir filtros: periodo, owner, decisao, modo e score.
+- [x] Retornar feedbackId, texto, decisao, score e reasons.
+- [x] Expor diferenca entre decisao shadow e status humano.
+- [x] Ordenar por menor score ou divergencia.
+- [x] Restringir acesso a usuario autenticado.
+- [x] Documentar contrato caso vire endpoint.
+
+Contrato adotado:
+
+- endpoint autenticado `GET /nlp/auto-review/report`
+- filtros por `mode`, `decision`, `minScore`, `maxScore`, `from`, `to`, `divergence`, `sortBy`, `order`, `page` e `limit`
+- retorno com `feedbackId`, `originalText`, `decision`, `score`, `reasons`, `humanStatus`, `shadowStatus` e `divergent`
 
 ### Passo a passo
 

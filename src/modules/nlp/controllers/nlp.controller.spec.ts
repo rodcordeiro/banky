@@ -12,11 +12,14 @@ describe('NlpController', () => {
     trainClassifiers: jest.fn(),
     createTransactionFromFeedback: jest.fn(),
   };
+  const shadowService = {
+    buildOperationalReport: jest.fn(),
+  };
 
   let controller: NlpController;
 
   beforeEach(() => {
-    controller = new NlpController(service as never);
+    controller = new NlpController(service as never, shadowService as never);
     jest.clearAllMocks();
   });
 
@@ -103,6 +106,24 @@ describe('NlpController', () => {
     expect(service.createTransactionFromFeedback).toHaveBeenCalledWith(
       'feedback-id',
       owner,
+    );
+  });
+
+  it('returns the operational auto review report for the authenticated owner', async () => {
+    const query = {
+      page: 1,
+      limit: 10,
+      sortBy: 'score' as const,
+      order: 'DESC' as const,
+    };
+    const report = { items: [], meta: { currentPage: 1 } };
+    shadowService.buildOperationalReport.mockResolvedValue(report);
+
+    await expect(controller.autoReviewReport(req, query)).resolves.toBe(report);
+
+    expect(shadowService.buildOperationalReport).toHaveBeenCalledWith(
+      owner,
+      query,
     );
   });
 });

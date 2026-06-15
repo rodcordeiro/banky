@@ -17,6 +17,7 @@ describe('FeedbackAutoReviewShadowService', () => {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    createQueryBuilder: jest.fn(),
   };
 
   const nlpService = {
@@ -103,5 +104,72 @@ describe('FeedbackAutoReviewShadowService', () => {
 
     expect(nlpService.evaluateFeedbackAutoReview).not.toHaveBeenCalled();
     expect(historyRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('builds an operational report with divergence and human status', async () => {
+    const rawRows = [
+      {
+        feedbackId: 'feedback-id',
+        originalText: 'Conta de mercado',
+        mode: AutoReviewMode.shadow,
+        decision: AutoReviewDecision.approve,
+        score: '1',
+        reasons: JSON.stringify([
+          {
+            code: 'all_fields_valid',
+            message: 'Feedback aprovado sem divergencias relevantes.',
+            severity: 'info',
+            field: 'overall',
+          },
+        ]),
+        reviewVersion: 'auto-review-shadow-v1',
+        evaluatedAt: '2026-06-15T10:00:00.000Z',
+        createdAt: '2026-06-15T10:00:00.000Z',
+        humanStatus: FeedbackStatus.pending,
+        divergent: '1',
+      },
+    ];
+
+    const queryBuilder = {
+      innerJoin: jest.fn().mockReturnThis(),
+      select: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
+      where: jest.fn().mockReturnThis(),
+      andWhere: jest.fn().mockReturnThis(),
+      orderBy: jest.fn().mockReturnThis(),
+      clone: jest.fn().mockReturnThis(),
+      skip: jest.fn().mockReturnThis(),
+      take: jest.fn().mockReturnThis(),
+      getRawMany: jest.fn().mockResolvedValue(rawRows),
+      getCount: jest.fn().mockResolvedValue(1),
+    };
+
+    historyRepository.createQueryBuilder.mockReturnValue(queryBuilder);
+
+    const report = await service.buildOperationalReport('owner-id', {
+      page: 1,
+      limit: 10,
+      sortBy: 'divergence',
+      order: 'DESC',
+    });
+
+    expect(report.items).toEqual([
+      expect.objectContaining({
+        feedbackId: 'feedback-id',
+        originalText: 'Conta de mercado',
+        decision: AutoReviewDecision.approve,
+        mode: AutoReviewMode.shadow,
+        score: 1,
+        humanStatus: FeedbackStatus.pending,
+        shadowStatus: FeedbackStatus.validated,
+        divergent: true,
+      }),
+    ]);
+    expect(report.meta).toMatchObject({
+      currentPage: 1,
+      itemCount: 1,
+      totalItems: 1,
+      hasNext: false,
+    });
   });
 });
