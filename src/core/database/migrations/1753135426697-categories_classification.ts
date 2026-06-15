@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
-export class CategoriesClassification1753135426697
-  implements MigrationInterface
-{
+export class CategoriesClassification1753135426697 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.addColumn(
       'bk_tb_categories',

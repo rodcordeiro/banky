@@ -37,7 +37,7 @@ export class PaginationService {
         throw new BadRequestError();
       }
 
-      throw new Error(error);
+      throw error;
     }
   }
 
@@ -64,7 +64,8 @@ export class PaginationService {
     }
 
     const [items, total] = await Promise.all(promises);
-    const totalPages = Math.ceil(items.length / limit) || undefined;
+
+    const totalPages = Math.ceil(total / limit) || undefined;
     return {
       items,
       meta: {

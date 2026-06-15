@@ -9,7 +9,7 @@ import {
   Post,
   Put,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 
@@ -17,6 +17,7 @@ import { PaymentsService } from '../services/payments.service';
 import { CreatePaymentDTO } from '../dto/create.dto';
 
 @Auth()
+@ApiBearerAuth()
 @ApiTags('Payment types')
 @Controller({
   version: '1',

@@ -5,6 +5,7 @@ import { paginationParamsSchema } from '@/common/schemas/shared.schemas';
 
 const QueryTransactionsSchema = z.object({
   category: z.string().trim().optional(),
+  lastUpdated: z.string().optional(),
   ...paginationParamsSchema,
 });
 
@@ -14,6 +15,10 @@ export class QueryTransactionsDTO extends createZodDto(
   /** Transactions category */
   @ApiPropertyOptional()
   category?: string;
+  /** Transactions updated after this */
+  @ApiPropertyOptional()
+  lastUpdated?: string;
+
   /**
    *Limite data of the paginate transactions.
    *@example 100

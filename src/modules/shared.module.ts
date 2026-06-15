@@ -8,6 +8,7 @@ import { AccountsModule } from './accounts/accounts.module';
 import { CategoriesModule } from './categories/categories.module';
 import { TransactionsModule } from './transactions/transactions.module';
 import { ParametersModule } from './parameters/parameters.module';
+import { NlpModule } from './nlp/nlp.module';
 @Module({
   imports: [
     HealthModule,
@@ -18,6 +19,7 @@ import { ParametersModule } from './parameters/parameters.module';
     CategoriesModule,
     AccountsModule,
     TransactionsModule,
+    NlpModule,
   ],
   controllers: [],
   providers: [],
