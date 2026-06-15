@@ -1,6 +1,7 @@
 import { AccountsClassifier } from '../classifiers/account.classifier';
 import { CategoryClassifier } from '../classifiers/category.classifier';
 import { IntentClassifier, Intents } from '../classifiers/intent.classifier';
+import { FeedbackEntity } from '../entities/feedback.entity';
 import { ValueClassifier } from '../classifiers/value.classifier';
 import { NlpService } from './nlp.service';
 
@@ -62,6 +63,9 @@ describe('NlpService classifier orchestration', () => {
     store: jest.fn(),
     createTransfer: jest.fn(),
   };
+  const feedbackAutoReviewService = {
+    evaluate: jest.fn(),
+  };
 
   let service: NlpService;
 
@@ -86,6 +90,7 @@ describe('NlpService classifier orchestration', () => {
       categoryRepository as never,
       paginateService as never,
       transactionsService as never,
+      feedbackAutoReviewService as never,
     );
   });
 
@@ -255,5 +260,28 @@ describe('NlpService classifier orchestration', () => {
     ).rejects.toThrow('Conta ou categoria nao encontrada para o feedback.');
 
     expect(transactionsService.store).not.toHaveBeenCalled();
+  });
+
+  it('loads owner entities once when evaluating auto review', async () => {
+    const feedback = {
+      predictedIntent: Intents.CREATE,
+      predictedAccount: 'nubank digo',
+      predictedCategory: 'Mercado',
+      predictedValue: 10,
+      predictedDate: '2026-06-12T00:00:00.000Z',
+    } as FeedbackEntity;
+    const evaluation = { decision: 'approve' };
+    feedbackAutoReviewService.evaluate.mockResolvedValue(evaluation);
+
+    await expect(
+      service.evaluateFeedbackAutoReview(feedback, owner),
+    ).resolves.toBe(evaluation);
+
+    expect(accountRepository.find).toHaveBeenCalledTimes(1);
+    expect(categoryRepository.find).toHaveBeenCalledTimes(1);
+    expect(feedbackAutoReviewService.evaluate).toHaveBeenCalledWith(feedback, {
+      ownerAccounts: accounts.map(({ name }) => ({ name })),
+      ownerCategories: categories.map(({ name }) => ({ name })),
+    });
   });
 });

@@ -12,6 +12,7 @@ import {
   Intents,
 } from '@/modules/nlp/classifiers/intent.classifier';
 import { ValueClassifier } from '@/modules/nlp/classifiers/value.classifier';
+import { FeedbackAutoReviewService } from '@/modules/nlp/services/feedback-auto-review.service';
 import { TransactionsService } from '@/modules/transactions/services/transactions.service';
 import {
   BadRequestException,
@@ -31,7 +32,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { SearchFeedbackDto } from '../dtos/search.dto';
 import { FeedbackEntity } from '../entities/feedback.entity';
-import { FeedbackStatus } from '../interfaces';
+import {
+  AutoReviewContext,
+  AutoReviewResult,
+  AutoReviewEntityReference,
+  FeedbackStatus,
+} from '../interfaces';
 
 interface AliasRule {
   patterns: string[];
@@ -95,6 +101,7 @@ export class NlpService {
 
     private readonly _paginateService: PaginationService,
     private readonly _transactionsService: TransactionsService,
+    private readonly _feedbackAutoReviewService: FeedbackAutoReviewService,
   ) {
     this.intentProcessor = new IntentClassifier();
     this.accountProcessor = new AccountsClassifier();
@@ -618,6 +625,23 @@ export class NlpService {
     });
   }
 
+  async evaluateFeedbackAutoReview(
+    feedback: FeedbackEntity,
+    owner: string,
+    context: Partial<AutoReviewContext> = {},
+  ): Promise<AutoReviewResult> {
+    const [ownerAccounts, ownerCategories] = await Promise.all([
+      this.listOwnerAccounts(owner),
+      this.listOwnerCategories(owner),
+    ]);
+
+    return this._feedbackAutoReviewService.evaluate(feedback, {
+      ...context,
+      ownerAccounts: this.toEntityReferences(ownerAccounts),
+      ownerCategories: this.toEntityReferences(ownerCategories),
+    });
+  }
+
   async Review(payload: Partial<FeedbackEntity>) {
     const existing = await this._repository.findOne({
       where: { id: payload.id },
@@ -785,5 +809,11 @@ export class NlpService {
       size: stats.size,
       model: JSON.parse(content),
     };
+  }
+
+  private toEntityReferences<T extends { name: string }>(
+    entities: T[],
+  ): AutoReviewEntityReference[] {
+    return entities.map(({ name }) => ({ name }));
   }
 }
