@@ -448,12 +448,12 @@ export class TrainingService {
     ENV_VARIABLES.NODE_ENV === 'production' ? PROD_CRON_TIME : DEV_CRON_TIME,
     { waitForCompletion: true },
   )
-  async train(fullTraining: boolean = true) {
+  async train(fullTraining: boolean = false) {
     this._logger.verbose('Starting training service');
 
     const classifiers = this.createModelClassifiers();
     const backups = await this.backupModels(classifiers);
-    const before = await this.evaluateModels();
+    const before = await this.evaluateExistingModels();
 
     try {
       await this.trainCandidate(classifiers);
@@ -463,6 +463,16 @@ export class TrainingService {
       this._nlpService.resetClassifiers();
 
       const after = await this.evaluateModels();
+
+      if (!before) {
+        this.logEvaluation('after', after);
+        this._logger.log(
+          `Training promoted: baseline models were not trained; seeded classifiers with evaluation score ${after.score.toFixed(
+            4,
+          )}.`,
+        );
+        return;
+      }
 
       this.logEvaluation('before', before);
       this.logEvaluation('after', after);
@@ -577,6 +587,32 @@ export class TrainingService {
       score: total ? passed / total : 0,
       failures,
     };
+  }
+
+  private async evaluateExistingModels(): Promise<EvaluationResult | null> {
+    try {
+      return await this.evaluateModels();
+    } catch (error) {
+      if (this.isNotTrainedError(error)) {
+        this._logger.warn(
+          'Baseline models are not trained; seeding classifiers before evaluation.',
+        );
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  private isNotTrainedError(error: unknown): boolean {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : String((error as { message?: unknown })?.message ?? error);
+
+    return /not trained/i.test(message);
   }
 
   private matchesExpected(actual: unknown, expected: unknown): boolean {
