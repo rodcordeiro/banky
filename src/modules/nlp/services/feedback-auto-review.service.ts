@@ -94,6 +94,10 @@ export class FeedbackAutoReviewService {
     this.scoreIntent(fieldScores, supportedIntent);
     this.scoreRequiredFields(fields, rule.requiredFields, fieldScores, reasons);
     this.scoreValue(fields, fieldScores, reasons);
+    const valueApprovalLimit = this.resolveValueApprovalLimit(
+      context.valueApprovalLimit,
+    );
+    this.scoreValueLimit(fields, fieldScores, reasons, valueApprovalLimit);
     this.scoreDate(fields, fieldScores, reasons);
 
     const ownerAccounts = context.ownerAccounts ?? [];
@@ -303,6 +307,31 @@ export class FeedbackAutoReviewService {
     if (valid) return;
 
     reasons.push(this.buildReason(AutoReviewRuleCode.invalidValue));
+  }
+
+  private scoreValueLimit(
+    fields: Record<AutoReviewField, string | number | undefined>,
+    fieldScores: AutoReviewFieldScores,
+    reasons: AutoReviewReason[],
+    limit: number,
+  ): void {
+    const value = fields.value;
+    const numericValue = typeof value === 'number' ? value : Number(value);
+    const valid = Number.isFinite(numericValue) && numericValue > 0;
+
+    if (!valid || numericValue <= limit) {
+      return;
+    }
+
+    reasons.push(
+      this.buildReason(AutoReviewReasonCode.valueAboveLimit, {
+        message: `Valor '${numericValue}' acima do limite '${limit}' para aprovacao automatica.`,
+        severity: AutoReviewReasonSeverity.warning,
+        field: 'value',
+      }),
+    );
+
+    fieldScores.value = fieldScores.value ?? AUTO_REVIEW_SCORE_MATCH;
   }
 
   private scoreDate(
@@ -617,5 +646,11 @@ export class FeedbackAutoReviewService {
       this.normalizeComparable(String(correctedValue)) !==
       this.normalizeComparable(String(predictedValue))
     );
+  }
+
+  private resolveValueApprovalLimit(limit?: number): number {
+    return Number.isFinite(limit) && (limit as number) > 0
+      ? (limit as number)
+      : AUTO_REVIEW_THRESHOLDS.maxAutoApprovalValue;
   }
 }

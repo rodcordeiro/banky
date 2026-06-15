@@ -73,6 +73,7 @@ describe('NLP auto review interfaces', () => {
       approve: 0.95,
       correct: 0.85,
       manualReview: 0.7,
+      maxAutoApprovalValue: 100,
     });
   });
 
@@ -90,6 +91,13 @@ describe('NLP auto review interfaces', () => {
       category: 'informative',
       severity: AutoReviewReasonSeverity.info,
       field: 'overall',
+    });
+    expect(
+      AUTO_REVIEW_REASON_CATALOG[AutoReviewReasonCode.valueAboveLimit],
+    ).toMatchObject({
+      category: 'invalidating',
+      severity: AutoReviewReasonSeverity.warning,
+      field: 'value',
     });
     expect(
       AUTO_REVIEW_REASON_CATALOG[AutoReviewRuleCode.invalidValue],

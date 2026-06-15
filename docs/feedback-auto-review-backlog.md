@@ -330,12 +330,20 @@ Contrato adotado:
 
 #### AUTO-012 - Aplicar limites por valor
 
-- Definir limite maximo por configuracao.
-- Definir limite default conservador.
-- Bloquear autoaprovacao acima do limite.
-- Permitir shadow acima do limite.
-- Registrar reason de valor acima do limite.
-- Testar limite abaixo, igual e acima.
+- [x] Definir limite maximo por configuracao.
+- [x] Definir limite default conservador.
+- [x] Bloquear autoaprovacao acima do limite.
+- [x] Permitir shadow acima do limite.
+- [x] Registrar reason de valor acima do limite.
+- [x] Testar limite abaixo, igual e acima.
+
+Contrato adotado:
+
+- limite default conservador de `100`;
+- valores `<= 100` podem seguir para aprovacao automatica, se os demais guardrails passarem;
+- valores acima do limite geram reason `value_above_limit` e caem em `manual_review`;
+- o limite pode ser sobrescrito por `valueApprovalLimit` no contexto de avaliacao, se necessario;
+- modo `shadow` continua avaliando normalmente para fins de auditoria e comparacao.
 
 #### AUTO-013 - Criar fluxo de autoaprovacao controlada
 

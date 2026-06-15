@@ -29,6 +29,7 @@ export enum AutoReviewReasonCode {
   allFieldsValid = 'all_fields_valid',
   correctionsSuggested = 'corrections_suggested',
   aliasCorrectionSuggested = 'alias_correction_suggested',
+  valueAboveLimit = 'value_above_limit',
   lowConfidence = 'low_confidence',
 }
 
@@ -126,6 +127,7 @@ export interface AutoReviewThresholds {
   approve: number;
   correct: number;
   manualReview: number;
+  maxAutoApprovalValue: number;
 }
 
 export interface AutoReviewEntityReference {
@@ -136,6 +138,7 @@ export interface AutoReviewContext {
   mode?: AutoReviewMode;
   reviewVersion?: string;
   evaluatedAt?: Date;
+  valueApprovalLimit?: number;
   ownerAccounts?: AutoReviewEntityReference[];
   ownerCategories?: AutoReviewEntityReference[];
 }
@@ -154,6 +157,7 @@ export const AUTO_REVIEW_THRESHOLDS: AutoReviewThresholds = {
   approve: 0.95,
   correct: 0.85,
   manualReview: 0.7,
+  maxAutoApprovalValue: 100,
 };
 
 export type AutoReviewIntent = 'create' | 'transfer';
@@ -252,6 +256,13 @@ export const AUTO_REVIEW_REASON_CATALOG: Record<
     severity: AutoReviewReasonSeverity.info,
     message: 'Alias conhecido sugere correcao segura.',
     field: 'overall',
+  },
+  [AutoReviewReasonCode.valueAboveLimit]: {
+    code: AutoReviewReasonCode.valueAboveLimit,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.warning,
+    message: 'Valor acima do limite conservador para aprovacao automatica.',
+    field: 'value',
   },
   [AutoReviewReasonCode.lowConfidence]: {
     code: AutoReviewReasonCode.lowConfidence,

@@ -14,7 +14,7 @@ describe('FeedbackAutoReviewService', () => {
       predictedIntent: 'create',
       predictedAccount: 'Nubank Digo',
       predictedCategory: 'Mercado',
-      predictedValue: 120.39,
+      predictedValue: 99.99,
       predictedDate: '2026-06-15T00:00:00.000Z',
     }) as FeedbackEntity;
 
@@ -104,7 +104,7 @@ describe('FeedbackAutoReviewService', () => {
       predictedIntent: 'create',
       correctedAccount: 'Nubank Yah',
       predictedCategory: 'Mercado',
-      predictedValue: 120.39,
+      predictedValue: 99.99,
       predictedDate: '2026-06-15T00:00:00.000Z',
     } as FeedbackEntity;
 
@@ -139,7 +139,7 @@ describe('FeedbackAutoReviewService', () => {
       predictedIntent: 'create',
       predictedAccount: 'Conta Externa',
       predictedCategory: 'Categoria Externa',
-      predictedValue: 120.39,
+      predictedValue: 99.99,
       predictedDate: '2026-06-15T00:00:00.000Z',
     } as FeedbackEntity;
 
@@ -176,6 +176,54 @@ describe('FeedbackAutoReviewService', () => {
     });
     expect(result.score).toBe(1);
   });
+
+  it.each([
+    ['below limit', 99.99, AutoReviewDecision.approve],
+    ['equal limit', 100, AutoReviewDecision.approve],
+    ['above limit', 100.01, AutoReviewDecision.manualReview],
+  ])(
+    'applies the default value limit for automatic approval when value is %s',
+    (_, value, decision) => {
+      const result = service.evaluate(
+        {
+          originalText: 'Pagamento validado no mercado',
+          predictedIntent: 'create',
+          predictedAccount: 'Nubank Digo',
+          predictedCategory: 'Mercado',
+          predictedValue: value,
+          predictedDate: '2026-06-15T00:00:00.000Z',
+        } as FeedbackEntity,
+        {
+          ownerAccounts: [{ name: 'Nubank Digo' }],
+          ownerCategories: [{ name: 'Mercado' }],
+        },
+      );
+
+      expect(result.decision).toBe(decision);
+
+      if (value > 100) {
+        expect(result.reasons).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              code: 'value_above_limit',
+              severity: AutoReviewReasonSeverity.warning,
+              field: 'value',
+            }),
+          ]),
+        );
+        return;
+      }
+
+      expect(result.reasons).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            code: 'all_fields_valid',
+            severity: AutoReviewReasonSeverity.info,
+          }),
+        ]),
+      );
+    },
+  );
 
   it('does not suggest alias corrections when the owner does not have the target entity', () => {
     const feedback = {
