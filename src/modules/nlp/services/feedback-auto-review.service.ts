@@ -20,6 +20,12 @@ import {
   AUTO_REVIEW_THRESHOLDS,
   FeedbackStatus,
 } from '../interfaces';
+import {
+  ACCOUNT_ALIASES,
+  CATEGORY_ALIASES,
+  AliasRule,
+  resolveAliasMatch,
+} from '../utils/alias.rules';
 
 const DEFAULT_REVIEW_VERSION = 'auto-review-v1';
 const DEFAULT_MODE = AutoReviewMode.shadow;
@@ -41,7 +47,9 @@ export class FeedbackAutoReviewService {
     const fieldScores: AutoReviewFieldScores = {};
     const rawIntent =
       feedback.correctedIntent?.trim() ?? feedback.predictedIntent?.trim();
-    const suggestedCorrections = this.extractSuggestedCorrections(feedback);
+    const suggestedCorrections: AutoReviewSuggestedCorrections = {
+      ...(this.extractSuggestedCorrections(feedback) ?? {}),
+    };
 
     if (!rawIntent) {
       reasons.push(this.buildReason(AutoReviewRuleCode.missingIntent));
@@ -90,22 +98,31 @@ export class FeedbackAutoReviewService {
 
     const ownerAccounts = context.ownerAccounts ?? [];
     const ownerCategories = context.ownerCategories ?? [];
+    let aliasCorrectionApplied = false;
 
     if (supportedIntent === 'create') {
-      this.scoreEntityField(
-        'account',
-        fields.account,
-        ownerAccounts,
-        fieldScores,
-        reasons,
-      );
-      this.scoreEntityField(
-        'category',
-        fields.category,
-        ownerCategories,
-        fieldScores,
-        reasons,
-      );
+      aliasCorrectionApplied =
+        this.scoreEntityField(
+          'account',
+          fields.account,
+          ownerAccounts,
+          fieldScores,
+          reasons,
+          feedback.originalText,
+          ACCOUNT_ALIASES,
+          suggestedCorrections,
+        ) || aliasCorrectionApplied;
+      aliasCorrectionApplied =
+        this.scoreEntityField(
+          'category',
+          fields.category,
+          ownerCategories,
+          fieldScores,
+          reasons,
+          feedback.originalText,
+          CATEGORY_ALIASES,
+          suggestedCorrections,
+        ) || aliasCorrectionApplied;
     }
 
     if (supportedIntent === 'transfer') {
@@ -127,8 +144,22 @@ export class FeedbackAutoReviewService {
     }
 
     const score = this.calculateScore(fieldScores);
-    const decision = this.decide(reasons, suggestedCorrections, score);
-    this.ensureDecisionReason(reasons, decision, score, suggestedCorrections);
+    const resolvedSuggestedCorrections = Object.keys(suggestedCorrections)
+      .length
+      ? suggestedCorrections
+      : undefined;
+    const decision = this.decide(
+      reasons,
+      resolvedSuggestedCorrections,
+      score,
+      aliasCorrectionApplied,
+    );
+    this.ensureDecisionReason(
+      reasons,
+      decision,
+      score,
+      resolvedSuggestedCorrections,
+    );
 
     return this.buildResult({
       decision,
@@ -137,7 +168,7 @@ export class FeedbackAutoReviewService {
       evaluatedAt,
       reasons,
       fieldScores,
-      suggestedCorrections,
+      suggestedCorrections: resolvedSuggestedCorrections,
       score,
     });
   }
@@ -297,9 +328,34 @@ export class FeedbackAutoReviewService {
     references: AutoReviewEntityReference[],
     fieldScores: AutoReviewFieldScores,
     reasons: AutoReviewReason[],
-  ): void {
+    text?: string,
+    aliases?: AliasRule[],
+    suggestedCorrections?: AutoReviewSuggestedCorrections,
+  ): boolean {
     if (!this.hasValue(value)) {
-      return;
+      return false;
+    }
+
+    const aliasMatch =
+      text && aliases?.length
+        ? resolveAliasMatch(text, references, aliases)
+        : undefined;
+
+    if (aliasMatch && this.hasMeaningfulDifference(value, aliasMatch.target)) {
+      fieldScores[field] = AUTO_REVIEW_SCORE_MATCH;
+
+      if (suggestedCorrections) {
+        suggestedCorrections[field] = aliasMatch.target as never;
+      }
+
+      reasons.push(
+        this.buildReason(AutoReviewReasonCode.aliasCorrectionSuggested, {
+          field,
+          message: `Alias '${aliasMatch.pattern}' sugere '${aliasMatch.target}' para o campo '${field}'.`,
+        }),
+      );
+
+      return true;
     }
 
     const normalizedValue = this.normalizeComparable(String(value));
@@ -311,13 +367,15 @@ export class FeedbackAutoReviewService {
       ? AUTO_REVIEW_SCORE_MATCH
       : AUTO_REVIEW_SCORE_PARTIAL_MATCH;
 
-    if (match) return;
+    if (match) return false;
 
     reasons.push(
       this.buildReason(AutoReviewRuleCode.entityNotFound, {
         message: `Entidade '${value}' nao encontrada para o owner.`,
       }),
     );
+
+    return false;
   }
 
   private scoreTransferAccounts(
@@ -350,6 +408,7 @@ export class FeedbackAutoReviewService {
     reasons: AutoReviewReason[],
     suggestedCorrections?: AutoReviewSuggestedCorrections,
     score?: number,
+    aliasCorrectionApplied?: boolean,
   ): AutoReviewDecision {
     if (
       reasons.some(
@@ -365,6 +424,10 @@ export class FeedbackAutoReviewService {
       )
     ) {
       return AutoReviewDecision.manualReview;
+    }
+
+    if (aliasCorrectionApplied) {
+      return AutoReviewDecision.correct;
     }
 
     if (

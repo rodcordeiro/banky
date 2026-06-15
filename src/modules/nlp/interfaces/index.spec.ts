@@ -85,6 +85,13 @@ describe('NLP auto review interfaces', () => {
       field: 'overall',
     });
     expect(
+      AUTO_REVIEW_REASON_CATALOG[AutoReviewReasonCode.aliasCorrectionSuggested],
+    ).toMatchObject({
+      category: 'informative',
+      severity: AutoReviewReasonSeverity.info,
+      field: 'overall',
+    });
+    expect(
       AUTO_REVIEW_REASON_CATALOG[AutoReviewRuleCode.invalidValue],
     ).toMatchObject({
       category: 'invalidating',

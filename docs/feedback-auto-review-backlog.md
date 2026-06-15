@@ -313,13 +313,20 @@ Objetivo: permitir que o avaliador sugira correcoes seguras e aprove automaticam
 
 #### AUTO-011 - Sugerir correcao por alias
 
-- Reutilizar aliases de conta existentes.
-- Reutilizar aliases de categoria existentes.
-- Identificar divergencia entre predito e alias deterministico.
-- Gerar `suggestedCorrections`.
-- Gerar reason de correcao por alias.
-- Nao sugerir correcao se entidade nao existir para o owner.
-- Cobrir alias conhecido e alias inexistente em teste.
+- [x] Reutilizar aliases de conta existentes.
+- [x] Reutilizar aliases de categoria existentes.
+- [x] Identificar divergencia entre predito e alias deterministico.
+- [x] Gerar `suggestedCorrections`.
+- [x] Gerar reason de correcao por alias.
+- [x] Nao sugerir correcao se entidade nao existir para o owner.
+- [x] Cobrir alias conhecido e alias inexistente em teste.
+
+Contrato adotado:
+
+- aliases de conta e categoria sao buscados no texto original do feedback;
+- quando o alias resolve uma entidade existente do owner, o autoavaliador sugere a correcao e retorna `correct`;
+- se o owner nao possui a entidade alvo, a sugestao nao e criada e o feedback continua em revisao humana;
+- reasons sao registradas com `alias_correction_suggested` e campo afetado.
 
 #### AUTO-012 - Aplicar limites por valor
 

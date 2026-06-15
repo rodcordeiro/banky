@@ -28,6 +28,7 @@ export type AutoReviewReasonScope = AutoReviewField | 'overall';
 export enum AutoReviewReasonCode {
   allFieldsValid = 'all_fields_valid',
   correctionsSuggested = 'corrections_suggested',
+  aliasCorrectionSuggested = 'alias_correction_suggested',
   lowConfidence = 'low_confidence',
 }
 
@@ -243,6 +244,13 @@ export const AUTO_REVIEW_REASON_CATALOG: Record<
     category: 'informative',
     severity: AutoReviewReasonSeverity.info,
     message: 'Feedback corrigido com sugestoes validas.',
+    field: 'overall',
+  },
+  [AutoReviewReasonCode.aliasCorrectionSuggested]: {
+    code: AutoReviewReasonCode.aliasCorrectionSuggested,
+    category: 'informative',
+    severity: AutoReviewReasonSeverity.info,
+    message: 'Alias conhecido sugere correcao segura.',
     field: 'overall',
   },
   [AutoReviewReasonCode.lowConfidence]: {

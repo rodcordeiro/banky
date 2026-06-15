@@ -133,6 +133,77 @@ describe('FeedbackAutoReviewService', () => {
     expect(result.score).toBe(1);
   });
 
+  it('marks feedback as correct when the original text matches known aliases', () => {
+    const feedback = {
+      originalText: 'Paguei o nubank digo credito e assinei youtube premium',
+      predictedIntent: 'create',
+      predictedAccount: 'Conta Externa',
+      predictedCategory: 'Categoria Externa',
+      predictedValue: 120.39,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'Crédito digo' }],
+      ownerCategories: [{ name: 'Serviços de streaming' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.correct);
+    expect(result.suggestedCorrections).toEqual({
+      account: 'Crédito digo',
+      category: 'Serviços de streaming',
+    });
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'alias_correction_suggested',
+          severity: AutoReviewReasonSeverity.info,
+          field: 'account',
+        }),
+        expect.objectContaining({
+          code: 'alias_correction_suggested',
+          severity: AutoReviewReasonSeverity.info,
+          field: 'category',
+        }),
+      ]),
+    );
+    expect(result.fieldScores).toMatchObject({
+      intent: 1,
+      account: 1,
+      category: 1,
+      value: 1,
+      date: 1,
+    });
+    expect(result.score).toBe(1);
+  });
+
+  it('does not suggest alias corrections when the owner does not have the target entity', () => {
+    const feedback = {
+      originalText: 'Paguei o nubank digo credito e assinei youtube premium',
+      predictedIntent: 'create',
+      predictedAccount: 'Conta Externa',
+      predictedCategory: 'Categoria Externa',
+      predictedValue: 120.39,
+      predictedDate: '2026-06-15T00:00:00.000Z',
+    } as FeedbackEntity;
+
+    const result = service.evaluate(feedback, {
+      ownerAccounts: [{ name: 'Outra Conta' }],
+      ownerCategories: [{ name: 'Outra Categoria' }],
+    });
+
+    expect(result.decision).toBe(AutoReviewDecision.manualReview);
+    expect(result.suggestedCorrections).toBeUndefined();
+    expect(result.reasons).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: 'entity_not_found',
+          severity: AutoReviewReasonSeverity.warning,
+        }),
+      ]),
+    );
+  });
+
   it('approves a valid transfer feedback with known owner entities', () => {
     const result = service.evaluate(validTransferFeedback(), {
       ownerAccounts: [{ name: 'santander' }, { name: 'nubank yah' }],
