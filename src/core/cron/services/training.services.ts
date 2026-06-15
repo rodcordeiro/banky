@@ -443,12 +443,11 @@ export class TrainingService {
     await this.train(true);
   }
 
-  // @Cron('0 0 * * * *', { waitForCompletion: true })
   @Cron(
     ENV_VARIABLES.NODE_ENV === 'production' ? PROD_CRON_TIME : DEV_CRON_TIME,
     { waitForCompletion: true },
   )
-  async train(fullTraining: boolean = false) {
+  async train(fullTraining: boolean = ENV_VARIABLES.NODE_ENV !== 'production') {
     this._logger.verbose('Starting training service');
 
     const classifiers = this.createModelClassifiers();
