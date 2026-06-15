@@ -347,14 +347,23 @@ Contrato adotado:
 
 #### AUTO-013 - Criar fluxo de autoaprovacao controlada
 
-- Criar metodo `applyAutoReviewDecision`.
-- Exigir decisao `approve`.
-- Exigir modo `automatic`.
-- Revalidar guardrails antes de salvar.
-- Alterar status para `validated`.
-- Registrar historico como `applied`.
-- Nao criar transacao neste metodo.
-- Testar idempotencia.
+- [x] Criar metodo `applyAutoReviewDecision`.
+- [x] Exigir decisao `approve`.
+- [x] Exigir modo `automatic`.
+- [x] Revalidar guardrails antes de salvar.
+- [x] Alterar status para `validated`.
+- [x] Registrar historico como `applied`.
+- [x] Nao criar transacao neste metodo.
+- [x] Testar idempotencia.
+
+Contrato adotado:
+
+- `applyAutoReviewDecision` recebe feedback e avaliacao ja calculada;
+- a aplicacao so ocorre quando a avaliacao e `approve` em modo `automatic`;
+- o feedback precisa estar em `pending` e sem correcao humana existente;
+- a aplicacao altera apenas `status` para `validated`;
+- o historico automatico e persistido com `applied=true` e `appliedAt`;
+- chamadas repetidas para a mesma combinacao de `feedbackId + mode + reviewVersion` nao reaplicam a decisao.
 
 #### AUTO-014 - Criar fluxo de autocorrecao controlada
 

@@ -1,6 +1,8 @@
 import {
   AutoReviewDecision,
   AutoReviewMode,
+  AutoReviewReasonSeverity,
+  AutoReviewResult,
   FeedbackStatus,
 } from '../interfaces';
 import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
@@ -11,12 +13,14 @@ import { NlpService } from './nlp.service';
 describe('FeedbackAutoReviewShadowService', () => {
   const feedbackRepository = {
     find: jest.fn(),
+    save: jest.fn(),
   };
 
   const historyRepository = {
     findOne: jest.fn(),
     create: jest.fn(),
     save: jest.fn(),
+    merge: jest.fn(),
     createQueryBuilder: jest.fn(),
   };
 
@@ -171,5 +175,132 @@ describe('FeedbackAutoReviewShadowService', () => {
       totalItems: 1,
       hasNext: false,
     });
+  });
+
+  it('applies an automatic approval and records applied history', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+      originalText: 'Pagamento normal',
+    } as FeedbackEntity;
+    const evaluation: AutoReviewResult = {
+      decision: AutoReviewDecision.approve,
+      mode: AutoReviewMode.automatic,
+      score: 1,
+      fieldScores: { intent: 1, account: 1, category: 1, value: 1, date: 1 },
+      reasons: [
+        {
+          code: 'all_fields_valid',
+          message: 'Feedback aprovado sem divergencias relevantes.',
+          severity: AutoReviewReasonSeverity.info,
+          field: 'overall',
+        },
+      ],
+      suggestedCorrections: undefined,
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-15T10:00:00.000Z',
+    };
+
+    historyRepository.findOne.mockResolvedValue(null);
+    historyRepository.create.mockImplementation(value => value);
+    historyRepository.merge.mockImplementation((existing, value) => ({
+      ...existing,
+      ...value,
+    }));
+    historyRepository.save.mockImplementation(async value => value);
+    feedbackRepository.save.mockImplementation(async value => value);
+
+    await expect(
+      service.applyAutoReviewDecision(feedback, evaluation),
+    ).resolves.toEqual(
+      expect.objectContaining({
+        status: FeedbackStatus.validated,
+      }),
+    );
+
+    expect(feedbackRepository.save).toHaveBeenCalledWith({
+      ...feedback,
+      status: FeedbackStatus.validated,
+    });
+    expect(historyRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        feedbackId: feedback.id,
+        owner: feedback.owner,
+        mode: AutoReviewMode.automatic,
+        decision: AutoReviewDecision.approve,
+        applied: true,
+        reviewVersion: 'auto-review-automatic-v1',
+      }),
+    );
+  });
+
+  it('does not apply an automatic approval twice for the same review version', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+      originalText: 'Pagamento normal',
+    } as FeedbackEntity;
+    const evaluation: AutoReviewResult = {
+      decision: AutoReviewDecision.approve,
+      mode: AutoReviewMode.automatic,
+      score: 1,
+      fieldScores: { intent: 1, account: 1, category: 1, value: 1, date: 1 },
+      reasons: [
+        {
+          code: 'all_fields_valid',
+          message: 'Feedback aprovado sem divergencias relevantes.',
+          severity: AutoReviewReasonSeverity.info,
+          field: 'overall',
+        },
+      ],
+      suggestedCorrections: undefined,
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-15T10:00:00.000Z',
+    };
+
+    historyRepository.findOne.mockResolvedValue({ applied: true });
+
+    await expect(
+      service.applyAutoReviewDecision(feedback, evaluation),
+    ).resolves.toBeNull();
+
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
+    expect(historyRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('blocks automatic approval when human corrections already exist', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+      correctedAccount: 'Conta Humana',
+      originalText: 'Pagamento normal',
+    } as FeedbackEntity;
+    const evaluation: AutoReviewResult = {
+      decision: AutoReviewDecision.approve,
+      mode: AutoReviewMode.automatic,
+      score: 1,
+      fieldScores: { intent: 1, account: 1, category: 1, value: 1, date: 1 },
+      reasons: [
+        {
+          code: 'all_fields_valid',
+          message: 'Feedback aprovado sem divergencias relevantes.',
+          severity: AutoReviewReasonSeverity.info,
+          field: 'overall',
+        },
+      ],
+      suggestedCorrections: undefined,
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-15T10:00:00.000Z',
+    };
+
+    await expect(
+      service.applyAutoReviewDecision(feedback, evaluation),
+    ).resolves.toBeNull();
+
+    expect(historyRepository.findOne).not.toHaveBeenCalled();
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
   });
 });

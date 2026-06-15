@@ -57,4 +57,16 @@ export class FeedbackAutoReviewEntity extends BaseEntity {
     type: 'datetime',
   })
   evaluatedAt: string;
+
+  @Column({
+    type: 'boolean',
+    default: false,
+  })
+  applied: boolean = false;
+
+  @Column({
+    type: 'datetime',
+    nullable: true,
+  })
+  appliedAt?: string | null;
 }

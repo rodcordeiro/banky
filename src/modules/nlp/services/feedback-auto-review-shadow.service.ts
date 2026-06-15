@@ -8,9 +8,12 @@ import {
   AUTO_REVIEW_DECISION_STATUS_MAP,
   AutoReviewDecision,
   AutoReviewMode,
+  AutoReviewResult,
   AutoReviewReportFilters,
   AutoReviewReportResult,
   AutoReviewReportItem,
+  AutoReviewReasonSeverity,
+  AUTO_REVIEW_THRESHOLDS,
   FeedbackStatus,
 } from '../interfaces';
 import { NlpService } from './nlp.service';
@@ -109,6 +112,66 @@ export class FeedbackAutoReviewShadowService {
     });
 
     return this._feedbackAutoReviewRepository.save(history);
+  }
+
+  async applyAutoReviewDecision(
+    feedback: FeedbackEntity,
+    evaluation: AutoReviewResult,
+  ): Promise<FeedbackEntity | null> {
+    if (!this.canApplyAutoReviewDecision(feedback, evaluation)) {
+      return null;
+    }
+
+    const existing = await this._feedbackAutoReviewRepository.findOne({
+      where: {
+        feedbackId: feedback.id,
+        mode: AutoReviewMode.automatic,
+        reviewVersion: evaluation.reviewVersion,
+      },
+    });
+
+    if (existing?.applied) {
+      return null;
+    }
+
+    const appliedAt = new Date().toISOString();
+    const savedFeedback = await this._feedbackRepository.save({
+      ...feedback,
+      status: FeedbackStatus.validated,
+    });
+
+    const history = existing
+      ? this._feedbackAutoReviewRepository.merge(existing, {
+          owner: feedback.owner,
+          mode: AutoReviewMode.automatic,
+          decision: AutoReviewDecision.approve,
+          score: evaluation.score,
+          fieldScores: evaluation.fieldScores,
+          reasons: evaluation.reasons,
+          suggestedCorrections: evaluation.suggestedCorrections ?? null,
+          reviewVersion: evaluation.reviewVersion,
+          evaluatedAt: evaluation.evaluatedAt,
+          applied: true,
+          appliedAt,
+        })
+      : this._feedbackAutoReviewRepository.create({
+          feedbackId: feedback.id,
+          owner: feedback.owner,
+          mode: AutoReviewMode.automatic,
+          decision: AutoReviewDecision.approve,
+          score: evaluation.score,
+          fieldScores: evaluation.fieldScores,
+          reasons: evaluation.reasons,
+          suggestedCorrections: evaluation.suggestedCorrections ?? null,
+          reviewVersion: evaluation.reviewVersion,
+          evaluatedAt: evaluation.evaluatedAt,
+          applied: true,
+          appliedAt,
+        });
+
+    const savedHistory = await this._feedbackAutoReviewRepository.save(history);
+
+    return savedHistory.applied ? savedFeedback : null;
   }
 
   async buildOperationalReport(
@@ -238,6 +301,50 @@ export class FeedbackAutoReviewShadowService {
       ) THEN 0
       ELSE 1
     END`;
+  }
+
+  private canApplyAutoReviewDecision(
+    feedback: FeedbackEntity,
+    evaluation: AutoReviewResult,
+  ): boolean {
+    if (evaluation.mode !== AutoReviewMode.automatic) {
+      return false;
+    }
+
+    if (evaluation.decision !== AutoReviewDecision.approve) {
+      return false;
+    }
+
+    if (evaluation.score < AUTO_REVIEW_THRESHOLDS.approve) {
+      return false;
+    }
+
+    if (feedback.status !== FeedbackStatus.pending) {
+      return false;
+    }
+
+    if (this.hasHumanCorrections(feedback)) {
+      return false;
+    }
+
+    return !evaluation.reasons.some(
+      reason => reason.severity !== AutoReviewReasonSeverity.info,
+    );
+  }
+
+  private hasHumanCorrections(feedback: FeedbackEntity): boolean {
+    return [
+      feedback.correctedIntent,
+      feedback.correctedAccount,
+      feedback.correctedOriginAccount,
+      feedback.correctedDestinyAccount,
+      feedback.correctedCategory,
+      feedback.correctedValue,
+      feedback.correctedDate,
+    ].some(
+      value =>
+        value !== undefined && value !== null && String(value).trim() !== '',
+    );
   }
 
   private mapReportRow(row: Record<string, unknown>): AutoReviewReportItem {
