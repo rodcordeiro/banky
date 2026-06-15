@@ -62,6 +62,18 @@ export interface AutoReviewResult {
   evaluatedAt: string;
 }
 
+export interface AutoReviewEntityReference {
+  name: string;
+}
+
+export interface AutoReviewContext {
+  mode?: AutoReviewMode;
+  reviewVersion?: string;
+  evaluatedAt?: Date;
+  ownerAccounts?: AutoReviewEntityReference[];
+  ownerCategories?: AutoReviewEntityReference[];
+}
+
 export const AUTO_REVIEW_DECISION_STATUS_MAP: Record<
   AutoReviewDecision,
   FeedbackStatus

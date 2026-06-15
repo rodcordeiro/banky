@@ -127,8 +127,8 @@ Objetivo: criar a fundacao do autoavaliador sem autonomia real. Ao final, o sist
 | --- | --- | --- | --- |
 | AUTO-001 | Definir contrato de decisao | Interfaces/enums para decisao, razoes e correcao sugerida | Implementado em `src/modules/nlp/interfaces/index.ts` |
 | AUTO-002 | Mapear regras por intent | Lista de regras para `create` e `transfer` | Implementado em `AUTO_REVIEW_INTENT_RULES` |
-| AUTO-003 | Criar `FeedbackAutoReviewService` | Service sem efeitos colaterais que recebe feedback e contexto | Service retorna decisao estruturada sem salvar nada |
-| AUTO-004 | Validar entidades do owner | Checagem de conta/categoria contra repositorios existentes | Feedback com entidade inexistente cai em `manual_review` ou `reject` |
+| AUTO-003 | Criar `FeedbackAutoReviewService` | Service sem efeitos colaterais que recebe feedback e contexto | Implementado em `src/modules/nlp/services/feedback-auto-review.service.ts` |
+| AUTO-004 | Validar entidades do owner | Checagem de conta/categoria contra repositorios existentes | Implementado em `NlpService.evaluateFeedbackAutoReview` |
 | AUTO-005 | Testar validacoes criticas | Testes unitarios das regras deterministicas | Casos de valor invalido, conta ausente e transferencia incompleta cobertos |
 
 ### Subtarefas
@@ -155,23 +155,23 @@ Objetivo: criar a fundacao do autoavaliador sem autonomia real. Ao final, o sist
 
 #### AUTO-003 - Criar `FeedbackAutoReviewService`
 
-- Criar service no modulo NLP.
-- Criar metodo `evaluate(feedback, owner)`.
-- Retornar sempre `AutoReviewResult`.
-- Nao salvar feedback no metodo `evaluate`.
-- Nao criar transacao.
-- Nao chamar treino de classificador.
-- Registrar testes para garantir ausencia de efeitos colaterais.
+- [x] Criar service no modulo NLP.
+- [x] Criar metodo `evaluate(feedback, owner)`.
+- [x] Retornar sempre `AutoReviewResult`.
+- [x] Nao salvar feedback no metodo `evaluate`.
+- [x] Nao criar transacao.
+- [x] Nao chamar treino de classificador.
+- [x] Registrar testes para garantir ausencia de efeitos colaterais.
 
 #### AUTO-004 - Validar entidades do owner
 
-- Buscar contas do owner uma vez.
-- Buscar categorias do owner uma vez.
-- Validar `predictedAccount` para `create`.
-- Validar `predictedCategory` para `create`.
-- Validar `predictedOriginAccount` para `transfer`.
-- Validar `predictedDestinyAccount` para `transfer`.
-- Retornar reason padronizada para entidade nao encontrada.
+- [x] Buscar contas do owner uma vez.
+- [x] Buscar categorias do owner uma vez.
+- [x] Validar `predictedAccount` para `create`.
+- [x] Validar `predictedCategory` para `create`.
+- [x] Validar `predictedOriginAccount` para `transfer`.
+- [x] Validar `predictedDestinyAccount` para `transfer`.
+- [x] Retornar reason padronizada para entidade nao encontrada.
 
 #### AUTO-005 - Testar validacoes criticas
 
