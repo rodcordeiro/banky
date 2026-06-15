@@ -242,13 +242,20 @@ Thresholds iniciais adotados:
 
 #### AUTO-008 - Implementar modo shadow
 
-- Criar `AutoReviewMode.shadow`.
-- Criar metodo de execucao shadow para feedback pendente.
-- Garantir que shadow nao altera `status`.
-- Garantir que shadow nao altera `corrected*`.
-- Criar entidade ou provider para historico de avaliacao.
-- Persistir resultado shadow no historico.
-- Tornar execucao idempotente por feedback e versao, quando aplicavel.
+- [x] Criar `AutoReviewMode.shadow`.
+- [x] Criar metodo de execucao shadow para feedback pendente.
+- [x] Garantir que shadow nao altera `status`.
+- [x] Garantir que shadow nao altera `corrected*`.
+- [x] Criar entidade ou provider para historico de avaliacao.
+- [x] Persistir resultado shadow no historico.
+- [x] Tornar execucao idempotente por feedback e versao, quando aplicavel.
+
+Persistencia e cron adotados:
+
+- tabela `bk_tb_feedback_auto_review`
+- job em modo shadow com batch por feedbacks `pending`
+- chave unica por `feedbackId + mode + reviewVersion`
+- registro sem alteracao do feedback original
 
 #### AUTO-009 - Registrar razoes de decisao
 
