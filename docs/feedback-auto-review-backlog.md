@@ -227,12 +227,18 @@ Objetivo: medir a qualidade das decisoes automaticas sem mudar o fluxo real de a
 
 #### AUTO-007 - Definir thresholds iniciais
 
-- Criar constantes de threshold.
-- Definir threshold minimo para `approve`.
-- Definir threshold minimo para `correct`.
-- Definir faixa de `manual_review`.
-- Definir regras que sempre vencem score.
-- Documentar thresholds no backlog ou doc operacional.
+- [x] Criar constantes de threshold.
+- [x] Definir threshold minimo para `approve`.
+- [x] Definir threshold minimo para `correct`.
+- [x] Definir faixa de `manual_review`.
+- [x] Definir regras que sempre vencem score.
+- [x] Documentar thresholds no backlog ou doc operacional.
+
+Thresholds iniciais adotados:
+
+- `approve`: `0.95`
+- `correct`: `0.85`
+- `manualReview`: `0.70`
 
 #### AUTO-008 - Implementar modo shadow
 

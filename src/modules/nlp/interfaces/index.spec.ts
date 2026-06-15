@@ -2,6 +2,7 @@ import {
   AUTO_REVIEW_GLOBAL_BLOCKERS,
   AUTO_REVIEW_INTENT_RULES,
   AUTO_REVIEW_DECISION_STATUS_MAP,
+  AUTO_REVIEW_THRESHOLDS,
   AutoReviewDecision,
   AutoReviewRuleCode,
   FeedbackStatus,
@@ -62,5 +63,13 @@ describe('NLP auto review interfaces', () => {
       AutoReviewRuleCode.invalidDate,
       AutoReviewRuleCode.entityNotFound,
     ]);
+  });
+
+  it('defines the initial score thresholds used by auto review decisions', () => {
+    expect(AUTO_REVIEW_THRESHOLDS).toEqual({
+      approve: 0.95,
+      correct: 0.85,
+      manualReview: 0.7,
+    });
   });
 });

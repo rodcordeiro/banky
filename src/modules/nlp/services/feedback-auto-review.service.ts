@@ -15,6 +15,7 @@ import {
   AutoReviewResult,
   AutoReviewRuleCode,
   AutoReviewSuggestedCorrections,
+  AUTO_REVIEW_THRESHOLDS,
   FeedbackStatus,
 } from '../interfaces';
 
@@ -132,8 +133,8 @@ export class FeedbackAutoReviewService {
       this.scoreTransferAccounts(fields, fieldScores, reasons);
     }
 
-    const decision = this.decide(reasons, suggestedCorrections);
     const score = this.calculateScore(fieldScores);
+    const decision = this.decide(reasons, suggestedCorrections, score);
 
     return this.buildResult({
       decision,
@@ -381,6 +382,7 @@ export class FeedbackAutoReviewService {
   private decide(
     reasons: AutoReviewReason[],
     suggestedCorrections?: AutoReviewSuggestedCorrections,
+    score?: number,
   ): AutoReviewDecision {
     if (
       reasons.some(
@@ -398,11 +400,23 @@ export class FeedbackAutoReviewService {
       return AutoReviewDecision.manualReview;
     }
 
-    if (suggestedCorrections && Object.keys(suggestedCorrections).length > 0) {
+    if (
+      suggestedCorrections &&
+      Object.keys(suggestedCorrections).length > 0 &&
+      (score ?? 0) >= AUTO_REVIEW_THRESHOLDS.correct
+    ) {
       return AutoReviewDecision.correct;
     }
 
-    return AutoReviewDecision.approve;
+    if ((score ?? 0) >= AUTO_REVIEW_THRESHOLDS.approve) {
+      return AutoReviewDecision.approve;
+    }
+
+    if ((score ?? 0) < AUTO_REVIEW_THRESHOLDS.manualReview) {
+      return AutoReviewDecision.manualReview;
+    }
+
+    return AutoReviewDecision.manualReview;
   }
 
   private calculateScore(fieldScores: AutoReviewFieldScores): number {

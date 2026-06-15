@@ -62,6 +62,12 @@ export interface AutoReviewResult {
   evaluatedAt: string;
 }
 
+export interface AutoReviewThresholds {
+  approve: number;
+  correct: number;
+  manualReview: number;
+}
+
 export interface AutoReviewEntityReference {
   name: string;
 }
@@ -82,6 +88,12 @@ export const AUTO_REVIEW_DECISION_STATUS_MAP: Record<
   [AutoReviewDecision.correct]: FeedbackStatus.corrected,
   [AutoReviewDecision.manualReview]: FeedbackStatus.pending,
   [AutoReviewDecision.reject]: FeedbackStatus.pending,
+};
+
+export const AUTO_REVIEW_THRESHOLDS: AutoReviewThresholds = {
+  approve: 0.95,
+  correct: 0.85,
+  manualReview: 0.7,
 };
 
 export type AutoReviewIntent = 'create' | 'transfer';
