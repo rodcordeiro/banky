@@ -1,5 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
-import { DeepPartial, FindOneOptions, Repository } from 'typeorm';
+import {
+  DeepPartial,
+  FindManyOptions,
+  FindOneOptions,
+  Repository,
+} from 'typeorm';
 
 export abstract class BaseService<Entity = any> {
   protected repository: Repository<Entity>;
@@ -8,9 +13,12 @@ export abstract class BaseService<Entity = any> {
     return await this.repository.find();
   }
 
-  async findBy(options: FindOneOptions<Entity>['where']) {
-    return await this.repository.findBy(options);
+  async findBy(options: FindManyOptions<Entity>) {
+    return await this.repository.find({
+      ...options,
+    });
   }
+
   async findOneBy(options: FindOneOptions<Entity>['where']) {
     try {
       const data = await this.repository.findOneOrFail({

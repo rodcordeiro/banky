@@ -17,6 +17,7 @@ export class CategoriesService extends BaseService {
   async listAll(owner: string) {
     return this._repository
       .createQueryBuilder('category')
+      .innerJoinAndSelect('category.owner', 'owner')
       .leftJoinAndSelect('category.subcategories', 'subcategory')
       .where('category.category IS NULL')
       .andWhere(`category.owner = '${owner}'`)

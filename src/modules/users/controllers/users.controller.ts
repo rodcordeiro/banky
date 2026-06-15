@@ -21,6 +21,6 @@ export class UsersControllers {
   }
   @Get('/me')
   async view(@Req() req: AuthenticatedRequest) {
-    return this._usersService.findBy({ id: req.user.id });
+    return this._usersService.findOneBy({ id: req.user.id });
   }
 }
