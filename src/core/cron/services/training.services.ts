@@ -8,8 +8,10 @@ import { CategoriesEntity } from '@/modules/categories/entities/categories.entit
 import { AccountsClassifier } from '@/modules/nlp/classifiers/account.classifier';
 import { CategoryClassifier } from '@/modules/nlp/classifiers/category.classifier';
 import { IntentClassifier } from '@/modules/nlp/classifiers/intent.classifier';
-import { intentSamples } from '@/modules/nlp/classifiers/samples/intent.samples';
-import { valueSamples } from '@/modules/nlp/classifiers/samples/value.samples';
+import {
+  intentSamples,
+  valueSamples,
+} from '@/modules/nlp/classifiers/samples/static-training.samples';
 import { ValueClassifier } from '@/modules/nlp/classifiers/value.classifier';
 import { NlpService } from '@/modules/nlp/services/nlp.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
