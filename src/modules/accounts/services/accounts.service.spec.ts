@@ -30,12 +30,12 @@ describe('AccountsService', () => {
 
   it('finds accounts by options', async () => {
     const accounts = [{ id: 'account-id' }];
-    const where = { owner: { id: 'user-id' } };
-    repository.findBy.mockResolvedValue(accounts);
+    const options = { where: { owner: { id: 'user-id' } } };
+    repository.find.mockResolvedValue(accounts);
 
-    await expect(service.findBy(where)).resolves.toBe(accounts);
+    await expect(service.findBy(options)).resolves.toBe(accounts);
 
-    expect(repository.findBy).toHaveBeenCalledWith(where);
+    expect(repository.find).toHaveBeenCalledWith(options);
   });
 
   it('finds one account by options', async () => {
@@ -101,12 +101,12 @@ describe('AccountsService', () => {
   });
 
   it('destroys account by id', async () => {
-    repository.findBy.mockResolvedValue([{ id: 'account-id' }]);
+    repository.find.mockResolvedValue([{ id: 'account-id' }]);
     repository.delete.mockResolvedValue({ affected: 1 });
 
     await expect(service.destroy('account-id')).resolves.toBeUndefined();
 
-    expect(repository.findBy).toHaveBeenCalledWith({ id: 'account-id' });
+    expect(repository.find).toHaveBeenCalledWith({ id: 'account-id' });
     expect(repository.delete).toHaveBeenCalledWith({ id: 'account-id' });
   });
 });

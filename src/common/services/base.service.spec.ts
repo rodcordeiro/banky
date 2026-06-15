@@ -44,12 +44,12 @@ describe('BaseService', () => {
 
   it('finds records by where options', async () => {
     const records = [{ id: 'entity-id', name: 'entity' }];
-    const where = { active: true };
-    repository.findBy.mockResolvedValue(records);
+    const options = { where: { active: true } };
+    repository.find.mockResolvedValue(records);
 
-    await expect(service.findBy(where)).resolves.toBe(records);
+    await expect(service.findBy(options)).resolves.toBe(records);
 
-    expect(repository.findBy).toHaveBeenCalledWith(where);
+    expect(repository.find).toHaveBeenCalledWith(options);
   });
 
   it('finds one record by where options', async () => {
@@ -122,12 +122,12 @@ describe('BaseService', () => {
   });
 
   it('destroys a record by id', async () => {
-    repository.findBy.mockResolvedValue([{ id: 'entity-id', name: 'entity' }]);
+    repository.find.mockResolvedValue([{ id: 'entity-id', name: 'entity' }]);
     repository.delete.mockResolvedValue({ affected: 1 });
 
     await expect(service.destroy('entity-id')).resolves.toBeUndefined();
 
-    expect(repository.findBy).toHaveBeenCalledWith({ id: 'entity-id' });
+    expect(repository.find).toHaveBeenCalledWith({ id: 'entity-id' });
     expect(repository.delete).toHaveBeenCalledWith({ id: 'entity-id' });
   });
 });

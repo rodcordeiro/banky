@@ -25,7 +25,10 @@ describe('AccountsController', () => {
     await expect(controller.index(req)).resolves.toBe(accounts);
 
     expect(service.findBy).toHaveBeenCalledWith({
-      owner: { id: owner },
+      where: {
+        owner: { id: owner },
+      },
+      relations: { owner: true },
     });
   });
 

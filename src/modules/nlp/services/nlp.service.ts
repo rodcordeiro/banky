@@ -68,45 +68,129 @@ export class NlpService {
 
   private cleanAccountChunk(value: string | undefined): string | undefined {
     if (!value) return undefined;
-    return value
-      .trim()
-      .replace(/^(o|a|os|as)\s+/i, '')
-      .replace(/\s+/g, ' ');
+    const normalized = value.trim().split(' ').filter(Boolean).join(' ');
+    const [first, ...rest] = normalized.split(' ');
+
+    if (['o', 'a', 'os', 'as'].includes(first?.toLowerCase())) {
+      return rest.join(' ') || undefined;
+    }
+
+    return normalized || undefined;
+  }
+
+  private hasWordBoundary(
+    text: string,
+    index: number,
+    length: number,
+  ): boolean {
+    const before = index === 0 ? ' ' : text[index - 1];
+    const after = index + length >= text.length ? ' ' : text[index + length];
+
+    return !this.isWordChar(before) && !this.isWordChar(after);
+  }
+
+  private isWordChar(char: string): boolean {
+    return /[a-z0-9_]/i.test(char);
+  }
+
+  private findMarker(
+    text: string,
+    markers: string[],
+    startAt: number = 0,
+  ): { marker: string; index: number } | undefined {
+    let best: { marker: string; index: number } | undefined;
+
+    for (const marker of markers) {
+      let index = text.indexOf(marker, startAt);
+      const boundaryLength = marker.trimEnd().length;
+
+      while (index >= 0) {
+        if (this.hasWordBoundary(text, index, boundaryLength)) {
+          if (!best || index < best.index) {
+            best = { marker, index };
+          }
+          break;
+        }
+
+        index = text.indexOf(marker, index + marker.length);
+      }
+    }
+
+    return best;
+  }
+
+  private findFirstDelimiterIndex(
+    text: string,
+    delimiters: string[],
+    startAt: number,
+  ): number {
+    let end = text.length;
+
+    for (const delimiter of delimiters) {
+      const index = text.indexOf(delimiter, startAt);
+      if (index >= 0 && index < end) {
+        end = index;
+      }
+    }
+
+    const commaIndex = text.indexOf(',', startAt);
+    if (commaIndex >= 0 && commaIndex < end) {
+      end = commaIndex;
+    }
+
+    return end;
+  }
+
+  private extractChunkAfterMarker(
+    text: string,
+    markers: string[],
+    delimiters: string[],
+  ): string | undefined {
+    const marker = this.findMarker(text, markers);
+    if (!marker) return undefined;
+
+    const chunkStart = marker.index + marker.marker.length;
+    const chunkEnd = this.findFirstDelimiterIndex(text, delimiters, chunkStart);
+
+    return this.cleanAccountChunk(text.slice(chunkStart, chunkEnd));
   }
 
   private extractTransferOrigin(cleaned: string): string | undefined {
-    const paired = cleaned.match(
-      /\b(?:do|de|na conta)\s+(.+?)\s+(?:para|pra|pro)\s+/i,
+    const paired = this.extractChunkAfterMarker(
+      cleaned,
+      ['do ', 'de ', 'na conta '],
+      [' para ', ' pra ', ' pro '],
     );
-    if (paired?.[1]) return this.cleanAccountChunk(paired[1]);
+    if (paired) return paired;
 
-    const byDoDe = cleaned.match(/\b(?:do|de)\s+(.+?)(?:,|$)/i);
-    if (byDoDe?.[1]) return this.cleanAccountChunk(byDoDe[1]);
-
-    const byConta = cleaned.match(/\bna conta\s+(.+?)(?:,|$)/i);
-    if (byConta?.[1]) return this.cleanAccountChunk(byConta[1]);
-
-    return undefined;
+    return this.extractChunkAfterMarker(
+      cleaned,
+      ['do ', 'de ', 'na conta '],
+      [],
+    );
   }
 
   private extractTransferDestiny(cleaned: string): string | undefined {
-    const match = cleaned.match(
-      /\b(?:para|pra|pro)\s+(.+?)(?:(?:\s+dia\b)|(?:\s+\d{1,2}[/-]\d{1,2})|,|$)/i,
+    return this.extractChunkAfterMarker(
+      cleaned,
+      ['para ', 'pra ', 'pro '],
+      [' dia '],
     );
-    if (!match?.[1]) return undefined;
-    return this.cleanAccountChunk(match[1]);
   }
 
   private extractCreateAccount(text: string): string | undefined {
-    const fromConta = text.match(/\bna conta\s+(.+?)(?:,|\sdia\b|$)/i);
-    if (fromConta?.[1]) return this.cleanAccountChunk(fromConta[1]);
-
-    const fromPayment = text.match(
-      /\b(?:com o|com a|com|pelo|pela|no|na)\s+(.+?)(?:(?:\s+dia\b)|(?:\s+\d{1,2}[/-]\d{1,2})|,|$)/i,
+    const fromConta = this.extractChunkAfterMarker(
+      text,
+      ['na conta '],
+      [' dia '],
     );
-    if (fromPayment?.[1]) return this.cleanAccountChunk(fromPayment[1]);
+    if (fromConta) return fromConta;
 
-    return undefined;
+    return this.extractChunkAfterMarker(
+      text,
+      ['com o ', 'com a ', 'com ', 'pelo ', 'pela ', 'no ', 'na '],
+      [' dia '],
+    );
   }
 
   private normalizeComparable(value: string): string {

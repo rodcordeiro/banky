@@ -4,6 +4,7 @@ import { CategoriesService } from './categories.service';
 
 describe('CategoriesService', () => {
   const queryBuilder = {
+    innerJoinAndSelect: jest.fn(),
     leftJoinAndSelect: jest.fn(),
     where: jest.fn(),
     andWhere: jest.fn(),
@@ -24,6 +25,7 @@ describe('CategoriesService', () => {
 
   beforeEach(() => {
     service = new CategoriesService(repository as never);
+    queryBuilder.innerJoinAndSelect.mockReturnValue(queryBuilder);
     queryBuilder.leftJoinAndSelect.mockReturnValue(queryBuilder);
     queryBuilder.where.mockReturnValue(queryBuilder);
     queryBuilder.andWhere.mockReturnValue(queryBuilder);
@@ -42,12 +44,12 @@ describe('CategoriesService', () => {
 
   it('finds categories by options', async () => {
     const categories = [{ id: 'category-id' }];
-    const where = { owner: { id: 'user-id' } };
-    repository.findBy.mockResolvedValue(categories);
+    const options = { where: { owner: { id: 'user-id' } } };
+    repository.find.mockResolvedValue(categories);
 
-    await expect(service.findBy(where)).resolves.toBe(categories);
+    await expect(service.findBy(options)).resolves.toBe(categories);
 
-    expect(repository.findBy).toHaveBeenCalledWith(where);
+    expect(repository.find).toHaveBeenCalledWith(options);
   });
 
   it('finds one category by options', async () => {
@@ -113,12 +115,12 @@ describe('CategoriesService', () => {
   });
 
   it('destroys category by id', async () => {
-    repository.findBy.mockResolvedValue([{ id: 'category-id' }]);
+    repository.find.mockResolvedValue([{ id: 'category-id' }]);
     repository.delete.mockResolvedValue({ affected: 1 });
 
     await expect(service.destroy('category-id')).resolves.toBeUndefined();
 
-    expect(repository.findBy).toHaveBeenCalledWith({ id: 'category-id' });
+    expect(repository.find).toHaveBeenCalledWith({ id: 'category-id' });
     expect(repository.delete).toHaveBeenCalledWith({ id: 'category-id' });
   });
 
@@ -130,6 +132,10 @@ describe('CategoriesService', () => {
     await expect(service.listAll(owner)).resolves.toBe(categories);
 
     expect(repository.createQueryBuilder).toHaveBeenCalledWith('category');
+    expect(queryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
+      'category.owner',
+      'owner',
+    );
     expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
       'category.subcategories',
       'subcategory',
