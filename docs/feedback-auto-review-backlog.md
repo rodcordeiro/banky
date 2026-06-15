@@ -216,14 +216,14 @@ Objetivo: medir a qualidade das decisoes automaticas sem mudar o fluxo real de a
 
 #### AUTO-006 - Expor score por campo
 
-- Criar modelo interno de score por campo.
-- Definir score default para match deterministico.
-- Definir score default para ausencia de classificacao.
-- Avaliar suporte de `natural` para ranking/classificacoes.
-- Expor score de intent.
-- Expor score de conta.
-- Expor score de categoria.
-- Expor score de valor/data por regra.
+- [x] Criar modelo interno de score por campo.
+- [x] Definir score default para match deterministico.
+- [x] Definir score default para ausencia de classificacao.
+- [x] Avaliar suporte de `natural` para ranking/classificacoes.
+- [x] Expor score de intent.
+- [x] Expor score de conta.
+- [x] Expor score de categoria.
+- [x] Expor score de valor/data por regra.
 
 #### AUTO-007 - Definir thresholds iniciais
 

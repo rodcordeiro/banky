@@ -43,6 +43,7 @@ describe('FeedbackAutoReviewService', () => {
       value: 1,
       date: 1,
     });
+    expect(result.score).toBe(1);
   });
 
   it('rejects create feedback without account', () => {
@@ -111,6 +112,14 @@ describe('FeedbackAutoReviewService', () => {
     expect(result.suggestedCorrections).toEqual({
       account: 'Nubank Yah',
     });
+    expect(result.fieldScores).toMatchObject({
+      intent: 1,
+      account: 1,
+      category: 1,
+      value: 1,
+      date: 1,
+    });
+    expect(result.score).toBe(1);
   });
 
   it('approves a valid transfer feedback with known owner entities', () => {
@@ -127,6 +136,7 @@ describe('FeedbackAutoReviewService', () => {
       value: 1,
       date: 1,
     });
+    expect(result.score).toBe(1);
   });
 
   it('rejects transfer feedback without origin account', () => {
@@ -272,5 +282,13 @@ describe('FeedbackAutoReviewService', () => {
         }),
       ]),
     );
+    expect(result.fieldScores).toMatchObject({
+      intent: 1,
+      account: 0.5,
+      category: 0.5,
+      value: 1,
+      date: 1,
+    });
+    expect(result.score).toBeCloseTo(0.8, 4);
   });
 });

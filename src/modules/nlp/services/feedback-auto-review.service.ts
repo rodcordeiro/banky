@@ -20,6 +20,9 @@ import {
 
 const DEFAULT_REVIEW_VERSION = 'auto-review-v1';
 const DEFAULT_MODE = AutoReviewMode.shadow;
+const AUTO_REVIEW_SCORE_MATCH = 1;
+const AUTO_REVIEW_SCORE_PARTIAL_MATCH = 0.5;
+const AUTO_REVIEW_SCORE_BLOCKER = 0;
 
 @Injectable()
 export class FeedbackAutoReviewService {
@@ -229,7 +232,9 @@ export class FeedbackAutoReviewService {
     fieldScores: AutoReviewFieldScores,
     intent: 'create' | 'transfer',
   ): void {
-    fieldScores.intent = intent ? 1 : 0;
+    fieldScores.intent = intent
+      ? AUTO_REVIEW_SCORE_MATCH
+      : AUTO_REVIEW_SCORE_BLOCKER;
   }
 
   private scoreRequiredFields(
@@ -243,7 +248,9 @@ export class FeedbackAutoReviewService {
 
       const value = fields[field];
       const valid = this.hasValue(value);
-      fieldScores[field] = valid ? 1 : 0;
+      fieldScores[field] = valid
+        ? AUTO_REVIEW_SCORE_MATCH
+        : AUTO_REVIEW_SCORE_BLOCKER;
 
       if (valid) continue;
 
@@ -266,7 +273,9 @@ export class FeedbackAutoReviewService {
     const value = fields.value;
     const numericValue = typeof value === 'number' ? value : Number(value);
     const valid = Number.isFinite(numericValue) && numericValue > 0;
-    fieldScores.value = valid ? 1 : 0;
+    fieldScores.value = valid
+      ? AUTO_REVIEW_SCORE_MATCH
+      : AUTO_REVIEW_SCORE_BLOCKER;
 
     if (valid) return;
 
@@ -288,7 +297,9 @@ export class FeedbackAutoReviewService {
     const date = fields.date;
     const parsed = date ? new Date(String(date)) : undefined;
     const valid = !!parsed && !Number.isNaN(parsed.getTime());
-    fieldScores.date = valid ? 1 : 0;
+    fieldScores.date = valid
+      ? AUTO_REVIEW_SCORE_MATCH
+      : AUTO_REVIEW_SCORE_BLOCKER;
 
     if (valid) return;
 
@@ -318,7 +329,9 @@ export class FeedbackAutoReviewService {
       reference => this.normalizeComparable(reference.name) === normalizedValue,
     );
 
-    fieldScores[field] = match ? 1 : 0.5;
+    fieldScores[field] = match
+      ? AUTO_REVIEW_SCORE_MATCH
+      : AUTO_REVIEW_SCORE_PARTIAL_MATCH;
 
     if (match) return;
 
@@ -348,8 +361,10 @@ export class FeedbackAutoReviewService {
       this.normalizeComparable(String(origin)) ===
       this.normalizeComparable(String(destiny));
 
-    fieldScores.originAccount = fieldScores.originAccount ?? 1;
-    fieldScores.destinyAccount = fieldScores.destinyAccount ?? 1;
+    fieldScores.originAccount =
+      fieldScores.originAccount ?? AUTO_REVIEW_SCORE_MATCH;
+    fieldScores.destinyAccount =
+      fieldScores.destinyAccount ?? AUTO_REVIEW_SCORE_MATCH;
 
     if (!same) return;
 
