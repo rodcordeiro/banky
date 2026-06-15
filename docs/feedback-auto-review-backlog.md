@@ -101,8 +101,8 @@ Mapeamento sugerido:
 
 - `approve` em modo automatico: altera `status` para `validated`, sem preencher `corrected*`.
 - `correct` em modo automatico: preenche apenas campos corrigidos sugeridos e altera `status` para `corrected`.
-- `manual_review`: mantem `status` como `pending`.
-- `reject`: mantem `status` como `pending` e registra razao invalidante.
+- `manual_review`: resulta em `status` `pending`, mantendo o feedback na fila humana.
+- `reject`: resulta em `status` `pending` e registra razao invalidante, sem descartar o feedback automaticamente.
 
 No modo `shadow`, nenhuma decisao altera `status` ou `corrected*`; apenas registra a avaliacao no historico.
 
@@ -125,8 +125,8 @@ Objetivo: criar a fundacao do autoavaliador sem autonomia real. Ao final, o sist
 
 | ID | Tarefa | Entrega | Criterio de aceite |
 | --- | --- | --- | --- |
-| AUTO-001 | Definir contrato de decisao | Interfaces/enums para decisao, razoes e correcao sugerida | Decisoes `approve`, `correct`, `manual_review` e `reject` documentadas e tipadas |
-| AUTO-002 | Mapear regras por intent | Lista de regras para `create` e `transfer` | Campos obrigatorios e invalidantes definidos por intent |
+| AUTO-001 | Definir contrato de decisao | Interfaces/enums para decisao, razoes e correcao sugerida | Implementado em `src/modules/nlp/interfaces/index.ts` |
+| AUTO-002 | Mapear regras por intent | Lista de regras para `create` e `transfer` | Implementado em `AUTO_REVIEW_INTENT_RULES` |
 | AUTO-003 | Criar `FeedbackAutoReviewService` | Service sem efeitos colaterais que recebe feedback e contexto | Service retorna decisao estruturada sem salvar nada |
 | AUTO-004 | Validar entidades do owner | Checagem de conta/categoria contra repositorios existentes | Feedback com entidade inexistente cai em `manual_review` ou `reject` |
 | AUTO-005 | Testar validacoes criticas | Testes unitarios das regras deterministicas | Casos de valor invalido, conta ausente e transferencia incompleta cobertos |
@@ -135,23 +135,23 @@ Objetivo: criar a fundacao do autoavaliador sem autonomia real. Ao final, o sist
 
 #### AUTO-001 - Definir contrato de decisao
 
-- Criar enum `AutoReviewDecision`.
-- Criar enum `AutoReviewMode`.
-- Criar tipo `AutoReviewReason`.
-- Criar tipo `AutoReviewFieldScores`.
-- Criar tipo `AutoReviewSuggestedCorrections`.
-- Criar interface `AutoReviewResult`.
-- Documentar mapeamento entre decisao e `FeedbackStatus`.
+- [x] Criar enum `AutoReviewDecision`.
+- [x] Criar enum `AutoReviewMode`.
+- [x] Criar tipo `AutoReviewReason`.
+- [x] Criar tipo `AutoReviewFieldScores`.
+- [x] Criar tipo `AutoReviewSuggestedCorrections`.
+- [x] Criar interface `AutoReviewResult`.
+- [x] Documentar mapeamento entre decisao e `FeedbackStatus`.
 
 #### AUTO-002 - Mapear regras por intent
 
-- Listar campos obrigatorios para `create`.
-- Listar campos obrigatorios para `transfer`.
-- Definir invalidantes de valor.
-- Definir invalidantes de data.
-- Definir regra de origem e destino distintos.
-- Definir regra para conta/categoria ausente.
-- Documentar comportamento para intent desconhecida.
+- [x] Listar campos obrigatorios para `create`.
+- [x] Listar campos obrigatorios para `transfer`.
+- [x] Definir invalidantes de valor.
+- [x] Definir invalidantes de data.
+- [x] Definir regra de origem e destino distintos.
+- [x] Definir regra para conta/categoria ausente.
+- [x] Documentar comportamento para intent desconhecida.
 
 #### AUTO-003 - Criar `FeedbackAutoReviewService`
 
