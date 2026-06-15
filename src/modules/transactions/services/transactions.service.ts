@@ -28,8 +28,6 @@ export class TransactionsService extends BaseService {
     super();
   }
   async listAll(query: QueryTransactionsDTO & { owner: string }) {
-    console.log(query);
-
     return this._paginateService.paginate(
       this._repository,
       {

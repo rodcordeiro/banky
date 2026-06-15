@@ -446,7 +446,7 @@ export class TrainingService {
     ENV_VARIABLES.NODE_ENV === 'production' ? PROD_CRON_TIME : DEV_CRON_TIME,
     { waitForCompletion: true },
   )
-  async train(fullTraining: boolean = false) {
+  async train(fullTraining: boolean = true) {
     this._logger.verbose('Starting training service');
 
     const classifiers = this.createModelClassifiers();

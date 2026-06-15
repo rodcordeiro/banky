@@ -1,4 +1,5 @@
 import { BayesClassifier, PorterStemmerPt } from 'natural';
+import { Logger } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -14,6 +15,7 @@ export interface ModelBackup {
 
 export class BaseClassifier {
   public classifier: BayesClassifier | null = null;
+  private readonly logger = new Logger(BaseClassifier.name);
   private model: string;
 
   constructor(model: string) {
@@ -121,7 +123,7 @@ export class BaseClassifier {
   }
 
   async retrain(newSamples: TrainingSample[]): Promise<void> {
-    console.log(`Retraining model '${this.model}' with feedback...`);
+    this.logger.verbose(`Retraining model '${this.model}' with feedback.`);
     const classifier = await this.init();
 
     for (const sample of newSamples) {
@@ -130,7 +132,7 @@ export class BaseClassifier {
 
     classifier.train();
     await this.save();
-    console.log(`Retraining finished: ${this.model}`);
+    this.logger.verbose(`Retraining finished for model '${this.model}'.`);
   }
 
   private save(): Promise<void> {
@@ -138,7 +140,7 @@ export class BaseClassifier {
     return new Promise((resolve, reject) => {
       this.classifier!.save(modelPath, err => {
         if (err) reject(err);
-        console.log(`Model '${this.model}' saved in ${modelPath}`);
+        this.logger.verbose(`Model '${this.model}' saved.`);
         resolve();
       });
     });

@@ -33,6 +33,49 @@ import { SearchFeedbackDto } from '../dtos/search.dto';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackStatus } from '../interfaces';
 
+interface AliasRule {
+  patterns: string[];
+  target: string;
+}
+
+const ACCOUNT_ALIASES: AliasRule[] = [
+  {
+    patterns: ['nubank yah credito', 'credito yah'],
+    target: 'Crédito yah',
+  },
+  {
+    patterns: ['nubank digo credito', 'credito digo'],
+    target: 'Crédito digo',
+  },
+];
+
+const CATEGORY_ALIASES: AliasRule[] = [
+  {
+    patterns: ['youtube premium', 'yt premium'],
+    target: 'Serviços de streaming',
+  },
+  { patterns: ['internet'], target: 'Serviço de Internet' },
+  { patterns: ['farmacia'], target: 'Farmácia' },
+  { patterns: ['bilhete unico', 'recarga bu'], target: 'Bilhete único' },
+  {
+    patterns: ['tarifa do banco', 'taxa bancaria'],
+    target: 'Taxa de serviço',
+  },
+  { patterns: ['aluguel'], target: 'Aluguel' },
+  { patterns: [' luz'], target: 'Luz' },
+  { patterns: ['agua'], target: 'Água e esgoto' },
+  { patterns: ['almoco'], target: 'Almoço' },
+  { patterns: ['smartbreak'], target: 'Smartbreak' },
+  {
+    patterns: ['troca da bateria', 'bateria dos relogios'],
+    target: 'Variado',
+  },
+  {
+    patterns: ['parcela emprestimo', 'parcela de emprestimo'],
+    target: 'Parcela de Empréstimo',
+  },
+];
+
 @Injectable()
 export class NlpService {
   private intentProcessor: IntentClassifier;
@@ -203,6 +246,50 @@ export class NlpService {
       .toLowerCase();
   }
 
+  private findMatchingAlias<T extends { name: string }>(
+    normalizedText: string,
+    candidates: T[],
+    aliases: AliasRule[],
+  ): T | undefined {
+    for (const alias of aliases) {
+      if (!alias.patterns.some(pattern => normalizedText.includes(pattern))) {
+        continue;
+      }
+
+      const normalizedTarget = this.normalizeComparable(alias.target);
+      const match = candidates.find(
+        candidate =>
+          this.normalizeComparable(candidate.name) === normalizedTarget,
+      );
+
+      if (match) return match;
+    }
+
+    return undefined;
+  }
+
+  private findComparableEntity<T extends { name: string }>(
+    text: string,
+    candidates: T[],
+    options?: { bidirectional?: boolean },
+  ): T | undefined {
+    const normalizedText = this.normalizeComparable(text);
+
+    return (
+      candidates.find(
+        candidate =>
+          this.normalizeComparable(candidate.name) === normalizedText,
+      ) ??
+      candidates.find(candidate => {
+        const normalizedCandidate = this.normalizeComparable(candidate.name);
+        return options?.bidirectional
+          ? normalizedText.includes(normalizedCandidate) ||
+              normalizedCandidate.includes(normalizedText)
+          : normalizedText.includes(normalizedCandidate);
+      })
+    );
+  }
+
   private async findAccountByText(
     text: string,
     owner?: string,
@@ -216,43 +303,45 @@ export class NlpService {
         : undefined,
     });
 
-    const accountAliases = [
-      {
-        patterns: ['nubank yah credito', 'credito yah'],
-        account: 'Crédito yah',
-      },
-      {
-        patterns: ['nubank digo credito', 'credito digo'],
-        account: 'Crédito digo',
-      },
-    ];
-
-    for (const alias of accountAliases) {
-      if (!alias.patterns.some(pattern => normalizedText.includes(pattern))) {
-        continue;
-      }
-
-      const match = accounts.find(
-        account =>
-          this.normalizeComparable(account.name) ===
-          this.normalizeComparable(alias.account),
-      );
-
-      if (match) return match.name;
-    }
-
-    const exact = accounts.find(
-      account => this.normalizeComparable(account.name) === normalizedText,
+    const aliasMatch = this.findMatchingAlias(
+      normalizedText,
+      accounts,
+      ACCOUNT_ALIASES,
     );
-    if (exact) return exact.name;
+    if (aliasMatch) return aliasMatch.name;
 
-    return accounts.find(account => {
-      const normalizedAccount = this.normalizeComparable(account.name);
-      return (
-        normalizedText.includes(normalizedAccount) ||
-        normalizedAccount.includes(normalizedText)
-      );
+    return this.findComparableEntity(normalizedText, accounts, {
+      bidirectional: true,
     })?.name;
+  }
+
+  private async listOwnerAccounts(owner: string): Promise<AccountsEntity[]> {
+    return this._accountRepository.find({
+      where: {
+        owner: { id: owner },
+      } as unknown as FindOptionsWhere<AccountsEntity>,
+    });
+  }
+
+  private async listOwnerCategories(
+    owner: string,
+  ): Promise<CategoriesEntity[]> {
+    return this._categoryRepository.find({
+      where: {
+        owner: { id: owner },
+      } as unknown as FindOptionsWhere<CategoriesEntity>,
+    });
+  }
+
+  private findAccountEntity(
+    text: string | undefined,
+    accounts: AccountsEntity[],
+  ): AccountsEntity | null {
+    if (!text) return null;
+
+    return (
+      this.findComparableEntity(text, accounts, { bidirectional: true }) ?? null
+    );
   }
 
   private async findAccountEntityByText(
@@ -261,26 +350,7 @@ export class NlpService {
   ): Promise<AccountsEntity | null> {
     if (!text) return null;
 
-    const normalizedText = this.normalizeComparable(text);
-    const accounts = await this._accountRepository.find({
-      where: {
-        owner: { id: owner },
-      } as unknown as FindOptionsWhere<AccountsEntity>,
-    });
-
-    return (
-      accounts.find(
-        account => this.normalizeComparable(account.name) === normalizedText,
-      ) ??
-      accounts.find(account => {
-        const normalizedAccount = this.normalizeComparable(account.name);
-        return (
-          normalizedText.includes(normalizedAccount) ||
-          normalizedAccount.includes(normalizedText)
-        );
-      }) ??
-      null
-    );
+    return this.findAccountEntity(text, await this.listOwnerAccounts(owner));
   }
 
   private async classifyAccountText(
@@ -314,46 +384,12 @@ export class NlpService {
         : undefined,
     });
 
-    const aliases = [
-      {
-        patterns: ['youtube premium', 'yt premium'],
-        category: 'Serviços de streaming',
-      },
-      { patterns: ['internet'], category: 'Serviço de Internet' },
-      { patterns: ['farmacia'], category: 'Farmácia' },
-      { patterns: ['bilhete unico', 'recarga bu'], category: 'Bilhete único' },
-      {
-        patterns: ['tarifa do banco', 'taxa bancaria'],
-        category: 'Taxa de serviço',
-      },
-      { patterns: ['aluguel'], category: 'Aluguel' },
-      { patterns: [' luz'], category: 'Luz' },
-      { patterns: ['agua'], category: 'Água e esgoto' },
-      { patterns: ['almoco'], category: 'Almoço' },
-      { patterns: ['smartbreak'], category: 'Smartbreak' },
-      {
-        patterns: ['troca da bateria', 'bateria dos relogios'],
-        category: 'Variado',
-      },
-      {
-        patterns: ['parcela emprestimo', 'parcela de emprestimo'],
-        category: 'Parcela de Empréstimo',
-      },
-    ];
-
-    for (const alias of aliases) {
-      if (!alias.patterns.some(pattern => normalized.includes(pattern))) {
-        continue;
-      }
-
-      const match = categories.find(
-        category =>
-          this.normalizeComparable(category.name) ===
-          this.normalizeComparable(alias.category),
-      );
-
-      if (match) return match.name;
-    }
+    const aliasMatch = this.findMatchingAlias(
+      normalized,
+      categories,
+      CATEGORY_ALIASES,
+    );
+    if (aliasMatch) return aliasMatch.name;
 
     if (/\b(?:de|do|da|no|na)\s+mercado\b/.test(normalized)) {
       const market = categories.find(
@@ -362,9 +398,16 @@ export class NlpService {
       if (market) return market.name;
     }
 
-    return categories.find(category =>
-      normalized.includes(this.normalizeComparable(category.name)),
-    )?.name;
+    return this.findComparableEntity(normalized, categories)?.name;
+  }
+
+  private findCategoryEntity(
+    text: string | undefined,
+    categories: CategoriesEntity[],
+  ): CategoriesEntity | null {
+    if (!text) return null;
+
+    return this.findComparableEntity(text, categories) ?? null;
   }
 
   private async findCategoryEntityByText(
@@ -373,22 +416,7 @@ export class NlpService {
   ): Promise<CategoriesEntity | null> {
     if (!text) return null;
 
-    const normalizedText = this.normalizeComparable(text);
-    const categories = await this._categoryRepository.find({
-      where: {
-        owner: { id: owner },
-      } as unknown as FindOptionsWhere<CategoriesEntity>,
-    });
-
-    return (
-      categories.find(
-        category => this.normalizeComparable(category.name) === normalizedText,
-      ) ??
-      categories.find(category =>
-        normalizedText.includes(this.normalizeComparable(category.name)),
-      ) ??
-      null
-    );
+    return this.findCategoryEntity(text, await this.listOwnerCategories(owner));
   }
 
   private async classifyCategory(
@@ -530,13 +558,14 @@ export class NlpService {
     }
 
     if (intent === Intents.TRANSFER) {
-      const originAccount = await this.findAccountEntityByText(
+      const accounts = await this.listOwnerAccounts(owner);
+      const originAccount = this.findAccountEntity(
         feedback.correctedOriginAccount ?? feedback.predictedOriginAccount,
-        owner,
+        accounts,
       );
-      const destinyAccount = await this.findAccountEntityByText(
+      const destinyAccount = this.findAccountEntity(
         feedback.correctedDestinyAccount ?? feedback.predictedDestinyAccount,
-        owner,
+        accounts,
       );
 
       if (!originAccount || !destinyAccount) {
@@ -560,13 +589,17 @@ export class NlpService {
       };
     }
 
-    const account = await this.findAccountEntityByText(
+    const [accounts, categories] = await Promise.all([
+      this.listOwnerAccounts(owner),
+      this.listOwnerCategories(owner),
+    ]);
+    const account = this.findAccountEntity(
       feedback.correctedAccount ?? feedback.predictedAccount,
-      owner,
+      accounts,
     );
-    const category = await this.findCategoryEntityByText(
+    const category = this.findCategoryEntity(
       feedback.correctedCategory ?? feedback.predictedCategory,
-      owner,
+      categories,
     );
 
     if (!account || !category) {
