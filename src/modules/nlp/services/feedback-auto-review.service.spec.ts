@@ -35,7 +35,12 @@ describe('FeedbackAutoReviewService', () => {
 
     expect(result.decision).toBe(AutoReviewDecision.approve);
     expect(result.mode).toBe(AutoReviewMode.shadow);
-    expect(result.reasons).toHaveLength(0);
+    expect(result.reasons).toEqual([
+      expect.objectContaining({
+        code: 'all_fields_valid',
+        severity: AutoReviewReasonSeverity.info,
+      }),
+    ]);
     expect(result.fieldScores).toMatchObject({
       intent: 1,
       account: 1,
@@ -112,6 +117,12 @@ describe('FeedbackAutoReviewService', () => {
     expect(result.suggestedCorrections).toEqual({
       account: 'Nubank Yah',
     });
+    expect(result.reasons).toEqual([
+      expect.objectContaining({
+        code: 'corrections_suggested',
+        severity: AutoReviewReasonSeverity.info,
+      }),
+    ]);
     expect(result.fieldScores).toMatchObject({
       intent: 1,
       account: 1,
@@ -128,7 +139,12 @@ describe('FeedbackAutoReviewService', () => {
     });
 
     expect(result.decision).toBe(AutoReviewDecision.approve);
-    expect(result.reasons).toHaveLength(0);
+    expect(result.reasons).toEqual([
+      expect.objectContaining({
+        code: 'all_fields_valid',
+        severity: AutoReviewReasonSeverity.info,
+      }),
+    ]);
     expect(result.fieldScores).toMatchObject({
       intent: 1,
       originAccount: 1,

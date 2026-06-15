@@ -1,9 +1,12 @@
 import {
   AUTO_REVIEW_GLOBAL_BLOCKERS,
+  AUTO_REVIEW_REASON_CATALOG,
   AUTO_REVIEW_INTENT_RULES,
   AUTO_REVIEW_DECISION_STATUS_MAP,
   AUTO_REVIEW_THRESHOLDS,
   AutoReviewDecision,
+  AutoReviewReasonCode,
+  AutoReviewReasonSeverity,
   AutoReviewRuleCode,
   FeedbackStatus,
 } from '.';
@@ -70,6 +73,23 @@ describe('NLP auto review interfaces', () => {
       approve: 0.95,
       correct: 0.85,
       manualReview: 0.7,
+    });
+  });
+
+  it('defines the reason catalog with informative and invalidating reasons', () => {
+    expect(
+      AUTO_REVIEW_REASON_CATALOG[AutoReviewReasonCode.allFieldsValid],
+    ).toMatchObject({
+      category: 'informative',
+      severity: AutoReviewReasonSeverity.info,
+      field: 'overall',
+    });
+    expect(
+      AUTO_REVIEW_REASON_CATALOG[AutoReviewRuleCode.invalidValue],
+    ).toMatchObject({
+      category: 'invalidating',
+      severity: AutoReviewReasonSeverity.blocker,
+      field: 'value',
     });
   });
 });

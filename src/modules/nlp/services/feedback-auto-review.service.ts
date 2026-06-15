@@ -3,6 +3,7 @@ import { FeedbackEntity } from '../entities/feedback.entity';
 import {
   AUTO_REVIEW_DECISION_STATUS_MAP,
   AUTO_REVIEW_INTENT_RULES,
+  AUTO_REVIEW_REASON_CATALOG,
   AUTO_REVIEW_SUPPORTED_INTENTS,
   AutoReviewContext,
   AutoReviewDecision,
@@ -10,6 +11,7 @@ import {
   AutoReviewField,
   AutoReviewFieldScores,
   AutoReviewMode,
+  AutoReviewReasonCode,
   AutoReviewReason,
   AutoReviewReasonSeverity,
   AutoReviewResult,
@@ -24,6 +26,7 @@ const DEFAULT_MODE = AutoReviewMode.shadow;
 const AUTO_REVIEW_SCORE_MATCH = 1;
 const AUTO_REVIEW_SCORE_PARTIAL_MATCH = 0.5;
 const AUTO_REVIEW_SCORE_BLOCKER = 0;
+type AutoReviewReasonKey = AutoReviewReasonCode | AutoReviewRuleCode;
 
 @Injectable()
 export class FeedbackAutoReviewService {
@@ -41,14 +44,7 @@ export class FeedbackAutoReviewService {
     const suggestedCorrections = this.extractSuggestedCorrections(feedback);
 
     if (!rawIntent) {
-      reasons.push(
-        this.buildReason(
-          AutoReviewRuleCode.missingIntent,
-          'Intent nao informado.',
-          AutoReviewReasonSeverity.blocker,
-          'intent',
-        ),
-      );
+      reasons.push(this.buildReason(AutoReviewRuleCode.missingIntent));
       return this.buildResult({
         decision: AutoReviewDecision.reject,
         mode,
@@ -68,12 +64,9 @@ export class FeedbackAutoReviewService {
       )
     ) {
       reasons.push(
-        this.buildReason(
-          AutoReviewRuleCode.unknownIntent,
-          `Intent '${rawIntent}' nao suportado.`,
-          AutoReviewReasonSeverity.blocker,
-          'intent',
-        ),
+        this.buildReason(AutoReviewRuleCode.unknownIntent, {
+          message: `Intent '${rawIntent}' nao suportado.`,
+        }),
       );
       return this.buildResult({
         decision: AutoReviewDecision.reject,
@@ -135,6 +128,7 @@ export class FeedbackAutoReviewService {
 
     const score = this.calculateScore(fieldScores);
     const decision = this.decide(reasons, suggestedCorrections, score);
+    this.ensureDecisionReason(reasons, decision, score, suggestedCorrections);
 
     return this.buildResult({
       decision,
@@ -256,12 +250,9 @@ export class FeedbackAutoReviewService {
       if (valid) continue;
 
       reasons.push(
-        this.buildReason(
-          this.missingRuleForField(field),
-          `Campo '${field}' nao informado.`,
-          AutoReviewReasonSeverity.blocker,
-          field,
-        ),
+        this.buildReason(this.missingRuleForField(field), {
+          message: `Campo '${field}' nao informado.`,
+        }),
       );
     }
   }
@@ -280,14 +271,7 @@ export class FeedbackAutoReviewService {
 
     if (valid) return;
 
-    reasons.push(
-      this.buildReason(
-        AutoReviewRuleCode.invalidValue,
-        'Valor invalido ou nao informado.',
-        AutoReviewReasonSeverity.blocker,
-        'value',
-      ),
-    );
+    reasons.push(this.buildReason(AutoReviewRuleCode.invalidValue));
   }
 
   private scoreDate(
@@ -304,14 +288,7 @@ export class FeedbackAutoReviewService {
 
     if (valid) return;
 
-    reasons.push(
-      this.buildReason(
-        AutoReviewRuleCode.invalidDate,
-        'Data invalida ou nao informada.',
-        AutoReviewReasonSeverity.blocker,
-        'date',
-      ),
-    );
+    reasons.push(this.buildReason(AutoReviewRuleCode.invalidDate));
   }
 
   private scoreEntityField(
@@ -337,12 +314,9 @@ export class FeedbackAutoReviewService {
     if (match) return;
 
     reasons.push(
-      this.buildReason(
-        AutoReviewRuleCode.entityNotFound,
-        `Entidade '${value}' nao encontrada para o owner.`,
-        AutoReviewReasonSeverity.warning,
-        field,
-      ),
+      this.buildReason(AutoReviewRuleCode.entityNotFound, {
+        message: `Entidade '${value}' nao encontrada para o owner.`,
+      }),
     );
   }
 
@@ -369,14 +343,7 @@ export class FeedbackAutoReviewService {
 
     if (!same) return;
 
-    reasons.push(
-      this.buildReason(
-        AutoReviewRuleCode.sameTransferAccounts,
-        'Contas de origem e destino sao iguais.',
-        AutoReviewReasonSeverity.blocker,
-        'originAccount',
-      ),
-    );
+    reasons.push(this.buildReason(AutoReviewRuleCode.sameTransferAccounts));
   }
 
   private decide(
@@ -462,12 +429,21 @@ export class FeedbackAutoReviewService {
   }
 
   private buildReason(
-    code: AutoReviewRuleCode,
-    message: string,
-    severity: AutoReviewReasonSeverity,
-    field?: AutoReviewField,
+    code: AutoReviewReasonKey,
+    overrides: Partial<{
+      message: string;
+      severity: AutoReviewReasonSeverity;
+      field: AutoReviewField | 'overall';
+    }> = {},
   ): AutoReviewReason {
-    return { code, message, severity, field };
+    const definition = AUTO_REVIEW_REASON_CATALOG[code];
+
+    return {
+      code,
+      message: overrides.message ?? definition.message,
+      severity: overrides.severity ?? definition.severity,
+      field: overrides.field ?? definition.field,
+    };
   }
 
   private missingRuleForField(
@@ -482,6 +458,46 @@ export class FeedbackAutoReviewService {
         return AutoReviewRuleCode.missingDestinyAccount;
       case 'category':
         return AutoReviewRuleCode.missingCategory;
+    }
+  }
+
+  private ensureDecisionReason(
+    reasons: AutoReviewReason[],
+    decision: AutoReviewDecision,
+    score: number,
+    suggestedCorrections?: AutoReviewSuggestedCorrections,
+  ): void {
+    if (reasons.length > 0) {
+      return;
+    }
+
+    if (decision === AutoReviewDecision.correct) {
+      reasons.push(this.buildReason(AutoReviewReasonCode.correctionsSuggested));
+      return;
+    }
+
+    if (decision === AutoReviewDecision.approve) {
+      reasons.push(this.buildReason(AutoReviewReasonCode.allFieldsValid));
+      return;
+    }
+
+    if (decision === AutoReviewDecision.manualReview) {
+      if (score < AUTO_REVIEW_THRESHOLDS.manualReview) {
+        reasons.push(this.buildReason(AutoReviewReasonCode.lowConfidence));
+        return;
+      }
+
+      if (
+        suggestedCorrections &&
+        Object.keys(suggestedCorrections).length > 0
+      ) {
+        reasons.push(
+          this.buildReason(AutoReviewReasonCode.correctionsSuggested),
+        );
+        return;
+      }
+
+      reasons.push(this.buildReason(AutoReviewReasonCode.lowConfidence));
     }
   }
 

@@ -23,6 +23,14 @@ export enum AutoReviewReasonSeverity {
   blocker = 'blocker',
 }
 
+export type AutoReviewReasonScope = AutoReviewField | 'overall';
+
+export enum AutoReviewReasonCode {
+  allFieldsValid = 'all_fields_valid',
+  correctionsSuggested = 'corrections_suggested',
+  lowConfidence = 'low_confidence',
+}
+
 export type AutoReviewField =
   | 'intent'
   | 'account'
@@ -36,7 +44,15 @@ export interface AutoReviewReason {
   code: string;
   message: string;
   severity: AutoReviewReasonSeverity;
-  field?: AutoReviewField;
+  field?: AutoReviewReasonScope;
+}
+
+export interface AutoReviewReasonDefinition {
+  code: AutoReviewReasonCode | AutoReviewRuleCode;
+  category: 'informative' | 'invalidating';
+  severity: AutoReviewReasonSeverity;
+  message: string;
+  field?: AutoReviewReasonScope;
 }
 
 export type AutoReviewFieldScores = Partial<Record<AutoReviewField, number>>;
@@ -165,5 +181,102 @@ export const AUTO_REVIEW_INTENT_RULES: Record<
       AutoReviewRuleCode.invalidDate,
       AutoReviewRuleCode.entityNotFound,
     ],
+  },
+};
+
+export const AUTO_REVIEW_REASON_CATALOG: Record<
+  AutoReviewReasonCode | AutoReviewRuleCode,
+  AutoReviewReasonDefinition
+> = {
+  [AutoReviewReasonCode.allFieldsValid]: {
+    code: AutoReviewReasonCode.allFieldsValid,
+    category: 'informative',
+    severity: AutoReviewReasonSeverity.info,
+    message: 'Feedback aprovado sem divergencias relevantes.',
+    field: 'overall',
+  },
+  [AutoReviewReasonCode.correctionsSuggested]: {
+    code: AutoReviewReasonCode.correctionsSuggested,
+    category: 'informative',
+    severity: AutoReviewReasonSeverity.info,
+    message: 'Feedback corrigido com sugestoes validas.',
+    field: 'overall',
+  },
+  [AutoReviewReasonCode.lowConfidence]: {
+    code: AutoReviewReasonCode.lowConfidence,
+    category: 'informative',
+    severity: AutoReviewReasonSeverity.info,
+    message: 'Score abaixo do limiar minimo para aprovacao automatica.',
+    field: 'overall',
+  },
+  [AutoReviewRuleCode.missingIntent]: {
+    code: AutoReviewRuleCode.missingIntent,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Intent nao informado.',
+    field: 'intent',
+  },
+  [AutoReviewRuleCode.unknownIntent]: {
+    code: AutoReviewRuleCode.unknownIntent,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Intent nao suportado.',
+    field: 'intent',
+  },
+  [AutoReviewRuleCode.missingAccount]: {
+    code: AutoReviewRuleCode.missingAccount,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Campo account nao informado.',
+    field: 'account',
+  },
+  [AutoReviewRuleCode.missingOriginAccount]: {
+    code: AutoReviewRuleCode.missingOriginAccount,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Campo originAccount nao informado.',
+    field: 'originAccount',
+  },
+  [AutoReviewRuleCode.missingDestinyAccount]: {
+    code: AutoReviewRuleCode.missingDestinyAccount,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Campo destinyAccount nao informado.',
+    field: 'destinyAccount',
+  },
+  [AutoReviewRuleCode.missingCategory]: {
+    code: AutoReviewRuleCode.missingCategory,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Campo category nao informado.',
+    field: 'category',
+  },
+  [AutoReviewRuleCode.invalidValue]: {
+    code: AutoReviewRuleCode.invalidValue,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Valor invalido ou nao informado.',
+    field: 'value',
+  },
+  [AutoReviewRuleCode.invalidDate]: {
+    code: AutoReviewRuleCode.invalidDate,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Data invalida ou nao informada.',
+    field: 'date',
+  },
+  [AutoReviewRuleCode.sameTransferAccounts]: {
+    code: AutoReviewRuleCode.sameTransferAccounts,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message: 'Contas de origem e destino sao iguais.',
+    field: 'originAccount',
+  },
+  [AutoReviewRuleCode.entityNotFound]: {
+    code: AutoReviewRuleCode.entityNotFound,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.warning,
+    message: 'Entidade nao encontrada para o owner.',
+    field: 'overall',
   },
 };
