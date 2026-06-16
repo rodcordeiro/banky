@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ProcessingDto } from '../dtos/processing.dto';
 import { NlpService } from '../services/nlp.service';
 import { FeedbackAutoReviewShadowService } from '../services/feedback-auto-review-shadow.service';
+import { FeedbackAutoReviewLearningService } from '../services/feedback-auto-review-learning.service';
 
 import { Auth } from '@/common/decorators/auth.decorator';
 import { SearchFeedbackDto } from '../dtos/search.dto';
@@ -10,6 +11,7 @@ import { ApproveFeedbackDto } from '../dtos/Approve.dto';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { TrainFeedbackDto } from '../dtos/training.dto';
 import { AutoReviewReportDto } from '../dtos/auto-review-report.dto';
+import { AutoReviewLearningLoopDto } from '../dtos/auto-review-learning-loop.dto';
 
 @Auth()
 @ApiBearerAuth()
@@ -22,6 +24,7 @@ export class NlpController {
   constructor(
     private readonly _service: NlpService,
     private readonly _shadowService: FeedbackAutoReviewShadowService,
+    private readonly _learningService: FeedbackAutoReviewLearningService,
   ) {}
 
   @Post()
@@ -85,6 +88,17 @@ export class NlpController {
     return await this._shadowService.buildOperationalReport(
       req.user.id,
       queries,
+    );
+  }
+
+  @Get('/auto-review/learning-loop')
+  async autoReviewLearningLoop(
+    @Req() req: AuthenticatedRequest,
+    @Query() queries: AutoReviewLearningLoopDto,
+  ) {
+    return await this._learningService.buildLearningLoopReport(
+      req.user.id,
+      queries.maxExamples,
     );
   }
 }

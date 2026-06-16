@@ -123,6 +123,70 @@ export interface AutoReviewReportResult {
   };
 }
 
+export type AutoReviewLearningField =
+  | 'intent'
+  | 'account'
+  | 'originAccount'
+  | 'destinyAccount'
+  | 'category'
+  | 'value'
+  | 'date';
+
+export interface AutoReviewLearningFieldMetric {
+  field: AutoReviewLearningField;
+  total: number;
+  matches: number;
+  divergences: number;
+  correctedLabels: number;
+  accuracy: number;
+}
+
+export interface AutoReviewLearningDatasetSummary {
+  version: string;
+  totalReviewedFeedbacks: number;
+  humanReviewedFeedbacks: number;
+  autoAppliedFeedbacks: number;
+  trainingEligibleFeedbacks: number;
+  sampleCounts: Record<AutoReviewLearningField, number>;
+}
+
+export interface AutoReviewLearningDivergenceExample {
+  feedbackId: string;
+  field: AutoReviewLearningField;
+  originalText: string;
+  predicted?: string | number;
+  corrected?: string | number;
+  status: FeedbackStatus;
+}
+
+export interface AutoReviewCategoryConfusionItem {
+  predicted: string;
+  corrected: string;
+  count: number;
+  examples: string[];
+}
+
+export interface AutoReviewShadowVersionComparison {
+  reviewVersion: string;
+  total: number;
+  matches: number;
+  divergences: number;
+  agreementRate: number;
+}
+
+export interface AutoReviewLearningLoopResult {
+  generatedAt: string;
+  dataset: AutoReviewLearningDatasetSummary;
+  fieldMetrics: AutoReviewLearningFieldMetric[];
+  categoryConfusions: AutoReviewCategoryConfusionItem[];
+  divergenceExamples: AutoReviewLearningDivergenceExample[];
+  shadowVersionComparisons: AutoReviewShadowVersionComparison[];
+  promotionReadiness: {
+    eligible: boolean;
+    reasons: string[];
+  };
+}
+
 export interface AutoReviewThresholds {
   approve: number;
   correct: number;

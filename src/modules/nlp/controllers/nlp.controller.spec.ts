@@ -15,11 +15,18 @@ describe('NlpController', () => {
   const shadowService = {
     buildOperationalReport: jest.fn(),
   };
+  const learningService = {
+    buildLearningLoopReport: jest.fn(),
+  };
 
   let controller: NlpController;
 
   beforeEach(() => {
-    controller = new NlpController(service as never, shadowService as never);
+    controller = new NlpController(
+      service as never,
+      shadowService as never,
+      learningService as never,
+    );
     jest.clearAllMocks();
   });
 
@@ -124,6 +131,23 @@ describe('NlpController', () => {
     expect(shadowService.buildOperationalReport).toHaveBeenCalledWith(
       owner,
       query,
+    );
+  });
+
+  it('returns the supervised learning loop report for the authenticated owner', async () => {
+    const report = {
+      dataset: { totalReviewedFeedbacks: 1 },
+      fieldMetrics: [],
+    };
+    learningService.buildLearningLoopReport.mockResolvedValue(report);
+
+    await expect(
+      controller.autoReviewLearningLoop(req, { maxExamples: 5 }),
+    ).resolves.toBe(report);
+
+    expect(learningService.buildLearningLoopReport).toHaveBeenCalledWith(
+      owner,
+      5,
     );
   });
 });

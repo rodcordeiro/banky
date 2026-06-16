@@ -211,6 +211,7 @@ Objetivo: medir a qualidade das decisoes automaticas sem mudar o fluxo real de a
 | AUTO-008 | Implementar modo shadow | Job/service executa autoavaliacao sem alterar feedback | Decisao automatica pode ser consultada sem efeito colateral |
 | AUTO-009 | Registrar razoes de decisao | Lista de reasons padronizadas | Cada decisao retorna pelo menos uma razao |
 | AUTO-010 | Criar relatorio operacional inicial | Consulta ou endpoint interno para comparar decisoes shadow | Relatorio lista feedback, decisao, score e razoes |
+| AUTO-022 | Criar learning loop supervisionado inicial | Processo para transformar reviews humanos em melhoria mensuravel antes da autonomia | Divergencias geram dataset, ajuste e comparacao por versao |
 
 ### Subtarefas
 
@@ -259,12 +260,12 @@ Persistencia e cron adotados:
 
 #### AUTO-009 - Registrar razoes de decisao
 
-- Criar catalogo de reason codes.
-- Separar reasons informativas de invalidantes.
-- Incluir campo afetado em cada reason.
-- Incluir mensagem tecnica curta.
-- Garantir pelo menos uma reason por resultado.
-- Cobrir reasons principais em teste.
+- [x] Criar catalogo de reason codes.
+- [x] Separar reasons informativas de invalidantes.
+- [x] Incluir campo afetado em cada reason.
+- [x] Incluir mensagem tecnica curta.
+- [x] Garantir pelo menos uma reason por resultado.
+- [x] Cobrir reasons principais em teste.
 
 #### AUTO-010 - Criar relatorio operacional inicial
 
@@ -281,6 +282,35 @@ Contrato adotado:
 - filtros por `mode`, `decision`, `minScore`, `maxScore`, `from`, `to`, `divergence`, `sortBy`, `order`, `page` e `limit`
 - retorno com `feedbackId`, `originalText`, `decision`, `score`, `reasons`, `humanStatus`, `shadowStatus` e `divergent`
 
+#### AUTO-022 - Criar learning loop supervisionado inicial
+
+- [x] Definir fonte canonica de exemplos revisados: feedbacks com `status` diferente de `pending`.
+- [x] Separar exemplos humanos de exemplos autoaprovados.
+- [x] Usar `corrected*` como label preferencial quando existir; caso contrario, usar `predicted*` apenas para feedback humano validado.
+- [x] Excluir feedback autoaprovado do treino automatico ate haver controle de qualidade explicito.
+- [x] Criar dataset versionado para intent, conta, categoria e valor.
+- [x] Medir acuracia por campo antes e depois de cada treino ou ajuste de regra.
+- [x] Medir matriz de confusao de categorias mais divergentes.
+- [x] Comparar versao anterior e nova versao do avaliador em modo shadow antes de promocao.
+- [ ] Promover novas regras, aliases ou modelos somente quando reduzir falso positivo sem aumentar risco operacional relevante.
+- [ ] Registrar versao, metricas, amostra usada, criterios de promocao e rollback.
+
+Contrato sugerido:
+
+- o aprendizado e supervisionado e auditavel;
+- reviews humanos sao a principal fonte de verdade;
+- divergencias recorrentes viram insumo para alias, regra, threshold ou treino;
+- nenhuma melhoria aprendida aumenta autonomia automaticamente sem passar por shadow e criterios de promocao;
+- o objetivo inicial e reduzir revisao manual repetitiva, nao eliminar revisao humana em casos ambiguos;
+- Marco 3 nao deve habilitar `apply` automatico antes de existir evidencia minima do learning loop.
+
+Contrato implementado:
+
+- endpoint autenticado `GET /nlp/auto-review/learning-loop`;
+- relatorio somente leitura, sem aplicar treino, alias, regra ou autonomia;
+- retorno com `dataset`, `fieldMetrics`, `categoryConfusions`, `divergenceExamples`, `shadowVersionComparisons` e `promotionReadiness`;
+- `promotionReadiness.eligible` permanece `false` ate existir criterio operacional explicito de promocao e rollback.
+
 ### Passo a passo
 
 1. Adaptar classificadores para expor sinal de confianca quando disponivel.
@@ -288,16 +318,19 @@ Contrato adotado:
 3. Criar thresholds conservadores.
 4. Rodar avaliador em modo shadow para feedbacks pendentes.
 5. Comparar resultado automatico com revisao humana posterior.
+6. Alimentar o learning loop com divergencias humanas revisadas.
+7. Comparar versoes em shadow antes de liberar autoaprovacao ou autocorrecao.
 
 ### Riscos e limites
 
 - Score do Naive Bayes nao deve ser tratado como probabilidade calibrada.
 - Threshold inicial deve priorizar falso negativo, nao falso positivo.
 - Modo shadow nao deve alterar `status`, `corrected*` ou criar transacao.
+- Sem learning loop e comparacao em shadow, Marco 3 nao deve aplicar aprovacoes ou correcoes automaticamente.
 
 ## Marco 3 - Correcao assistida e aprovacao limitada
 
-Objetivo: permitir que o avaliador sugira correcoes seguras e aprove automaticamente apenas casos de baixo risco.
+Objetivo: permitir que o avaliador sugira correcoes seguras e aprove automaticamente apenas casos de baixo risco, depois de validar o learning loop supervisionado do Marco 2.
 
 ### Sprint 3
 
@@ -412,6 +445,7 @@ Objetivo: transformar o autoavaliador em um fluxo operavel, mensuravel e evoluti
 | AUTO-018 | Definir rotina de reavaliacao | Job para reprocessar feedbacks pendentes elegiveis | Reprocessamento e idempotente |
 | AUTO-019 | Criar criterios para LLM judge opcional | Documento com quando usar ou nao usar judge externo | LLM restrito a casos ambiguos e sem autonomia direta |
 | AUTO-020 | Consolidar playbook operacional | Passo a passo para ativar, monitorar e desligar autoaprovacao | Operador consegue habilitar/desabilitar com seguranca |
+| AUTO-021 | Sugerir aliases a partir de divergencias | Relatorio assistido de aliases candidatos para conta/categoria | Sugestoes exigem revisao humana antes de virar regra |
 
 ### Subtarefas
 
@@ -464,13 +498,36 @@ Objetivo: transformar o autoavaliador em um fluxo operavel, mensuravel e evoluti
 - Documentar procedimento de rollback.
 - Documentar criterios para aumentar autonomia.
 
+#### AUTO-021 - Sugerir aliases a partir de divergencias
+
+- Identificar feedbacks em que `predictedCategory` ou `predictedAccount` diverge do campo `corrected*`.
+- Agrupar divergencias por texto normalizado, entidade predita, entidade corrigida e owner.
+- Calcular frequencia, recencia e taxa de recorrencia da mesma correcao.
+- Gerar candidatos de alias somente quando houver volume minimo configurado.
+- Exibir exemplos de textos reais que sustentam a sugestao.
+- Bloquear sugestao quando houver conflito entre categorias ou contas diferentes para o mesmo padrao textual.
+- Marcar sugestoes como `pending`, `approved`, `rejected` ou `applied`.
+- Aplicar alias somente apos aprovacao humana explicita.
+- Registrar auditoria com origem da sugestao, usuario aprovador, data e versao.
+- Reprocessar em modo shadow os feedbacks afetados antes de permitir uso automatico do novo alias.
+
+Contrato sugerido:
+
+- o autoavaliador nao cria alias sozinho;
+- ele apenas sugere candidatos com base em divergencias recorrentes entre predicao e review humano;
+- alias aprovado passa a compor a camada deterministica usada pelo avaliador;
+- alias rejeitado deve ser mantido como evidencia para evitar sugestoes repetidas;
+- alias aplicado exige nova versao do avaliador ou das regras de alias.
+
 ### Passo a passo
 
 1. Medir decisoes antes de ampliar autonomia.
 2. Expor metricas por modo: shadow, assistido e automatico.
 3. Criar auditoria suficiente para explicar cada status alterado.
-4. Definir processo de rollback operacional.
-5. Avaliar uso de LLM apenas depois de conhecer os erros recorrentes.
+4. Usar divergencias recorrentes para sugerir aliases, regras e datasets de treino.
+5. Comparar versoes em shadow antes de promover autonomia.
+6. Definir processo de rollback operacional.
+7. Avaliar uso de LLM apenas depois de conhecer os erros recorrentes.
 
 ### Riscos e limites
 
@@ -482,9 +539,11 @@ Objetivo: transformar o autoavaliador em um fluxo operavel, mensuravel e evoluti
 
 1. Entregar Marco 1 e validar com testes unitarios.
 2. Rodar Marco 2 em shadow por um periodo com volume real de feedbacks.
-3. Revisar falsos positivos e falsos negativos.
-4. Habilitar Marco 3 apenas para casos com score alto e baixo valor.
-5. Usar Marco 4 para operar, auditar e decidir se vale adicionar LLM judge.
+3. Rodar learning loop supervisionado com reviews humanos e divergencias do shadow.
+4. Revisar falsos positivos e falsos negativos por versao.
+5. Comparar a nova versao em shadow antes de ampliar autonomia.
+6. Habilitar Marco 3 apenas para casos com score alto, baixo valor e evidencia de aprendizado validado.
+7. Usar Marco 4 para operar, auditar e decidir se vale adicionar LLM judge.
 
 ## Definicao de pronto
 
@@ -502,3 +561,5 @@ Cada tarefa deve ser considerada pronta somente quando tiver:
 - Usar LLM como aprovador final.
 - Alterar schema de banco sem planejamento de migration.
 - Retreinar classificadores automaticamente com feedback autoaprovado sem controle de qualidade.
+- Criar ou aplicar aliases automaticamente sem revisao humana.
+- Promover nova versao de avaliador sem comparacao em modo shadow.
