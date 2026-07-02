@@ -36,11 +36,14 @@ import {
 import * as fs from 'fs';
 import * as path from 'path';
 import { SearchFeedbackDto } from '../dtos/search.dto';
+import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import {
+  AutoReviewDecision,
   AutoReviewContext,
   AutoReviewResult,
   AutoReviewEntityReference,
+  AutoReviewMode,
   FeedbackStatus,
 } from '../interfaces';
 
@@ -60,6 +63,9 @@ export class NlpService {
 
     @Inject('CATEGORIES_REPOSITORY')
     private readonly _categoryRepository: Repository<CategoriesEntity>,
+
+    @Inject('FEEDBACK_AUTO_REVIEW_REPOSITORY')
+    private readonly _feedbackAutoReviewRepository: Repository<FeedbackAutoReviewEntity>,
 
     private readonly _paginateService: PaginationService,
     private readonly _transactionsService: TransactionsService,
@@ -568,7 +574,9 @@ export class NlpService {
   async evaluateFeedbackAutoReview(
     feedback: FeedbackEntity,
     owner: string,
-    context: Partial<AutoReviewContext> = {},
+    context: Partial<AutoReviewContext> = {
+      valueApprovalLimit: 5000,
+    },
   ): Promise<AutoReviewResult> {
     const [ownerAccounts, ownerCategories] = await Promise.all([
       this.listOwnerAccounts(owner),
@@ -580,6 +588,83 @@ export class NlpService {
       ownerAccounts: this.toEntityReferences(ownerAccounts),
       ownerCategories: this.toEntityReferences(ownerCategories),
     });
+  }
+
+  async applyAutoReviewCorrection(
+    feedback: FeedbackEntity,
+    evaluation: AutoReviewResult,
+  ): Promise<FeedbackEntity> {
+    if (evaluation.decision !== AutoReviewDecision.correct) {
+      throw new BadRequestException(
+        'Somente decisao correct pode ser autocorrigida.',
+      );
+    }
+
+    if (evaluation.mode !== AutoReviewMode.automatic) {
+      throw new BadRequestException(
+        'Somente avaliacao automatica pode ser autocorrigida.',
+      );
+    }
+
+    if (feedback.status !== FeedbackStatus.pending) {
+      return feedback;
+    }
+
+    if (this.hasHumanCorrection(feedback)) {
+      throw new BadRequestException(
+        'Feedback com correcao humana nao pode ser autocorrigido.',
+      );
+    }
+
+    if (!evaluation.suggestedCorrections) {
+      throw new BadRequestException(
+        'Avaliacao sem correcao sugerida nao pode ser autocorrigida.',
+      );
+    }
+
+    const existingHistory = await this._feedbackAutoReviewRepository.findOne({
+      where: {
+        feedbackId: feedback.id,
+        mode: evaluation.mode,
+        reviewVersion: evaluation.reviewVersion,
+      },
+    });
+
+    if (existingHistory?.applied) {
+      return feedback;
+    }
+
+    const corrected = this._repository.create({
+      ...feedback,
+      ...this.toCorrectedFeedbackFields(evaluation.suggestedCorrections),
+      status: FeedbackStatus.corrected,
+    });
+    const savedFeedback = await this._repository.save(corrected);
+
+    const historyPayload = {
+      feedbackId: feedback.id,
+      owner: feedback.owner,
+      mode: evaluation.mode,
+      decision: evaluation.decision,
+      score: evaluation.score,
+      fieldScores: evaluation.fieldScores,
+      reasons: evaluation.reasons,
+      suggestedCorrections: evaluation.suggestedCorrections,
+      reviewVersion: evaluation.reviewVersion,
+      evaluatedAt: evaluation.evaluatedAt,
+      applied: true,
+      appliedAt: new Date().toISOString(),
+    };
+    const history = existingHistory
+      ? this._feedbackAutoReviewRepository.merge(
+          existingHistory,
+          historyPayload,
+        )
+      : this._feedbackAutoReviewRepository.create(historyPayload);
+
+    await this._feedbackAutoReviewRepository.save(history);
+
+    return savedFeedback;
   }
 
   async Review(payload: Partial<FeedbackEntity>) {
@@ -755,5 +840,31 @@ export class NlpService {
     entities: T[],
   ): AutoReviewEntityReference[] {
     return entities.map(({ name }) => ({ name }));
+  }
+
+  private hasHumanCorrection(feedback: FeedbackEntity): boolean {
+    return [
+      feedback.correctedIntent,
+      feedback.correctedAccount,
+      feedback.correctedCategory,
+      feedback.correctedOriginAccount,
+      feedback.correctedDestinyAccount,
+      feedback.correctedValue,
+      feedback.correctedDate,
+    ].some(value => value !== undefined && value !== null && value !== '');
+  }
+
+  private toCorrectedFeedbackFields(
+    suggestedCorrections: AutoReviewResult['suggestedCorrections'],
+  ): Partial<FeedbackEntity> {
+    return {
+      correctedIntent: suggestedCorrections?.intent,
+      correctedAccount: suggestedCorrections?.account,
+      correctedCategory: suggestedCorrections?.category,
+      correctedOriginAccount: suggestedCorrections?.originAccount,
+      correctedDestinyAccount: suggestedCorrections?.destinyAccount,
+      correctedValue: suggestedCorrections?.value,
+      correctedDate: suggestedCorrections?.date,
+    };
   }
 }

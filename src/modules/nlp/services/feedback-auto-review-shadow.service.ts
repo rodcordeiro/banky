@@ -20,7 +20,7 @@ import { NlpService } from './nlp.service';
 
 const PROD_SHADOW_CRON = '0 */15 * * * *';
 const DEV_SHADOW_CRON = '0 */1 * * * *';
-const DEFAULT_SHADOW_BATCH_SIZE = 50;
+const DEFAULT_SHADOW_BATCH_SIZE = 100;
 const DEFAULT_SHADOW_REVIEW_VERSION = 'auto-review-shadow-v1';
 
 @Injectable()

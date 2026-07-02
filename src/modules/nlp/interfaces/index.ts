@@ -187,6 +187,140 @@ export interface AutoReviewLearningLoopResult {
   };
 }
 
+export enum AutoReviewPromotionCandidateType {
+  alias = 'alias',
+  rule = 'rule',
+  threshold = 'threshold',
+  model = 'model',
+  operationalPolicy = 'operational_policy',
+}
+
+export enum AutoReviewPromotionStatus {
+  candidate = 'candidate',
+  shadowValidated = 'shadow_validated',
+  approved = 'approved',
+  rejected = 'rejected',
+  active = 'active',
+  rolledBack = 'rolled_back',
+}
+
+export enum AutoReviewPromotionCandidateOrigin {
+  humanDivergence = 'human_divergence',
+  shadowComparison = 'shadow_comparison',
+  metricRegression = 'metric_regression',
+  aliasSuggestion = 'alias_suggestion',
+  trainingRun = 'training_run',
+  manualAdjustment = 'manual_adjustment',
+}
+
+export interface AutoReviewPromotionCriteria {
+  minShadowSamples: number;
+  minAgreementRate: number;
+  maxFalsePositiveRate: number;
+  maxRegressionRate: number;
+  requiresApprover: boolean;
+  allowsAutoPromotion: boolean;
+}
+
+export interface AutoReviewPromotionPolicy {
+  candidateTypes: AutoReviewPromotionCandidateType[];
+  statuses: AutoReviewPromotionStatus[];
+  evidenceRequirements: string[];
+  automaticBlockers: string[];
+  criteriaByType: Record<
+    AutoReviewPromotionCandidateType,
+    AutoReviewPromotionCriteria
+  >;
+}
+
+export interface AutoReviewPromotionCandidateExample {
+  feedbackId?: string;
+  originalText: string;
+  predicted?: string | number;
+  corrected?: string | number;
+  field?: AutoReviewLearningField;
+}
+
+export interface AutoReviewPromotionCandidateEvidence {
+  sampleSize: number;
+  shadowAgreementRate: number;
+  falsePositiveRate: number;
+  falseNegativeRate: number;
+  regressionRate: number;
+  fieldMetrics: AutoReviewLearningFieldMetric[];
+  fieldDivergences: Partial<Record<AutoReviewLearningField, number>>;
+  examples: AutoReviewPromotionCandidateExample[];
+}
+
+export interface AutoReviewPromotionCandidateImpact {
+  expectedManualReviewReduction?: number;
+  affectedFields: AutoReviewLearningField[];
+  affectedIntents?: AutoReviewIntent[];
+  affectedOwners?: string[];
+  operationalSummary: string;
+}
+
+export interface AutoReviewPromotionCandidateRisk {
+  level: 'low' | 'medium' | 'high';
+  reasons: string[];
+  financialImpact?: string;
+}
+
+export interface AutoReviewPromotionRollbackPlan {
+  strategy: string;
+  previousVersion: string;
+  validation: string;
+}
+
+export interface AutoReviewPromotionCandidate {
+  type: AutoReviewPromotionCandidateType;
+  status: AutoReviewPromotionStatus;
+  origin: AutoReviewPromotionCandidateOrigin;
+  candidateVersion: string;
+  baseReviewVersion: string;
+  evidence: AutoReviewPromotionCandidateEvidence;
+  expectedImpact: AutoReviewPromotionCandidateImpact;
+  knownRisk: AutoReviewPromotionCandidateRisk;
+  rollbackPlan: AutoReviewPromotionRollbackPlan;
+  createdBy: string;
+  approvedBy?: string;
+  rejectedBy?: string;
+  appliedBy?: string;
+  rolledBackBy?: string;
+  createdAt: string;
+  approvedAt?: string;
+  rejectedAt?: string;
+  appliedAt?: string;
+  rolledBackAt?: string;
+  rollbackReason?: string;
+  notes?: string;
+}
+
+export enum AutoReviewPromotionReplayRecommendation {
+  promote = 'promote',
+  collectMoreShadow = 'collect_more_shadow',
+  reject = 'reject',
+}
+
+export interface AutoReviewPromotionReplayResult {
+  candidateVersion: string;
+  baseReviewVersion: string;
+  type: AutoReviewPromotionCandidateType;
+  sampleSize: number;
+  minShadowSamples: number;
+  agreementRate: number;
+  minAgreementRate: number;
+  falsePositiveRate: number;
+  maxFalsePositiveRate: number;
+  falseNegativeRate: number;
+  regressionRate: number;
+  maxRegressionRate: number;
+  fieldDivergences: Partial<Record<AutoReviewLearningField, number>>;
+  eligible: boolean;
+  blockers: string[];
+  recommendation: AutoReviewPromotionReplayRecommendation;
+}
+
 export interface AutoReviewThresholds {
   approve: number;
   correct: number;
@@ -221,8 +355,149 @@ export const AUTO_REVIEW_THRESHOLDS: AutoReviewThresholds = {
   approve: 0.95,
   correct: 0.85,
   manualReview: 0.7,
-  maxAutoApprovalValue: 100,
+  maxAutoApprovalValue: 5000,
 };
+
+export const AUTO_REVIEW_PROMOTION_POLICY: AutoReviewPromotionPolicy = {
+  candidateTypes: [
+    AutoReviewPromotionCandidateType.alias,
+    AutoReviewPromotionCandidateType.rule,
+    AutoReviewPromotionCandidateType.threshold,
+    AutoReviewPromotionCandidateType.model,
+    AutoReviewPromotionCandidateType.operationalPolicy,
+  ],
+  statuses: [
+    AutoReviewPromotionStatus.candidate,
+    AutoReviewPromotionStatus.shadowValidated,
+    AutoReviewPromotionStatus.approved,
+    AutoReviewPromotionStatus.rejected,
+    AutoReviewPromotionStatus.active,
+    AutoReviewPromotionStatus.rolledBack,
+  ],
+  evidenceRequirements: [
+    'candidateVersion',
+    'baseReviewVersion',
+    'sampleSize',
+    'fieldMetrics',
+    'falsePositiveRate',
+    'falseNegativeRate',
+    'fieldDivergences',
+    'operationalImpact',
+    'rollbackPlan',
+  ],
+  automaticBlockers: [
+    'missing_shadow_comparison',
+    'missing_rollback_plan',
+    'missing_approver',
+    'false_positive_regression',
+    'financial_risk_regression',
+    'critical_field_regression',
+  ],
+  criteriaByType: {
+    [AutoReviewPromotionCandidateType.alias]: {
+      minShadowSamples: 20,
+      minAgreementRate: 0.98,
+      maxFalsePositiveRate: 0,
+      maxRegressionRate: 0,
+      requiresApprover: true,
+      allowsAutoPromotion: false,
+    },
+    [AutoReviewPromotionCandidateType.rule]: {
+      minShadowSamples: 50,
+      minAgreementRate: 0.98,
+      maxFalsePositiveRate: 0,
+      maxRegressionRate: 0,
+      requiresApprover: true,
+      allowsAutoPromotion: false,
+    },
+    [AutoReviewPromotionCandidateType.threshold]: {
+      minShadowSamples: 100,
+      minAgreementRate: 0.99,
+      maxFalsePositiveRate: 0,
+      maxRegressionRate: 0,
+      requiresApprover: true,
+      allowsAutoPromotion: false,
+    },
+    [AutoReviewPromotionCandidateType.model]: {
+      minShadowSamples: 200,
+      minAgreementRate: 0.99,
+      maxFalsePositiveRate: 0,
+      maxRegressionRate: 0,
+      requiresApprover: true,
+      allowsAutoPromotion: false,
+    },
+    [AutoReviewPromotionCandidateType.operationalPolicy]: {
+      minShadowSamples: 100,
+      minAgreementRate: 0.99,
+      maxFalsePositiveRate: 0,
+      maxRegressionRate: 0,
+      requiresApprover: true,
+      allowsAutoPromotion: false,
+    },
+  },
+};
+
+export function buildAutoReviewPromotionReplayResult(
+  candidate: AutoReviewPromotionCandidate,
+  policy = AUTO_REVIEW_PROMOTION_POLICY,
+): AutoReviewPromotionReplayResult {
+  const criteria = policy.criteriaByType[candidate.type];
+  const blockers: string[] = [];
+
+  if (candidate.evidence.sampleSize < criteria.minShadowSamples) {
+    blockers.push('insufficient_shadow_samples');
+  }
+
+  if (candidate.evidence.shadowAgreementRate < criteria.minAgreementRate) {
+    blockers.push('insufficient_agreement_rate');
+  }
+
+  if (candidate.evidence.falsePositiveRate > criteria.maxFalsePositiveRate) {
+    blockers.push('false_positive_regression');
+  }
+
+  if (candidate.evidence.regressionRate > criteria.maxRegressionRate) {
+    blockers.push('candidate_regression');
+  }
+
+  if (
+    !candidate.rollbackPlan.strategy ||
+    !candidate.rollbackPlan.previousVersion ||
+    !candidate.rollbackPlan.validation
+  ) {
+    blockers.push('missing_rollback_plan');
+  }
+
+  const onlyNeedsMoreShadow = blockers.every(blocker =>
+    ['insufficient_shadow_samples', 'insufficient_agreement_rate'].includes(
+      blocker,
+    ),
+  );
+
+  return {
+    candidateVersion: candidate.candidateVersion,
+    baseReviewVersion: candidate.baseReviewVersion,
+    type: candidate.type,
+    sampleSize: candidate.evidence.sampleSize,
+    minShadowSamples: criteria.minShadowSamples,
+    agreementRate: candidate.evidence.shadowAgreementRate,
+    minAgreementRate: criteria.minAgreementRate,
+    falsePositiveRate: candidate.evidence.falsePositiveRate,
+    maxFalsePositiveRate: criteria.maxFalsePositiveRate,
+    falseNegativeRate: candidate.evidence.falseNegativeRate,
+    regressionRate: candidate.evidence.regressionRate,
+    maxRegressionRate: criteria.maxRegressionRate,
+    fieldDivergences: candidate.evidence.fieldDivergences,
+    eligible: blockers.length === 0,
+    blockers,
+    recommendation:
+      blockers.length === 0
+        ? AutoReviewPromotionReplayRecommendation.promote
+        : onlyNeedsMoreShadow
+          ? AutoReviewPromotionReplayRecommendation.collectMoreShadow
+          : AutoReviewPromotionReplayRecommendation.reject,
+  };
+}
 
 export type AutoReviewIntent = 'create' | 'transfer';
 

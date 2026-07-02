@@ -21,7 +21,7 @@ export const ACCOUNT_ALIASES: AliasRule[] = [
 
 export const CATEGORY_ALIASES: AliasRule[] = [
   {
-    patterns: ['youtube premium', 'yt premium'],
+    patterns: ['youtube premium', 'yt premium', 'prime video', 'hbo'],
     target: 'Serviços de streaming',
   },
   { patterns: ['internet'], target: 'Serviço de Internet' },
@@ -36,6 +36,10 @@ export const CATEGORY_ALIASES: AliasRule[] = [
   { patterns: ['agua'], target: 'Água e esgoto' },
   { patterns: ['almoco'], target: 'Almoço' },
   { patterns: ['smartbreak'], target: 'Smartbreak' },
+  {
+    patterns: ['mercadinho', 'padaria'],
+    target: 'mercearia e açougue (dia-a-dia)',
+  },
   {
     patterns: ['troca da bateria', 'bateria dos relogios'],
     target: 'Variado',

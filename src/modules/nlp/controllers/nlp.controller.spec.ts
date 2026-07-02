@@ -18,6 +18,14 @@ describe('NlpController', () => {
   const learningService = {
     buildLearningLoopReport: jest.fn(),
   };
+  const promotionService = {
+    listCandidates: jest.fn(),
+    getCandidate: jest.fn(),
+    approveCandidate: jest.fn(),
+    rejectCandidate: jest.fn(),
+    applyCandidate: jest.fn(),
+    rollbackCandidate: jest.fn(),
+  };
 
   let controller: NlpController;
 
@@ -26,6 +34,7 @@ describe('NlpController', () => {
       service as never,
       shadowService as never,
       learningService as never,
+      promotionService as never,
     );
     jest.clearAllMocks();
   });
@@ -148,6 +157,63 @@ describe('NlpController', () => {
     expect(learningService.buildLearningLoopReport).toHaveBeenCalledWith(
       owner,
       5,
+    );
+  });
+
+  it('lists promotion candidates scoped by authenticated owner', async () => {
+    const candidates = [{ candidateVersion: 'alias-v1' }];
+    promotionService.listCandidates.mockResolvedValue(candidates);
+
+    await expect(
+      controller.autoReviewPromotionCandidates(req, {
+        status: 'candidate' as never,
+      }),
+    ).resolves.toBe(candidates);
+
+    expect(promotionService.listCandidates).toHaveBeenCalledWith(
+      owner,
+      'candidate',
+    );
+  });
+
+  it('approves a promotion candidate using authenticated owner as approver', async () => {
+    const approved = { candidateVersion: 'alias-v1', status: 'approved' };
+    promotionService.approveCandidate.mockResolvedValue(approved);
+
+    await expect(
+      controller.approveAutoReviewPromotionCandidate(req, 'alias-v1', {
+        notes: 'ok',
+      }),
+    ).resolves.toBe(approved);
+
+    expect(promotionService.approveCandidate).toHaveBeenCalledWith(
+      owner,
+      'alias-v1',
+      owner,
+      'ok',
+    );
+  });
+
+  it('rolls back an active promotion candidate using authenticated owner', async () => {
+    const rolledBack = {
+      candidateVersion: 'alias-v1',
+      status: 'rolled_back',
+    };
+    promotionService.rollbackCandidate.mockResolvedValue(rolledBack);
+
+    await expect(
+      controller.rollbackAutoReviewPromotionCandidate(req, 'alias-v1', {
+        reason: 'regression detected',
+        notes: 'disabled before runtime integration',
+      }),
+    ).resolves.toBe(rolledBack);
+
+    expect(promotionService.rollbackCandidate).toHaveBeenCalledWith(
+      owner,
+      'alias-v1',
+      owner,
+      'regression detected',
+      'disabled before runtime integration',
     );
   });
 });
