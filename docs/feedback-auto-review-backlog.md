@@ -432,7 +432,7 @@ trilha historica dedicada permanece no escopo de `AUTO-017`, e rollback fica em
 - [x] Garantir que rollback nao altera feedbacks ja revisados sem decisao explicita.
 - [x] Cobrir regras de rollback do service com teste unitario.
 - [x] Expor historico dedicado de promocao e rollback.
-- [ ] Reprocessar amostra em shadow apos rollback runtime efetivo (depende de AUTO-034).
+- [x] Reprocessar amostra em shadow apos rollback runtime efetivo (depende de AUTO-034).
 
 Contrato implementado:
 
@@ -440,7 +440,7 @@ Contrato implementado:
 - endpoint autenticado `GET /nlp/auto-review/promotion-history` (filtro opcional `candidateVersion`);
 - historico reconstruido a partir dos campos de auditoria do candidato;
 - cada evento marca `runtimeEffective=false` enquanto aliases nao forem efetivos no avaliador;
-- reprocessamento shadow pos-rollback fica explicitamente amarrado a AUTO-034 (runtime efetivo).
+- apos apply/rollback de alias, `revaluateAffectedSample` grava shadow com `reviewVersion=shadow-post-{apply|rollback}-...` (sem mudar status/corrected*).
 
 Entregue em `src/modules/nlp/services/feedback-auto-review-promotion.service.ts`
 e `src/modules/nlp/controllers/nlp.controller.ts`.
@@ -544,8 +544,8 @@ Contrato adotado:
 - [x] Nao criar transacao neste metodo.
 - [x] Bloquear sobrescrita de correcao humana existente.
 - [x] Testar aplicacao, idempotencia e bloqueio por correcao humana.
-- [ ] Revalidar semanticamente cada campo sugerido contra alias/regra promovida.
-- [ ] Testar correcao segura por conta, categoria e valor separadamente.
+- [x] Revalidar semanticamente cada campo sugerido contra alias/regra promovida.
+- [x] Testar correcao segura por conta, categoria e valor separadamente.
 
 Contrato adotado:
 
@@ -555,7 +555,7 @@ Contrato adotado:
 - a aplicacao altera apenas campos `corrected*` presentes em `suggestedCorrections` e muda `status` para `corrected`;
 - o historico automatico e persistido com `applied=true` e `appliedAt`;
 - chamadas repetidas para a mesma combinacao de `feedbackId + mode + reviewVersion` nao reaplicam a correcao;
-- a validacao semantica fina por alias/regra promovida fica pendente ate haver runtime promovido e aliases persistidos.
+- `applyAutoReviewCorrection` revalida entidades do owner + inconsistencia com alias efetivo; valor precisa ser finito e > 0; score >= threshold `correct`; blocker impede apply.
 
 #### AUTO-015 - Testar nao sobrescrita humana
 
@@ -695,14 +695,16 @@ Contrato implementado:
 - [x] Marcar sugestoes como ciclo de promocao (`candidate`/`approved`/`rejected`/`active`/`rolled_back`).
 - [x] Aplicar alias somente apos aprovacao humana explicita no ciclo (runtime efetivo permanece AUTO-034).
 - [x] Registrar auditoria com origem da sugestao via candidato de promocao.
-- [ ] Reprocessar em modo shadow os feedbacks afetados antes de permitir uso automatico do novo alias (AUTO-034).
+- [x] Reprocessar em modo shadow os feedbacks afetados antes de permitir uso automatico do novo alias (AUTO-034).
 
 Contrato implementado:
 
 - endpoint autenticado `GET /nlp/auto-review/alias-suggestions`;
 - endpoint autenticado `POST /nlp/auto-review/alias-suggestions/promote` cria `PromotionCandidate` tipo `alias`;
 - retorno somente leitura com conflitos, volume minimo e `runtimeEffective=false`;
-- nao escreve `alias.rules.ts` e nao altera runtime do avaliador.
+- evidence.examples carrega `feedbackId` quando disponivel;
+- apply/rollback de alias dispara reprocess shadow da amostra (`sampleShadow=...` nas notes);
+- nao escreve `alias.rules.ts` no promote (runtime so via apply AUTO-034).
 
 ### Passo a passo
 
@@ -846,7 +848,8 @@ Contrato implementado (fatia fina):
 
 - `POST .../rollback` com `kind=immediate|pause|expire`; grava em `rollbackReason`/`notes`;
 - kind `immediate`/`pause` desativa alias runtime (034); history expoe `rollbackKind`;
-- gatilhos auto / despromoção parcial / reprocess amostra **deferidos**;
+- gatilhos auto / despromoção parcial **deferidos**;
+- reprocess amostra shadow pos apply/rollback de alias **ligado** (via `revaluateAffectedSample`);
 - feedbacks/transações permanece intactos.
 
 #### AUTO-034 - Persistir aliases e ativar promocao no runtime
@@ -924,7 +927,7 @@ Contrato implementado:
 | 18    | P1         | Marco 3 | AUTO-011 - Sugerir correcao por alias                      | Concluida         | AUTO-010, AUTO-022                                | Sugerir correcao segura quando alias conhecido resolver entidade existente     |
 | 19    | P1         | Marco 3 | AUTO-012 - Aplicar limites por valor                       | Concluida         | AUTO-007                                          | Restringir autonomia por limite financeiro conservador                         |
 | 20    | P1         | Marco 3 | AUTO-013 - Criar fluxo de autoaprovacao controlada         | Base implementada | AUTO-022, AUTO-023, AUTO-025                      | Aplicar `approve` somente quando politica permitir                             |
-| 21    | P1         | Marco 3 | AUTO-014 - Criar fluxo de autocorrecao controlada          | Base implementada | AUTO-011, AUTO-022, AUTO-023, AUTO-025            | Aplicar `correct` somente para correcao segura e promovida                     |
+| 21    | P1         | Marco 3 | AUTO-014 - Criar fluxo de autocorrecao controlada          | Concluida         | AUTO-011, AUTO-022, AUTO-023, AUTO-025            | Aplicar `correct` somente para correcao segura e promovida                     |
 | 22    | P1         | Marco 3 | AUTO-015 - Testar nao sobrescrita humana                   | Concluida         | AUTO-013, AUTO-014                                | Garantir que automacao nunca sobrescreve revisao humana                        |
 | 23    | P1         | Marco 4 | AUTO-016 - Criar metricas de qualidade                     | Base implementada | AUTO-010, AUTO-022                                | Medir qualidade operacional por decisao, intent e campo                        |
 | 24    | P1         | Marco 4 | AUTO-017 - Criar trilha de auditoria                       | Concluida         | AUTO-013, AUTO-014, AUTO-026B                     | Rastrear versoes, reasons, aplicacoes e bloqueios                              |

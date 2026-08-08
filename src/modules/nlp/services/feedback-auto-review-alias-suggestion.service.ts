@@ -57,6 +57,7 @@ type DivergenceRecord = {
   predicted: string;
   corrected: string;
   originalText: string;
+  feedbackId: string;
   updatedAt: string;
 };
 
@@ -155,6 +156,7 @@ export class FeedbackAutoReviewAliasSuggestionService {
           count: 1,
           lastSeenAt: divergence.updatedAt,
           examples: [divergence.originalText],
+          exampleFeedbackIds: [divergence.feedbackId],
           conflict,
           meetsMinimumVolume: false,
           alreadyPromoted: promotedVersions.has(candidateVersion),
@@ -170,6 +172,10 @@ export class FeedbackAutoReviewAliasSuggestionService {
       }
       if (current.examples.length < MAX_EXAMPLES) {
         current.examples.push(divergence.originalText);
+        current.exampleFeedbackIds = [
+          ...(current.exampleFeedbackIds ?? []),
+          divergence.feedbackId,
+        ];
       }
       current.conflict = current.conflict || conflict;
     }
@@ -252,8 +258,9 @@ export class FeedbackAutoReviewAliasSuggestionService {
         fieldDivergences: {
           [suggestion.field]: suggestion.count,
         },
-        examples: suggestion.examples.map(originalText => ({
+        examples: suggestion.examples.map((originalText, index) => ({
           originalText,
+          feedbackId: suggestion.exampleFeedbackIds?.[index],
           predicted: suggestion.predicted,
           corrected: suggestion.corrected,
           field: suggestion.field,
@@ -474,6 +481,7 @@ export class FeedbackAutoReviewAliasSuggestionService {
       predicted: predicted?.trim() || '',
       corrected: corrected.trim(),
       originalText: feedback.originalText,
+      feedbackId: feedback.id,
       updatedAt: feedback.updatedAt,
     });
   }

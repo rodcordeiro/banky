@@ -1,19 +1,22 @@
 import { ENV_VARIABLES } from '@/common/config/env.config';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
 import {
   AUTO_REVIEW_DECISION_STATUS_MAP,
   AutoReviewDecision,
   AutoReviewMode,
+  AutoReviewPromotionCandidateExample,
   AutoReviewResult,
   AutoReviewReportFilters,
   AutoReviewReportResult,
   AutoReviewReportItem,
   AutoReviewReasonSeverity,
   AutoReviewRevaluationResult,
+  AutoReviewSampleRevaluationResult,
+  AutoReviewSampleRevaluationTrigger,
   AUTO_REVIEW_THRESHOLDS,
   FeedbackStatus,
 } from '../interfaces';
@@ -22,6 +25,7 @@ import { NlpService } from './nlp.service';
 const PROD_SHADOW_CRON = '0 */15 * * * *';
 const DEV_SHADOW_CRON = '0 */1 * * * *';
 const DEFAULT_SHADOW_BATCH_SIZE = 100;
+const DEFAULT_SAMPLE_BATCH_SIZE = 50;
 export const DEFAULT_SHADOW_REVIEW_VERSION = 'auto-review-shadow-v1';
 
 @Injectable()
@@ -125,6 +129,77 @@ export class FeedbackAutoReviewShadowService {
     );
 
     return result;
+  }
+
+  /**
+   * Reprocessa em shadow a amostra afetada por apply/rollback de alias.
+   * Não altera status/corrected* e não aplica approve/correct.
+   * Idempotente por `reviewVersion` derivada do trigger + candidateVersion.
+   */
+  async revaluateAffectedSample(options: {
+    owner: string;
+    candidateVersion: string;
+    trigger: AutoReviewSampleRevaluationTrigger;
+    examples?: AutoReviewPromotionCandidateExample[];
+    batchSize?: number;
+  }): Promise<AutoReviewSampleRevaluationResult> {
+    const batchSize =
+      Number.isFinite(options.batchSize) && (options.batchSize as number) > 0
+        ? Math.floor(options.batchSize as number)
+        : DEFAULT_SAMPLE_BATCH_SIZE;
+    const reviewVersion = this.buildSampleReviewVersion(
+      options.trigger,
+      options.candidateVersion,
+    );
+    const startedAt = new Date().toISOString();
+    const sample = await this.resolveSampleFeedbacks(
+      options.owner,
+      options.examples ?? [],
+      batchSize,
+    );
+
+    let evaluated = 0;
+    let skipped = 0;
+    let errors = 0;
+    const errorFeedbackIds: string[] = [];
+
+    for (const feedback of sample) {
+      try {
+        const saved = await this.evaluateAndPersist(feedback, reviewVersion);
+        if (saved) {
+          evaluated += 1;
+        } else {
+          skipped += 1;
+        }
+      } catch (error) {
+        errors += 1;
+        errorFeedbackIds.push(feedback.id);
+        this._logger.error(
+          `Failed sample shadow revaluation feedback=${feedback.id} trigger=${options.trigger} version=${options.candidateVersion}: ${this.getErrorMessage(error)}`,
+        );
+      }
+    }
+
+    const finishedAt = new Date().toISOString();
+    this._logger.log(
+      `Sample shadow revaluation trigger=${options.trigger} candidate=${options.candidateVersion} candidates=${sample.length} evaluated=${evaluated} skipped=${skipped} errors=${errors}`,
+    );
+
+    return {
+      startedAt,
+      finishedAt,
+      reviewVersion,
+      mode: AutoReviewMode.shadow,
+      batchSize,
+      candidates: sample.length,
+      evaluated,
+      skipped,
+      errors,
+      errorFeedbackIds,
+      trigger: options.trigger,
+      candidateVersion: options.candidateVersion,
+      runtimeEffective: false,
+    };
   }
 
   async evaluateAndPersist(
@@ -454,6 +529,81 @@ export class FeedbackAutoReviewShadowService {
     } catch {
       return fallback;
     }
+  }
+
+  private buildSampleReviewVersion(
+    trigger: AutoReviewSampleRevaluationTrigger,
+    candidateVersion: string,
+  ): string {
+    const slug = candidateVersion
+      .replace(/[^a-zA-Z0-9._-]+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+    return `shadow-post-${trigger}-${slug}`.slice(0, 64);
+  }
+
+  private async resolveSampleFeedbacks(
+    owner: string,
+    examples: AutoReviewPromotionCandidateExample[],
+    batchSize: number,
+  ): Promise<FeedbackEntity[]> {
+    const feedbackIds = [
+      ...new Set(
+        examples
+          .map(example => example.feedbackId?.trim())
+          .filter((id): id is string => !!id),
+      ),
+    ];
+    const texts = [
+      ...new Set(
+        examples
+          .map(example => example.originalText?.trim())
+          .filter((text): text is string => !!text),
+      ),
+    ];
+
+    const collected: FeedbackEntity[] = [];
+    const seen = new Set<string>();
+
+    if (feedbackIds.length > 0) {
+      const byId = await this._feedbackRepository.find({
+        where: {
+          owner,
+          id: In(feedbackIds.slice(0, batchSize)),
+        },
+      });
+      for (const feedback of byId) {
+        if (!seen.has(feedback.id)) {
+          seen.add(feedback.id);
+          collected.push(feedback);
+        }
+      }
+    }
+
+    if (collected.length < batchSize && texts.length > 0) {
+      const byText = await this._feedbackRepository.find({
+        where: {
+          owner,
+          originalText: In(texts.slice(0, batchSize)),
+        },
+        take: batchSize,
+        order: {
+          updatedAt: 'DESC',
+        },
+      });
+      for (const feedback of byText) {
+        if (seen.has(feedback.id)) {
+          continue;
+        }
+        seen.add(feedback.id);
+        collected.push(feedback);
+        if (collected.length >= batchSize) {
+          break;
+        }
+      }
+    }
+
+    return collected.slice(0, batchSize);
   }
 
   private getErrorMessage(error: unknown): string {

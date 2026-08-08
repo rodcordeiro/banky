@@ -23,11 +23,21 @@ describe('FeedbackAutoReviewPromotionService', () => {
     activateFromCandidate: jest.fn(),
     deactivateByCandidateVersion: jest.fn().mockResolvedValue(1),
   };
+  const shadowService = {
+    revaluateAffectedSample: jest.fn().mockResolvedValue({
+      evaluated: 1,
+      skipped: 0,
+      errors: 0,
+      reviewVersion: 'shadow-post-apply-alias-v1',
+      runtimeEffective: false,
+    }),
+  };
 
   const service = new FeedbackAutoReviewPromotionService(
     candidateRepository as never,
     qualityService as never,
     effectiveAliasService as never,
+    shadowService as never,
   );
 
   const buildQuality = () => ({
@@ -137,10 +147,27 @@ describe('FeedbackAutoReviewPromotionService', () => {
     qualityService.buildQualityMetrics.mockResolvedValue(buildQuality());
     effectiveAliasService.hasActiveRuntime.mockResolvedValue(false);
     effectiveAliasService.deactivateByCandidateVersion.mockResolvedValue(1);
+    shadowService.revaluateAffectedSample.mockResolvedValue({
+      evaluated: 1,
+      skipped: 0,
+      errors: 0,
+      reviewVersion: 'shadow-post-apply-alias-v1',
+      runtimeEffective: false,
+    });
   });
 
   it('rolls back an active candidate and records audit metadata', async () => {
     const candidate = buildCandidate();
+    candidate.evidence = {
+      sampleSize: 1,
+      shadowAgreementRate: 0,
+      falsePositiveRate: 0,
+      falseNegativeRate: 0,
+      regressionRate: 0,
+      fieldMetrics: [],
+      fieldDivergences: {},
+      examples: [{ originalText: 'exemplo', feedbackId: 'f1' }],
+    };
     candidateRepository.findOne.mockResolvedValue(candidate);
     candidateRepository.save.mockImplementation(entity =>
       Promise.resolve(entity),
@@ -158,7 +185,6 @@ describe('FeedbackAutoReviewPromotionService', () => {
       status: AutoReviewPromotionStatus.rolledBack,
       rolledBackBy: 'operator-id',
       rollbackReason: '[kind=immediate] regression detected',
-      notes: 'rollbackKind=immediate; disabled before runtime activation',
     });
 
     expect(candidateRepository.findOne).toHaveBeenCalledWith({
@@ -167,12 +193,53 @@ describe('FeedbackAutoReviewPromotionService', () => {
         candidateVersion: 'alias-v1',
       },
     });
+    expect(shadowService.revaluateAffectedSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        owner: 'owner-id',
+        candidateVersion: 'alias-v1',
+        trigger: 'rollback',
+      }),
+    );
     expect(candidateRepository.save).toHaveBeenCalledWith(
       expect.objectContaining({
         status: AutoReviewPromotionStatus.rolledBack,
         rolledBackBy: 'operator-id',
         rolledBackAt: expect.any(String),
         rollbackReason: '[kind=immediate] regression detected',
+        notes: expect.stringContaining('sampleShadow=rollback'),
+      }),
+    );
+  });
+
+  it('reprocesses sample in shadow after applying an alias candidate', async () => {
+    const candidate = buildCandidate(AutoReviewPromotionStatus.approved);
+    candidate.evidence = {
+      sampleSize: 1,
+      shadowAgreementRate: 1,
+      falsePositiveRate: 0,
+      falseNegativeRate: 0,
+      regressionRate: 0,
+      fieldMetrics: [],
+      fieldDivergences: {},
+      examples: [{ originalText: 'exemplo', feedbackId: 'f1' }],
+    };
+    candidateRepository.findOne.mockResolvedValue(candidate);
+    candidateRepository.save.mockImplementation(entity =>
+      Promise.resolve(entity),
+    );
+    effectiveAliasService.activateFromCandidate.mockResolvedValue(undefined);
+
+    await expect(
+      service.applyCandidate('owner-id', 'alias-v1', 'operator-id'),
+    ).resolves.toMatchObject({
+      status: AutoReviewPromotionStatus.active,
+    });
+
+    expect(effectiveAliasService.activateFromCandidate).toHaveBeenCalled();
+    expect(shadowService.revaluateAffectedSample).toHaveBeenCalledWith(
+      expect.objectContaining({
+        trigger: 'apply',
+        candidateVersion: 'alias-v1',
       }),
     );
   });

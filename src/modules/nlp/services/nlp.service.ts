@@ -17,6 +17,7 @@ import { FeedbackAutoReviewEffectiveAliasService } from '@/modules/nlp/services/
 import {
   ACCOUNT_ALIASES,
   CATEGORY_ALIASES,
+  normalizeAliasText,
   resolveAliasMatch,
 } from '@/modules/nlp/utils/alias.rules';
 import { TransactionsService } from '@/modules/transactions/services/transactions.service';
@@ -41,13 +42,16 @@ import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entit
 import { FeedbackEntity } from '../entities/feedback.entity';
 import {
   AUTO_REVIEW_REASON_CATALOG,
+  AUTO_REVIEW_THRESHOLDS,
   AutoReviewDecision,
   AutoReviewContext,
   AutoReviewReason,
   AutoReviewReasonCode,
+  AutoReviewReasonSeverity,
   AutoReviewResult,
   AutoReviewEntityReference,
   AutoReviewMode,
+  AutoReviewSuggestedCorrections,
   FeedbackStatus,
 } from '../interfaces';
 
@@ -591,7 +595,7 @@ export class NlpService {
 
     return this._feedbackAutoReviewService.evaluate(feedback, {
       ...context,
-      mode: AutoReviewMode.assistive,
+      mode: context.mode ?? AutoReviewMode.assistive,
       ownerAccounts: this.toEntityReferences(ownerAccounts),
       ownerCategories: this.toEntityReferences(ownerCategories),
       accountAliases,
@@ -644,6 +648,49 @@ export class NlpService {
       return feedback;
     }
 
+    if (evaluation.score < AUTO_REVIEW_THRESHOLDS.correct) {
+      await this.persistBlockedAutoReview(feedback, {
+        ...evaluation,
+        reasons: this.mergeBlockReasons(
+          evaluation.reasons,
+          AUTO_REVIEW_REASON_CATALOG[AutoReviewReasonCode.lowConfidence],
+        ),
+      });
+      throw new BadRequestException(
+        'Score insuficiente para autocorrecao controlada.',
+      );
+    }
+
+    if (
+      evaluation.reasons.some(
+        reason => reason.severity === AutoReviewReasonSeverity.blocker,
+      )
+    ) {
+      await this.persistBlockedAutoReview(feedback, evaluation);
+      throw new BadRequestException(
+        'Avaliacao com blocker nao pode ser autocorrigida.',
+      );
+    }
+
+    const semanticOk = await this.areSuggestedCorrectionsSemanticallyValid(
+      feedback,
+      evaluation.suggestedCorrections,
+    );
+    if (!semanticOk) {
+      await this.persistBlockedAutoReview(feedback, {
+        ...evaluation,
+        reasons: this.mergeBlockReasons(
+          evaluation.reasons,
+          AUTO_REVIEW_REASON_CATALOG[
+            AutoReviewReasonCode.semanticRevalidationFailed
+          ],
+        ),
+      });
+      throw new BadRequestException(
+        'Correcao sugerida falhou na revalidacao semantica.',
+      );
+    }
+
     const corrected = this._repository.create({
       ...feedback,
       ...this.toCorrectedFeedbackFields(evaluation.suggestedCorrections),
@@ -679,16 +726,12 @@ export class NlpService {
 
   /**
    * Persiste tentativa de apply bloqueada (applied=false) sem alterar o feedback.
+   * Só adiciona `human_correction_present` quando há correção humana no feedback.
    */
   async persistBlockedAutoReview(
     feedback: FeedbackEntity,
     evaluation: AutoReviewResult,
   ): Promise<FeedbackAutoReviewEntity> {
-    const blockReason = {
-      ...AUTO_REVIEW_REASON_CATALOG[
-        AutoReviewReasonCode.humanCorrectionPresent
-      ],
-    };
     const existingHistory = await this._feedbackAutoReviewRepository.findOne({
       where: {
         feedbackId: feedback.id,
@@ -701,10 +744,13 @@ export class NlpService {
       return existingHistory;
     }
 
-    const reasons = this.mergeBlockReasons(
-      existingHistory?.reasons ?? evaluation.reasons ?? [],
-      blockReason,
-    );
+    let reasons = existingHistory?.reasons ?? evaluation.reasons ?? [];
+    if (this.hasHumanCorrection(feedback)) {
+      reasons = this.mergeBlockReasons(
+        reasons,
+        AUTO_REVIEW_REASON_CATALOG[AutoReviewReasonCode.humanCorrectionPresent],
+      );
+    }
 
     const historyPayload = {
       feedbackId: feedback.id,
@@ -941,5 +987,82 @@ export class NlpService {
       correctedValue: suggestedCorrections?.value,
       correctedDate: suggestedCorrections?.date,
     };
+  }
+
+  /**
+   * Revalida cada campo sugerido contra entidades do owner e aliases efetivos.
+   */
+  private async areSuggestedCorrectionsSemanticallyValid(
+    feedback: FeedbackEntity,
+    corrections: AutoReviewSuggestedCorrections,
+  ): Promise<boolean> {
+    const [ownerAccounts, ownerCategories, accountAliases, categoryAliases] =
+      await Promise.all([
+        this.listOwnerAccounts(feedback.owner),
+        this.listOwnerCategories(feedback.owner),
+        this._effectiveAliasService.resolveAliasRules(
+          feedback.owner,
+          'account',
+        ),
+        this._effectiveAliasService.resolveAliasRules(
+          feedback.owner,
+          'category',
+        ),
+      ]);
+
+    const accountRefs = this.toEntityReferences(ownerAccounts);
+    const categoryRefs = this.toEntityReferences(ownerCategories);
+    const accountNames = new Set(
+      accountRefs.map(item => normalizeAliasText(item.name)),
+    );
+    const categoryNames = new Set(
+      categoryRefs.map(item => normalizeAliasText(item.name)),
+    );
+
+    const entityFields: Array<{
+      key: keyof AutoReviewSuggestedCorrections;
+      kind: 'account' | 'category';
+    }> = [
+      { key: 'account', kind: 'account' },
+      { key: 'originAccount', kind: 'account' },
+      { key: 'destinyAccount', kind: 'account' },
+      { key: 'category', kind: 'category' },
+    ];
+
+    for (const { key, kind } of entityFields) {
+      const suggested = corrections[key];
+      if (typeof suggested !== 'string' || !suggested.trim()) {
+        continue;
+      }
+
+      const catalog = kind === 'account' ? accountNames : categoryNames;
+      if (!catalog.has(normalizeAliasText(suggested))) {
+        return false;
+      }
+
+      const aliasMatch = resolveAliasMatch(
+        feedback.originalText ?? '',
+        kind === 'account' ? accountRefs : categoryRefs,
+        kind === 'account' ? accountAliases : categoryAliases,
+      );
+      if (
+        aliasMatch &&
+        normalizeAliasText(aliasMatch.target) !== normalizeAliasText(suggested)
+      ) {
+        return false;
+      }
+    }
+
+    if (corrections.value !== undefined && corrections.value !== null) {
+      if (
+        typeof corrections.value !== 'number' ||
+        !Number.isFinite(corrections.value) ||
+        corrections.value <= 0
+      ) {
+        return false;
+      }
+    }
+
+    return true;
   }
 }

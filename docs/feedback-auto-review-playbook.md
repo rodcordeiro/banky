@@ -55,8 +55,8 @@ Bump de `reviewVersion` gera **nova** linha shadow; mesma versão faz skip.
 
 **Caminho feliz do AUTO-021 termina no candidato criado** (`promote`).  
 Candidatos de alias nascem com `shadowAgreementRate=0`, então `POST .../approve` retorna **400** (`insufficient_agreement_rate` / amostras) até haver evidência shadow do próprio alias — isso é gate esperado, não bug.  
-Após approve com gates ok: `POST .../apply` grava alias em `bk_tb_feedback_auto_review_effective_alias` (`runtimeEffective=true` no relatório).  
-`POST .../rollback` com `kind=immediate|pause|expire` desativa runtime; feedbacks/tx intactos.  
+Após approve com gates ok: `POST .../apply` grava alias em `bk_tb_feedback_auto_review_effective_alias` (`runtimeEffective=true` no relatório) e **reprocessa a amostra em shadow** (`shadow-post-apply-...`; não muda status/corrected*).  
+`POST .../rollback` com `kind=immediate|pause|expire` desativa runtime e reprocessa amostra em shadow (`shadow-post-rollback-...`); feedbacks/tx intactos.  
 `GET .../effective-aliases` lista runtime. Estático `alias.rules.ts` continua como fallback.
 
 ## Política / workflow (032)
@@ -71,6 +71,7 @@ Métodos existem (`applyAutoReviewDecision` / `applyAutoReviewCorrection`) com g
 
 - modo `automatic`, score alto, valor sob limite
 - feedback `pending`, sem `corrected*` humano
+- `applyAutoReviewCorrection` revalida entidade/alias (e valor > 0); falha → `semantic_revalidation_failed`
 - bloqueio humano grava auditoria `applied=false` + `human_correction_present`
 
 **Não** habilitar cron de apply sem:
@@ -121,7 +122,7 @@ Pergunta operacional: “o shadow está seguro o bastante para eu olhar candidat
 1. `POST .../rollback` com `kind=immediate|pause|expire` e `reason`.
 2. Alias DB → `inactive`/`paused`; ciclo → `rolled_back`.
 3. Conferir `GET .../effective-aliases` e history.
-4. Reprocess shadow da amostra afetada continua opcional/manual.
+4. Reprocess shadow da amostra afetada roda automaticamente no apply/rollback de alias (ainda sem mudar status/tx).
 
 ## Política de promoção (AUTO-029)
 

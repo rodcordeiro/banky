@@ -306,6 +306,7 @@ describe('NlpService classifier orchestration', () => {
     expect(categoryRepository.find).toHaveBeenCalledTimes(1);
     expect(feedbackAutoReviewService.evaluate).toHaveBeenCalledWith(feedback, {
       valueApprovalLimit: 5000,
+      mode: AutoReviewMode.assistive,
       ownerAccounts: accounts.map(({ name }) => ({ name })),
       ownerCategories: categories.map(({ name }) => ({ name })),
       accountAliases: ACCOUNT_ALIASES,
@@ -313,11 +314,11 @@ describe('NlpService classifier orchestration', () => {
     });
   });
 
-  it('applies automatic correction suggestions without creating a transaction', async () => {
+  it('applies automatic category correction when entity exists and no alias conflict', async () => {
     const feedback = {
       id: 'feedback-id',
       owner,
-      originalText: 'Na conta santander, dia 14/11, 120.39 de mercadinho',
+      originalText: 'Na conta santander, dia 14/11, 120.39 de Mercado',
       predictedIntent: Intents.CREATE,
       predictedAccount: 'santander',
       predictedCategory: 'Variado',
@@ -363,6 +364,127 @@ describe('NlpService classifier orchestration', () => {
     expect(feedbackAutoReviewRepository.save).toHaveBeenCalledWith(history);
     expect(transactionsService.store).not.toHaveBeenCalled();
     expect(transactionsService.createTransfer).not.toHaveBeenCalled();
+  });
+
+  it('applies automatic account correction when entity exists', async () => {
+    const feedback = {
+      id: 'feedback-account',
+      owner,
+      originalText: 'compra na conta santander',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+    const evaluation = {
+      decision: AutoReviewDecision.correct,
+      mode: AutoReviewMode.automatic,
+      score: 0.9,
+      fieldScores: { account: 1 },
+      reasons: [],
+      suggestedCorrections: { account: 'santander' },
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-17T10:00:00.000Z',
+    };
+    const corrected = {
+      ...feedback,
+      correctedAccount: 'santander',
+      status: FeedbackStatus.corrected,
+    };
+
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackRepository.create.mockReturnValue(corrected);
+    feedbackRepository.save.mockResolvedValue(corrected);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
+
+    await expect(
+      service.applyAutoReviewCorrection(feedback, evaluation),
+    ).resolves.toBe(corrected);
+
+    expect(feedbackRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correctedAccount: 'santander',
+        status: FeedbackStatus.corrected,
+      }),
+    );
+  });
+
+  it('applies automatic value correction when value is finite and positive', async () => {
+    const feedback = {
+      id: 'feedback-value',
+      owner,
+      originalText: 'compra 120.39',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+    const evaluation = {
+      decision: AutoReviewDecision.correct,
+      mode: AutoReviewMode.automatic,
+      score: 0.9,
+      fieldScores: { value: 1 },
+      reasons: [],
+      suggestedCorrections: { value: 120.39 },
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-17T10:00:00.000Z',
+    };
+    const corrected = {
+      ...feedback,
+      correctedValue: 120.39,
+      status: FeedbackStatus.corrected,
+    };
+
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackRepository.create.mockReturnValue(corrected);
+    feedbackRepository.save.mockResolvedValue(corrected);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
+
+    await expect(
+      service.applyAutoReviewCorrection(feedback, evaluation),
+    ).resolves.toBe(corrected);
+
+    expect(feedbackRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        correctedValue: 120.39,
+        status: FeedbackStatus.corrected,
+      }),
+    );
+  });
+
+  it('blocks automatic correction when suggested entity does not exist for owner', async () => {
+    const feedback = {
+      id: 'feedback-invalid-entity',
+      owner,
+      originalText: 'compra qualquer',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+    const evaluation = {
+      decision: AutoReviewDecision.correct,
+      mode: AutoReviewMode.automatic,
+      score: 0.9,
+      fieldScores: { category: 1 },
+      reasons: [],
+      suggestedCorrections: { category: 'Categoria Fantasma' },
+      reviewVersion: 'auto-review-automatic-v1',
+      evaluatedAt: '2026-06-17T10:00:00.000Z',
+    };
+
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
+
+    await expect(
+      service.applyAutoReviewCorrection(feedback, evaluation),
+    ).rejects.toThrow('Correcao sugerida falhou na revalidacao semantica.');
+
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
+    expect(feedbackAutoReviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applied: false,
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            code: AutoReviewReasonCode.semanticRevalidationFailed,
+          }),
+        ]),
+      }),
+    );
   });
 
   it('does not reapply an automatic correction already marked as applied', async () => {

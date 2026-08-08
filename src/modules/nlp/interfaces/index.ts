@@ -32,6 +32,7 @@ export enum AutoReviewReasonCode {
   valueAboveLimit = 'value_above_limit',
   lowConfidence = 'low_confidence',
   humanCorrectionPresent = 'human_correction_present',
+  semanticRevalidationFailed = 'semantic_revalidation_failed',
 }
 
 export type AutoReviewField =
@@ -137,6 +138,15 @@ export interface AutoReviewRevaluationResult {
   errorFeedbackIds: string[];
 }
 
+export type AutoReviewSampleRevaluationTrigger = 'apply' | 'rollback';
+
+/** Reprocessamento shadow da amostra afetada por apply/rollback de alias. */
+export interface AutoReviewSampleRevaluationResult extends AutoReviewRevaluationResult {
+  trigger: AutoReviewSampleRevaluationTrigger;
+  candidateVersion: string;
+  runtimeEffective: false;
+}
+
 export type AutoReviewAliasSuggestionField = 'account' | 'category';
 
 export interface AutoReviewAliasSuggestionItem {
@@ -147,6 +157,8 @@ export interface AutoReviewAliasSuggestionItem {
   count: number;
   lastSeenAt: string;
   examples: string[];
+  /** IDs alinhados a `examples` para reprocess shadow da amostra. */
+  exampleFeedbackIds?: string[];
   conflict: boolean;
   meetsMinimumVolume: boolean;
   alreadyPromoted: boolean;
@@ -1247,6 +1259,14 @@ export const AUTO_REVIEW_REASON_CATALOG: Record<
     severity: AutoReviewReasonSeverity.warning,
     message:
       'Aplicacao bloqueada porque ja existe correcao humana no feedback.',
+    field: 'overall',
+  },
+  [AutoReviewReasonCode.semanticRevalidationFailed]: {
+    code: AutoReviewReasonCode.semanticRevalidationFailed,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.blocker,
+    message:
+      'Correcao sugerida nao passa na revalidacao semantica contra alias/regra ou entidade do owner.',
     field: 'overall',
   },
   [AutoReviewRuleCode.missingIntent]: {

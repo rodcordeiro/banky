@@ -2,6 +2,7 @@ import {
   BadRequestException,
   Inject,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { Repository } from 'typeorm';
@@ -22,6 +23,7 @@ import {
   AutoReviewPromotionSegmentConfidence,
   AutoReviewPromotionStatus,
   AutoReviewQualityMetricsResult,
+  AutoReviewSampleRevaluationTrigger,
   FeedbackAutoReviewPromotionCandidateSnapshot,
   buildAutoReviewPromotionReplayResult,
 } from '../interfaces';
@@ -30,16 +32,22 @@ import {
   EffectiveAliasDeactivationKind,
   FeedbackAutoReviewEffectiveAliasService,
 } from './feedback-auto-review-effective-alias.service';
+import { FeedbackAutoReviewShadowService } from './feedback-auto-review-shadow.service';
 
 const APPROVED_EXPIRE_DAYS_DEFAULT = 14;
 
 @Injectable()
 export class FeedbackAutoReviewPromotionService {
+  private readonly _logger = new Logger(
+    FeedbackAutoReviewPromotionService.name,
+  );
+
   constructor(
     @Inject('FEEDBACK_AUTO_REVIEW_PROMOTION_CANDIDATE_REPOSITORY')
     private readonly _candidateRepository: Repository<FeedbackAutoReviewPromotionCandidateEntity>,
     private readonly _qualityService: FeedbackAutoReviewQualityService,
     private readonly _effectiveAliasService: FeedbackAutoReviewEffectiveAliasService,
+    private readonly _shadowService: FeedbackAutoReviewShadowService,
   ) {}
 
   async storeCandidate(
@@ -391,7 +399,13 @@ export class FeedbackAutoReviewPromotionService {
     candidate.appliedAt = new Date().toISOString();
     candidate.notes = this.mergeNotes(candidate.notes, notes);
 
-    return this._candidateRepository.save(candidate);
+    const saved = await this._candidateRepository.save(candidate);
+
+    if (candidate.type === AutoReviewPromotionCandidateType.alias) {
+      await this.runSampleShadowRevaluation(saved, 'apply');
+    }
+
+    return saved;
   }
 
   async rollbackCandidate(
@@ -436,7 +450,13 @@ export class FeedbackAutoReviewPromotionService {
       [`rollbackKind=${kind}`, notes].filter(Boolean).join('; '),
     );
 
-    return this._candidateRepository.save(candidate);
+    const saved = await this._candidateRepository.save(candidate);
+
+    if (candidate.type === AutoReviewPromotionCandidateType.alias) {
+      await this.runSampleShadowRevaluation(saved, 'rollback');
+    }
+
+    return saved;
   }
 
   /**
@@ -985,6 +1005,40 @@ export class FeedbackAutoReviewPromotionService {
       rollbackReason: entity.rollbackReason ?? undefined,
       notes: entity.notes ?? undefined,
     };
+  }
+
+  /**
+   * Dispara shadow da amostra afetada; falha do shadow não reverte apply/rollback.
+   */
+  private async runSampleShadowRevaluation(
+    candidate: FeedbackAutoReviewPromotionCandidateEntity,
+    trigger: AutoReviewSampleRevaluationTrigger,
+  ): Promise<void> {
+    try {
+      const result = await this._shadowService.revaluateAffectedSample({
+        owner: candidate.owner,
+        candidateVersion: candidate.candidateVersion,
+        trigger,
+        examples: candidate.evidence?.examples ?? [],
+      });
+
+      candidate.notes = this.mergeNotes(
+        candidate.notes,
+        `sampleShadow=${trigger};version=${result.reviewVersion};evaluated=${result.evaluated};skipped=${result.skipped};errors=${result.errors}`,
+      );
+      await this._candidateRepository.save(candidate);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'unknown_sample_shadow_error';
+      this._logger.error(
+        `Sample shadow revaluation failed trigger=${trigger} candidate=${candidate.candidateVersion}: ${message}`,
+      );
+      candidate.notes = this.mergeNotes(
+        candidate.notes,
+        `sampleShadow=${trigger};error=${message}`,
+      );
+      await this._candidateRepository.save(candidate);
+    }
   }
 
   private mergeNotes(current?: string | null, next?: string): string | null {

@@ -404,4 +404,46 @@ describe('FeedbackAutoReviewShadowService', () => {
     expect(historyRepository.findOne).not.toHaveBeenCalled();
     expect(feedbackRepository.save).not.toHaveBeenCalled();
   });
+
+  it('revaluates affected sample in shadow without applying decisions', async () => {
+    const feedback = {
+      id: 'f1',
+      owner: 'owner-id',
+      originalText: 'exemplo youtube',
+      status: FeedbackStatus.corrected,
+    } as FeedbackEntity;
+    const evaluation = {
+      decision: AutoReviewDecision.correct,
+      mode: AutoReviewMode.shadow,
+      score: 0.9,
+      fieldScores: {},
+      reasons: [],
+      reviewVersion: 'shadow-post-apply-alias-v1',
+      evaluatedAt: '2026-08-08T12:00:00.000Z',
+    };
+
+    feedbackRepository.find.mockResolvedValue([feedback]);
+    historyRepository.findOne.mockResolvedValue(null);
+    historyRepository.create.mockImplementation(value => value);
+    historyRepository.save.mockImplementation(async value => value);
+    nlpService.evaluateFeedbackAutoReview.mockResolvedValue(evaluation);
+
+    const result = await service.revaluateAffectedSample({
+      owner: 'owner-id',
+      candidateVersion: 'alias-v1',
+      trigger: 'apply',
+      examples: [{ originalText: 'exemplo youtube', feedbackId: 'f1' }],
+    });
+
+    expect(result.runtimeEffective).toBe(false);
+    expect(result.trigger).toBe('apply');
+    expect(result.evaluated).toBe(1);
+    expect(result.reviewVersion).toContain('shadow-post-apply');
+    expect(nlpService.evaluateFeedbackAutoReview).toHaveBeenCalledWith(
+      feedback,
+      'owner-id',
+      expect.objectContaining({ mode: AutoReviewMode.shadow }),
+    );
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
+  });
 });
