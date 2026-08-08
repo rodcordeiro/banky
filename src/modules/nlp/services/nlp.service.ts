@@ -591,6 +591,7 @@ export class NlpService {
 
     return this._feedbackAutoReviewService.evaluate(feedback, {
       ...context,
+      mode: AutoReviewMode.assistive,
       ownerAccounts: this.toEntityReferences(ownerAccounts),
       ownerCategories: this.toEntityReferences(ownerCategories),
       accountAliases,

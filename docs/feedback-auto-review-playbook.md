@@ -44,11 +44,14 @@ Bump de `reviewVersion` gera **nova** linha shadow; mesma versão faz skip.
 
 1. `GET /api/v1/nlp/auto-review/alias-suggestions?minVolume=2`
 2. Revisar conflitos (`conflict=true` não promove).
-3. `POST /api/v1/nlp/auto-review/alias-suggestions/promote` com `field`, `pattern`, `predicted`, `corrected`.
-4. Ciclo existente:
+3. Cron (ou manual) **só enche a fila de candidatos** — não aprova nem ativa runtime:
+   - cron diário (prod `02:15`, dev a cada hora): elegíveis (`meetsMinimumVolume`, sem conflict/rejected/alreadyPromoted/rolled_back)
+   - manual por owner: `POST /api/v1/nlp/auto-review/alias-suggestions/promote-eligible`
+4. Promote pontual: `POST /api/v1/nlp/auto-review/alias-suggestions/promote` com `field`, `pattern`, `predicted`, `corrected`.
+5. Ciclo existente:
    - listar: `GET /api/v1/nlp/auto-review/promotion-candidates`
-   - rejeitar / (futuro) aprovar / apply / rollback nos endpoints de promotion-candidates
-5. Histórico de ciclo: `GET /api/v1/nlp/auto-review/promotion-history`
+   - rejeitar / aprovar / apply / rollback nos endpoints de promotion-candidates
+6. Histórico de ciclo: `GET /api/v1/nlp/auto-review/promotion-history`
 
 **Caminho feliz do AUTO-021 termina no candidato criado** (`promote`).  
 Candidatos de alias nascem com `shadowAgreementRate=0`, então `POST .../approve` retorna **400** (`insufficient_agreement_rate` / amostras) até haver evidência shadow do próprio alias — isso é gate esperado, não bug.  

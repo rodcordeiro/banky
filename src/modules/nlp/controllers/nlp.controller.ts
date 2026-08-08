@@ -195,6 +195,18 @@ export class NlpController {
     );
   }
 
+  @Post('/auto-review/alias-suggestions/promote-eligible')
+  async autoReviewAliasSuggestionsPromoteEligible(
+    @Req() req: AuthenticatedRequest,
+    @Query() queries: AutoReviewAliasSuggestionQueryDto,
+  ) {
+    return await this._aliasSuggestionService.promoteEligibleAliasSuggestions({
+      owner: req.user.id,
+      minVolume: queries.minVolume,
+      createdBy: req.user.id,
+    });
+  }
+
   @Get('/auto-review/promotion-candidates')
   async autoReviewPromotionCandidates(
     @Req() req: AuthenticatedRequest,

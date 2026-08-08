@@ -1,4 +1,11 @@
-import { BadRequestException, Inject, Injectable } from '@nestjs/common';
+import { ENV_VARIABLES } from '@/common/config/env.config';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { Not, Repository } from 'typeorm';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import { FeedbackAutoReviewPromotionCandidateEntity } from '../entities/feedback-auto-review-promotion-candidate.entity';
@@ -17,6 +24,32 @@ import { FeedbackAutoReviewPromotionService } from './feedback-auto-review-promo
 
 const DEFAULT_MIN_VOLUME = 2;
 const MAX_EXAMPLES = 3;
+const CRON_CREATED_BY = 'alias-suggestion-cron';
+const PROD_PROMOTE_CRON = '0 15 2 * * *';
+const DEV_PROMOTE_CRON = '0 0 */1 * * *';
+
+export type AliasSuggestionPromoteBatchOutcome =
+  | 'promoted'
+  | 'skipped'
+  | 'error';
+
+export interface AliasSuggestionPromoteBatchItem {
+  owner: string;
+  candidateVersion: string;
+  outcome: AliasSuggestionPromoteBatchOutcome;
+  reason?: string;
+}
+
+export interface AliasSuggestionPromoteBatchResult {
+  generatedAt: string;
+  minVolume: number;
+  ownersProcessed: number;
+  promoted: number;
+  skipped: number;
+  errors: number;
+  items: AliasSuggestionPromoteBatchItem[];
+  runtimeEffective: false;
+}
 
 type DivergenceRecord = {
   field: AutoReviewAliasSuggestionField;
@@ -29,6 +62,10 @@ type DivergenceRecord = {
 
 @Injectable()
 export class FeedbackAutoReviewAliasSuggestionService {
+  private readonly _logger = new Logger(
+    FeedbackAutoReviewAliasSuggestionService.name,
+  );
+
   constructor(
     @Inject('FEEDBACK_REPOSITORY')
     private readonly _feedbackRepository: Repository<FeedbackEntity>,
@@ -36,6 +73,23 @@ export class FeedbackAutoReviewAliasSuggestionService {
     private readonly _candidateRepository: Repository<FeedbackAutoReviewPromotionCandidateEntity>,
     private readonly _promotionService: FeedbackAutoReviewPromotionService,
   ) {}
+
+  /**
+   * Cron: promove sugestões elegíveis → candidatos (fila). Não aprova nem ativa runtime.
+   */
+  @Cron(
+    ENV_VARIABLES.NODE_ENV === 'production'
+      ? PROD_PROMOTE_CRON
+      : DEV_PROMOTE_CRON,
+    { waitForCompletion: true },
+  )
+  async processEligibleAliasSuggestionPromotions(): Promise<number> {
+    const result = await this.promoteEligibleAliasSuggestions();
+    this._logger.log(
+      `Alias suggestion cron finished promoted=${result.promoted} skipped=${result.skipped} errors=${result.errors} owners=${result.ownersProcessed}`,
+    );
+    return result.promoted;
+  }
 
   /**
    * Lista sugestoes de alias a partir de divergencias humanas (somente leitura).
@@ -227,6 +281,150 @@ export class FeedbackAutoReviewAliasSuggestionService {
     };
 
     return this._promotionService.storeCandidate(owner, candidate);
+  }
+
+  /**
+   * Promove em lote sugestões elegíveis para candidatos (idempotente; sem approve/apply).
+   */
+  async promoteEligibleAliasSuggestions(options?: {
+    owner?: string;
+    minVolume?: number;
+    createdBy?: string;
+  }): Promise<AliasSuggestionPromoteBatchResult> {
+    const minVolume = options?.minVolume ?? DEFAULT_MIN_VOLUME;
+    const createdBy = options?.createdBy?.trim() || CRON_CREATED_BY;
+    const owners = options?.owner
+      ? [options.owner]
+      : await this.listOwnersWithReviewedFeedback();
+
+    const items: AliasSuggestionPromoteBatchItem[] = [];
+    let promoted = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    for (const owner of owners) {
+      const report = await this.buildAliasSuggestions(owner, minVolume);
+      const rolledBackVersions = await this.listRolledBackVersions(owner);
+
+      for (const suggestion of report.items) {
+        if (!suggestion.meetsMinimumVolume) {
+          skipped += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'skipped',
+            reason: 'below_min_volume',
+          });
+          continue;
+        }
+
+        if (suggestion.conflict) {
+          skipped += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'skipped',
+            reason: 'conflict',
+          });
+          continue;
+        }
+
+        if (suggestion.alreadyRejected) {
+          skipped += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'skipped',
+            reason: 'already_rejected',
+          });
+          continue;
+        }
+
+        if (suggestion.alreadyPromoted) {
+          skipped += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'skipped',
+            reason: 'already_promoted',
+          });
+          continue;
+        }
+
+        if (rolledBackVersions.has(suggestion.candidateVersion)) {
+          skipped += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'skipped',
+            reason: 'already_rolled_back',
+          });
+          continue;
+        }
+
+        try {
+          await this.promoteAliasSuggestion(owner, createdBy, {
+            field: suggestion.field,
+            pattern: suggestion.pattern,
+            predicted: suggestion.predicted,
+            corrected: suggestion.corrected,
+            minVolume,
+          });
+          promoted += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'promoted',
+          });
+        } catch (error) {
+          errors += 1;
+          items.push({
+            owner,
+            candidateVersion: suggestion.candidateVersion,
+            outcome: 'error',
+            reason:
+              error instanceof Error ? error.message : 'unknown_promote_error',
+          });
+        }
+      }
+    }
+
+    return {
+      generatedAt: new Date().toISOString(),
+      minVolume,
+      ownersProcessed: owners.length,
+      promoted,
+      skipped,
+      errors,
+      items,
+      runtimeEffective: false,
+    };
+  }
+
+  private async listOwnersWithReviewedFeedback(): Promise<string[]> {
+    const rows = await this._feedbackRepository
+      .createQueryBuilder('feedback')
+      .select('DISTINCT feedback.owner', 'owner')
+      .where('feedback.status != :pending', {
+        pending: FeedbackStatus.pending,
+      })
+      .getRawMany<{ owner: string }>();
+
+    return rows
+      .map(row => row.owner)
+      .filter((owner): owner is string => !!owner?.trim());
+  }
+
+  private async listRolledBackVersions(owner: string): Promise<Set<string>> {
+    const rolledBack = await this._candidateRepository.find({
+      where: {
+        owner,
+        status: AutoReviewPromotionStatus.rolledBack,
+      },
+      select: ['candidateVersion'],
+    });
+
+    return new Set(rolledBack.map(item => item.candidateVersion));
   }
 
   private collectDivergences(feedbacks: FeedbackEntity[]): DivergenceRecord[] {
