@@ -13,6 +13,7 @@ import {
 } from '@/modules/nlp/classifiers/intent.classifier';
 import { ValueClassifier } from '@/modules/nlp/classifiers/value.classifier';
 import { FeedbackAutoReviewService } from '@/modules/nlp/services/feedback-auto-review.service';
+import { FeedbackAutoReviewEffectiveAliasService } from '@/modules/nlp/services/feedback-auto-review-effective-alias.service';
 import {
   ACCOUNT_ALIASES,
   CATEGORY_ALIASES,
@@ -39,8 +40,11 @@ import { SearchFeedbackDto } from '../dtos/search.dto';
 import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
 import { FeedbackEntity } from '../entities/feedback.entity';
 import {
+  AUTO_REVIEW_REASON_CATALOG,
   AutoReviewDecision,
   AutoReviewContext,
+  AutoReviewReason,
+  AutoReviewReasonCode,
   AutoReviewResult,
   AutoReviewEntityReference,
   AutoReviewMode,
@@ -70,6 +74,7 @@ export class NlpService {
     private readonly _paginateService: PaginationService,
     private readonly _transactionsService: TransactionsService,
     private readonly _feedbackAutoReviewService: FeedbackAutoReviewService,
+    private readonly _effectiveAliasService: FeedbackAutoReviewEffectiveAliasService,
   ) {
     this.intentProcessor = new IntentClassifier();
     this.accountProcessor = new AccountsClassifier();
@@ -256,11 +261,10 @@ export class NlpService {
         : undefined,
     });
 
-    const aliasMatch = resolveAliasMatch(
-      normalizedText,
-      accounts,
-      ACCOUNT_ALIASES,
-    );
+    const aliasRules = owner
+      ? await this._effectiveAliasService.resolveAliasRules(owner, 'account')
+      : ACCOUNT_ALIASES;
+    const aliasMatch = resolveAliasMatch(normalizedText, accounts, aliasRules);
     if (aliasMatch) return aliasMatch.target;
 
     return this.findComparableEntity(normalizedText, accounts, {
@@ -337,11 +341,10 @@ export class NlpService {
         : undefined,
     });
 
-    const aliasMatch = resolveAliasMatch(
-      normalized,
-      categories,
-      CATEGORY_ALIASES,
-    );
+    const aliasRules = owner
+      ? await this._effectiveAliasService.resolveAliasRules(owner, 'category')
+      : CATEGORY_ALIASES;
+    const aliasMatch = resolveAliasMatch(normalized, categories, aliasRules);
     if (aliasMatch) return aliasMatch.target;
 
     if (/\b(?:de|do|da|no|na)\s+mercado\b/.test(normalized)) {
@@ -578,15 +581,20 @@ export class NlpService {
       valueApprovalLimit: 5000,
     },
   ): Promise<AutoReviewResult> {
-    const [ownerAccounts, ownerCategories] = await Promise.all([
-      this.listOwnerAccounts(owner),
-      this.listOwnerCategories(owner),
-    ]);
+    const [ownerAccounts, ownerCategories, accountAliases, categoryAliases] =
+      await Promise.all([
+        this.listOwnerAccounts(owner),
+        this.listOwnerCategories(owner),
+        this._effectiveAliasService.resolveAliasRules(owner, 'account'),
+        this._effectiveAliasService.resolveAliasRules(owner, 'category'),
+      ]);
 
     return this._feedbackAutoReviewService.evaluate(feedback, {
       ...context,
       ownerAccounts: this.toEntityReferences(ownerAccounts),
       ownerCategories: this.toEntityReferences(ownerCategories),
+      accountAliases,
+      categoryAliases,
     });
   }
 
@@ -611,6 +619,7 @@ export class NlpService {
     }
 
     if (this.hasHumanCorrection(feedback)) {
+      await this.persistBlockedAutoReview(feedback, evaluation);
       throw new BadRequestException(
         'Feedback com correcao humana nao pode ser autocorrigido.',
       );
@@ -665,6 +674,60 @@ export class NlpService {
     await this._feedbackAutoReviewRepository.save(history);
 
     return savedFeedback;
+  }
+
+  /**
+   * Persiste tentativa de apply bloqueada (applied=false) sem alterar o feedback.
+   */
+  async persistBlockedAutoReview(
+    feedback: FeedbackEntity,
+    evaluation: AutoReviewResult,
+  ): Promise<FeedbackAutoReviewEntity> {
+    const blockReason = {
+      ...AUTO_REVIEW_REASON_CATALOG[
+        AutoReviewReasonCode.humanCorrectionPresent
+      ],
+    };
+    const existingHistory = await this._feedbackAutoReviewRepository.findOne({
+      where: {
+        feedbackId: feedback.id,
+        mode: evaluation.mode,
+        reviewVersion: evaluation.reviewVersion,
+      },
+    });
+
+    if (existingHistory?.applied) {
+      return existingHistory;
+    }
+
+    const reasons = this.mergeBlockReasons(
+      existingHistory?.reasons ?? evaluation.reasons ?? [],
+      blockReason,
+    );
+
+    const historyPayload = {
+      feedbackId: feedback.id,
+      owner: feedback.owner,
+      mode: evaluation.mode,
+      decision: evaluation.decision,
+      score: evaluation.score,
+      fieldScores: evaluation.fieldScores,
+      reasons,
+      suggestedCorrections: evaluation.suggestedCorrections ?? null,
+      reviewVersion: evaluation.reviewVersion,
+      evaluatedAt: evaluation.evaluatedAt,
+      applied: false,
+      appliedAt: null,
+    };
+
+    const history = existingHistory
+      ? this._feedbackAutoReviewRepository.merge(
+          existingHistory,
+          historyPayload,
+        )
+      : this._feedbackAutoReviewRepository.create(historyPayload);
+
+    return this._feedbackAutoReviewRepository.save(history);
   }
 
   async Review(payload: Partial<FeedbackEntity>) {
@@ -852,6 +915,17 @@ export class NlpService {
       feedback.correctedValue,
       feedback.correctedDate,
     ].some(value => value !== undefined && value !== null && value !== '');
+  }
+
+  private mergeBlockReasons(
+    current: AutoReviewReason[],
+    blockReason: AutoReviewReason,
+  ): AutoReviewReason[] {
+    if (current.some(reason => reason.code === blockReason.code)) {
+      return current;
+    }
+
+    return [...current, blockReason];
   }
 
   private toCorrectedFeedbackFields(

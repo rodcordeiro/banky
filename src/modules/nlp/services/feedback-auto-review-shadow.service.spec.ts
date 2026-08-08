@@ -26,6 +26,7 @@ describe('FeedbackAutoReviewShadowService', () => {
 
   const nlpService = {
     evaluateFeedbackAutoReview: jest.fn(),
+    persistBlockedAutoReview: jest.fn(),
   };
 
   const service = new FeedbackAutoReviewShadowService(
@@ -78,7 +79,7 @@ describe('FeedbackAutoReviewShadowService', () => {
     expect(feedbackRepository.find).toHaveBeenCalledWith({
       where: { status: FeedbackStatus.pending },
       order: { createdAt: 'ASC' },
-      take: 50,
+      take: 100,
     });
     expect(nlpService.evaluateFeedbackAutoReview).toHaveBeenCalledWith(
       feedback,
@@ -108,6 +109,97 @@ describe('FeedbackAutoReviewShadowService', () => {
 
     expect(nlpService.evaluateFeedbackAutoReview).not.toHaveBeenCalled();
     expect(historyRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('creates a new shadow row when review version bumps', async () => {
+    const feedback = {
+      id: 'feedback-id',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+    const evaluation = {
+      decision: AutoReviewDecision.manualReview,
+      mode: AutoReviewMode.shadow,
+      score: 0.8,
+      fieldScores: { intent: 1 },
+      reasons: [],
+      reviewVersion: 'auto-review-shadow-v2',
+      evaluatedAt: '2026-08-08T12:00:00.000Z',
+    };
+
+    historyRepository.findOne.mockResolvedValue(null);
+    historyRepository.create.mockImplementation(value => value);
+    historyRepository.save.mockImplementation(async value => value);
+    nlpService.evaluateFeedbackAutoReview.mockResolvedValue(evaluation);
+    feedbackRepository.find.mockResolvedValue([feedback]);
+
+    const result = await service.revaluatePendingBatch({
+      reviewVersion: 'auto-review-shadow-v2',
+      batchSize: 10,
+      owner: 'owner-id',
+    });
+
+    expect(feedbackRepository.find).toHaveBeenCalledWith({
+      where: {
+        status: FeedbackStatus.pending,
+        owner: 'owner-id',
+      },
+      order: { createdAt: 'ASC' },
+      take: 10,
+    });
+    expect(historyRepository.findOne).toHaveBeenCalledWith({
+      where: {
+        feedbackId: feedback.id,
+        mode: AutoReviewMode.shadow,
+        reviewVersion: 'auto-review-shadow-v2',
+      },
+    });
+    expect(result).toMatchObject({
+      reviewVersion: 'auto-review-shadow-v2',
+      candidates: 1,
+      evaluated: 1,
+      skipped: 0,
+      errors: 0,
+    });
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
+  });
+
+  it('keeps the batch running when one feedback fails', async () => {
+    const okFeedback = {
+      id: 'feedback-ok',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+    const badFeedback = {
+      id: 'feedback-bad',
+      owner: 'owner-id',
+      status: FeedbackStatus.pending,
+    } as FeedbackEntity;
+
+    feedbackRepository.find.mockResolvedValue([badFeedback, okFeedback]);
+    historyRepository.findOne.mockResolvedValue(null);
+    historyRepository.create.mockImplementation(value => value);
+    historyRepository.save.mockImplementation(async value => value);
+    nlpService.evaluateFeedbackAutoReview
+      .mockRejectedValueOnce(new Error('boom'))
+      .mockResolvedValueOnce({
+        decision: AutoReviewDecision.approve,
+        mode: AutoReviewMode.shadow,
+        score: 1,
+        fieldScores: {},
+        reasons: [],
+        reviewVersion: 'auto-review-shadow-v1',
+        evaluatedAt: '2026-08-08T12:00:00.000Z',
+      });
+
+    const result = await service.revaluatePendingBatch({
+      reviewVersion: 'auto-review-shadow-v1',
+    });
+
+    expect(result.evaluated).toBe(1);
+    expect(result.errors).toBe(1);
+    expect(result.errorFeedbackIds).toEqual(['feedback-bad']);
+    expect(feedbackRepository.save).not.toHaveBeenCalled();
   });
 
   it('builds an operational report with divergence and human status', async () => {
@@ -296,10 +388,19 @@ describe('FeedbackAutoReviewShadowService', () => {
       evaluatedAt: '2026-06-15T10:00:00.000Z',
     };
 
+    nlpService.persistBlockedAutoReview.mockResolvedValue({
+      id: 'history-id',
+      applied: false,
+    });
+
     await expect(
       service.applyAutoReviewDecision(feedback, evaluation),
     ).resolves.toBeNull();
 
+    expect(nlpService.persistBlockedAutoReview).toHaveBeenCalledWith(
+      feedback,
+      evaluation,
+    );
     expect(historyRepository.findOne).not.toHaveBeenCalled();
     expect(feedbackRepository.save).not.toHaveBeenCalled();
   });

@@ -300,8 +300,8 @@ Contrato adotado:
 - [x] Medir acuracia por campo antes e depois de cada treino ou ajuste de regra.
 - [x] Medir matriz de confusao de categorias mais divergentes.
 - [x] Comparar versao anterior e nova versao do avaliador em modo shadow antes de promocao.
-- [ ] Promover novas regras, aliases ou modelos somente quando reduzir falso positivo sem aumentar risco operacional relevante.
-- [ ] Registrar versao, metricas, amostra usada, criterios de promocao e rollback.
+- [x] Promover novas regras, aliases ou modelos somente quando reduzir falso positivo sem aumentar risco operacional relevante.
+- [x] Registrar versao, metricas, amostra usada, criterios de promocao e rollback.
 
 Contrato sugerido:
 
@@ -316,8 +316,11 @@ Contrato implementado:
 
 - endpoint autenticado `GET /nlp/auto-review/learning-loop`;
 - relatorio somente leitura, sem aplicar treino, alias, regra ou autonomia;
-- retorno com `dataset`, `fieldMetrics`, `categoryConfusions`, `divergenceExamples`, `shadowVersionComparisons` e `promotionReadiness`;
-- `promotionReadiness.eligible` permanece `false` ate existir criterio operacional explicito de promocao e rollback.
+- retorno com `dataset`, `fieldMetrics`, `categoryConfusions`, `divergenceExamples`, `shadowVersionComparisons`, `inspectionReady`, `promotionEvidence` e `promotionReadiness`;
+- `inspectionReady` indica amostra minima para inspecionar divergencias;
+- `promotionReadiness.eligible` usa a politica de alias (`minShadowSamples`, `minAgreementRate`, `maxFalsePositiveRate`) e exige `rollbackRequired`;
+- `eligible=true` libera apenas o aprovador humano — nao autoativa runtime, nao altera `status` e nao cria lancamento;
+- `promotionEvidence` expoe versao, amostra, metricas, criterios aplicados e exigencia de rollback sem persistir no GET.
 
 #### AUTO-023 - Definir politica de promocao do autoavaliador
 
@@ -428,15 +431,19 @@ trilha historica dedicada permanece no escopo de `AUTO-017`, e rollback fica em
 - [x] Registrar motivo do rollback.
 - [x] Garantir que rollback nao altera feedbacks ja revisados sem decisao explicita.
 - [x] Cobrir regras de rollback do service com teste unitario.
-- [ ] Reprocessar amostra em shadow apos rollback runtime efetivo.
-- [ ] Expor historico dedicado de promocao e rollback.
+- [x] Expor historico dedicado de promocao e rollback.
+- [ ] Reprocessar amostra em shadow apos rollback runtime efetivo (depende de AUTO-034).
+
+Contrato implementado:
+
+- rollback de ciclo: `active` -> `rolled_back` com usuario, data e motivo;
+- endpoint autenticado `GET /nlp/auto-review/promotion-history` (filtro opcional `candidateVersion`);
+- historico reconstruido a partir dos campos de auditoria do candidato;
+- cada evento marca `runtimeEffective=false` enquanto aliases nao forem efetivos no avaliador;
+- reprocessamento shadow pos-rollback fica explicitamente amarrado a AUTO-034 (runtime efetivo).
 
 Entregue em `src/modules/nlp/services/feedback-auto-review-promotion.service.ts`
-e `src/modules/nlp/controllers/nlp.controller.ts`. Como a promocao ainda nao
-altera runtime, o rollback atual reverte o ciclo persistido do candidato de
-`active` para `rolled_back`, registra usuario, data e motivo, sem tocar
-feedbacks ou transacoes. Reprocessamento shadow e historico dedicado ficam
-associados a `AUTO-017`, `AUTO-033` e `AUTO-034`.
+e `src/modules/nlp/controllers/nlp.controller.ts`.
 
 ### Passo a passo
 
@@ -557,14 +564,14 @@ Contrato adotado:
 - [x] Criar fixture com `correctedCategory`.
 - [x] Criar fixture com `correctedValue`.
 - [x] Garantir que apply nao sobrescreve campo corrigido.
-- [ ] Garantir que historico registra bloqueio por correcao humana.
+- [x] Garantir que historico registra bloqueio por correcao humana.
 
 Contrato adotado:
 
 - `applyAutoReviewCorrection` nao altera feedback que ja esta `corrected`;
 - qualquer campo `corrected*` ja preenchido bloqueia nova autocorrecao;
-- enquanto a trilha de auditoria dedicada nao existir, o bloqueio nao grava historico proprio;
-- o registro auditavel de bloqueios fica associado a `AUTO-017`.
+- bloqueio por correcao humana persiste em `bk_tb_feedback_auto_review` com `applied=false`, `appliedAt=null` e reason `human_correction_present`;
+- o mesmo bloqueio e registrado ao tentar autoaprovacao com correcao humana presente.
 
 ### Passo a passo
 
@@ -599,32 +606,57 @@ Objetivo: transformar o autoavaliador em um fluxo operavel, mensuravel e evoluti
 
 #### AUTO-016 - Criar metricas de qualidade
 
-- Contar decisoes por modo.
-- Contar decisoes por intent.
-- Contar aplicacoes automaticas.
-- Contar bloqueios por guardrail.
-- Medir divergencia entre shadow e revisao humana.
-- Medir taxa de falso positivo conhecida.
-- Expor metricas por log estruturado ou endpoint interno.
+- [x] Contar decisoes por modo.
+- [x] Contar decisoes por intent.
+- [x] Contar aplicacoes automaticas.
+- [x] Contar bloqueios por guardrail.
+- [x] Medir divergencia entre shadow e revisao humana.
+- [x] Medir taxa de falso positivo conhecida.
+- [x] Expor metricas por endpoint interno autenticado.
+- [ ] Expor metricas por log estruturado.
+
+Contrato implementado (fatia inicial):
+
+- endpoint autenticado `GET /nlp/auto-review/quality-metrics`;
+- filtros `from`, `to` e `valueApprovalLimit`;
+- retorno somente leitura com `summary`, `byMode`, `byDecision`, `byIntent`, `byField`, `byValueBand`, `guardrailBlocksByCode` e `aliasInspectionReadiness`;
+- falso positivo potencial = shadow `approve` com feedback humano `corrected` ou ainda `pending`;
+- nao altera `status`, `corrected*`, promocao nem runtime.
 
 #### AUTO-017 - Criar trilha de auditoria
 
-- Persistir versao do avaliador.
-- Persistir reasons completas.
-- Persistir correcoes sugeridas.
-- Persistir snapshot dos scores.
-- Persistir usuario/origem quando aplicavel.
-- Registrar quando decisao foi aplicada.
-- Registrar quando decisao foi bloqueada.
+- [x] Persistir versao do avaliador.
+- [x] Persistir reasons completas.
+- [x] Persistir correcoes sugeridas.
+- [x] Persistir snapshot dos scores.
+- [x] Persistir usuario/origem quando aplicavel (ciclo de promocao separado).
+- [x] Registrar quando decisao foi aplicada (`applied=true`).
+- [x] Registrar quando decisao foi bloqueada (`applied=false` + `human_correction_present`).
+
+Contrato implementado:
+
+- reutiliza `bk_tb_feedback_auto_review` sem migration;
+- aplicacao grava `applied=true` e `appliedAt`;
+- bloqueio por correcao humana grava `applied=false`, `appliedAt=null` e reason `human_correction_present`;
+- feedback permanece inalterado no bloqueio;
+- consulta por `feedbackId` + `reviewVersion` distingue blocked vs applied via `applied` + reason code.
 
 #### AUTO-018 - Definir rotina de reavaliacao
 
-- Selecionar feedbacks pendentes elegiveis.
-- Ignorar feedbacks ja avaliados na mesma versao.
-- Limitar volume por execucao.
-- Registrar inicio/fim da rotina.
-- Tratar erro por feedback sem interromper lote inteiro.
-- Garantir reprocessamento idempotente.
+- [x] Selecionar feedbacks pendentes elegiveis.
+- [x] Ignorar feedbacks ja avaliados na mesma versao.
+- [x] Limitar volume por execucao.
+- [x] Registrar inicio/fim da rotina.
+- [x] Tratar erro por feedback sem interromper lote inteiro.
+- [x] Garantir reprocessamento idempotente.
+
+Contrato implementado:
+
+- metodo `revaluatePendingBatch` (cron shadow passa a usa-lo);
+- endpoint autenticado `POST /nlp/auto-review/revaluate` com `reviewVersion` e `batchSize` opcionais, escopo por owner;
+- bump de versao cria nova linha shadow; mesma versao faz skip;
+- retorno com `startedAt`, `finishedAt`, `candidates`, `evaluated`, `skipped`, `errors` e `errorFeedbackIds`;
+- nao altera `status`/`corrected*` e nao aplica approve/correct.
 
 #### AUTO-019 - Criar criterios para LLM judge opcional
 
@@ -638,34 +670,39 @@ Objetivo: transformar o autoavaliador em um fluxo operavel, mensuravel e evoluti
 
 #### AUTO-020 - Consolidar playbook operacional
 
-- Documentar como ativar modo shadow.
-- Documentar como ativar modo assistivo.
-- Documentar como ativar modo automatico limitado.
-- Documentar como desligar autoaprovacao.
-- Documentar metricas que devem ser acompanhadas.
-- Documentar procedimento de rollback.
-- Documentar criterios para aumentar autonomia.
+- [x] Documentar como ativar modo shadow.
+- [x] Documentar como ativar modo assistivo.
+- [x] Documentar como ativar modo automatico limitado.
+- [x] Documentar como desligar autoaprovacao.
+- [x] Documentar metricas que devem ser acompanhadas.
+- [x] Documentar procedimento de rollback.
+- [x] Documentar criterios para aumentar autonomia.
+
+Contrato implementado:
+
+- playbook em `docs/feedback-auto-review-playbook.md`;
+- deixa explicito que `PromotionCandidate.active` != runtime efetivo ate AUTO-034;
+- cron de apply permanece desligado por padrao.
 
 #### AUTO-021 - Sugerir aliases a partir de divergencias
 
-- Identificar feedbacks em que `predictedCategory` ou `predictedAccount` diverge do campo `corrected*`.
-- Agrupar divergencias por texto normalizado, entidade predita, entidade corrigida e owner.
-- Calcular frequencia, recencia e taxa de recorrencia da mesma correcao.
-- Gerar candidatos de alias somente quando houver volume minimo configurado.
-- Exibir exemplos de textos reais que sustentam a sugestao.
-- Bloquear sugestao quando houver conflito entre categorias ou contas diferentes para o mesmo padrao textual.
-- Marcar sugestoes como `pending`, `approved`, `rejected` ou `applied`.
-- Aplicar alias somente apos aprovacao humana explicita.
-- Registrar auditoria com origem da sugestao, usuario aprovador, data e versao.
-- Reprocessar em modo shadow os feedbacks afetados antes de permitir uso automatico do novo alias.
+- [x] Identificar feedbacks em que `predictedCategory` ou `predictedAccount` diverge do campo `corrected*`.
+- [x] Agrupar divergencias por texto normalizado, entidade predita, entidade corrigida e owner.
+- [x] Calcular frequencia, recencia e taxa de recorrencia da mesma correcao.
+- [x] Gerar candidatos de alias somente quando houver volume minimo configurado.
+- [x] Exibir exemplos de textos reais que sustentam a sugestao.
+- [x] Bloquear sugestao quando houver conflito entre categorias ou contas diferentes para o mesmo padrao textual.
+- [x] Marcar sugestoes como ciclo de promocao (`candidate`/`approved`/`rejected`/`active`/`rolled_back`).
+- [x] Aplicar alias somente apos aprovacao humana explicita no ciclo (runtime efetivo permanece AUTO-034).
+- [x] Registrar auditoria com origem da sugestao via candidato de promocao.
+- [ ] Reprocessar em modo shadow os feedbacks afetados antes de permitir uso automatico do novo alias (AUTO-034).
 
-Contrato sugerido:
+Contrato implementado:
 
-- o autoavaliador nao cria alias sozinho;
-- ele apenas sugere candidatos com base em divergencias recorrentes entre predicao e review humano;
-- alias aprovado passa a compor a camada deterministica usada pelo avaliador;
-- alias rejeitado deve ser mantido como evidencia para evitar sugestoes repetidas;
-- alias aplicado exige nova versao do avaliador ou das regras de alias.
+- endpoint autenticado `GET /nlp/auto-review/alias-suggestions`;
+- endpoint autenticado `POST /nlp/auto-review/alias-suggestions/promote` cria `PromotionCandidate` tipo `alias`;
+- retorno somente leitura com conflitos, volume minimo e `runtimeEffective=false`;
+- nao escreve `alias.rules.ts` e nao altera runtime do avaliador.
 
 ### Passo a passo
 
@@ -703,98 +740,134 @@ Objetivo: revisar a efetividade do learning loop ja promovivel no Marco 2, ident
 
 #### AUTO-028 - Reavaliar learning loop supervisionado
 
-- Revisar volume, recencia e representatividade dos feedbacks humanos revisados.
-- Separar qualidade por fonte: revisao humana, shadow, assistivo e automatico limitado.
-- Medir cobertura por intent, categoria, conta, faixa de valor e owner quando aplicavel.
-- Identificar divergencias recorrentes que ainda nao viraram alias, regra, threshold ou treino candidato.
-- Comparar metricas antes/depois das primeiras iteracoes do learning loop.
-- Identificar lacunas de label, vieses de amostra e campos com baixa confianca.
-- Atualizar criterios de entrada do dataset e exclusao de exemplos de risco.
-- Gerar recomendacao de proximos ajustes sem aumentar autonomia automaticamente.
+- [x] Revisar volume, recencia e representatividade dos feedbacks humanos revisados.
+- [x] Separar qualidade por fonte: revisao humana, shadow, assistivo e automatico limitado.
+- [x] Medir cobertura por intent, categoria, conta, faixa de valor e owner quando aplicavel.
+- [x] Identificar divergencias recorrentes que ainda nao viraram alias, regra, threshold ou treino candidato.
+- [x] Comparar metricas antes/depois das primeiras iteracoes do learning loop.
+- [x] Identificar lacunas de label, vieses de amostra e campos com baixa confianca.
+- [x] Atualizar criterios de entrada do dataset e exclusao de exemplos de risco.
+- [x] Gerar recomendacao de proximos ajustes sem aumentar autonomia automaticamente.
 
-Contrato sugerido:
+Contrato implementado:
 
-- Marco 5 reavalia a efetividade do learning loop criado no Marco 2;
-- reavaliacao usa dados reais e separa aprendizado supervisionado de autoaprovacao;
-- melhorias propostas devem virar candidatos promoviveis, nao comportamento ativo direto;
-- lacunas de dados ou baixa cobertura devem reduzir escopo, nao elevar autonomia.
+- endpoint autenticado `GET /nlp/auto-review/learning-loop/reassessment`;
+- `runtimeEffective=false` fixo; recommendations nunca aumentam autonomia;
+- `promotionVsLearning` separa promote/candidatos de `validatedLearning`;
+- `aliasEffectivePromotionEligible` falso quando shadow do alias ausente/`shadowAgreementRate=0`;
+- sinais `inspectionReady` / `promotionEvidence` / `promotionReadiness.eligible` permanecem distintos.
 
 #### AUTO-029 - Reavaliar politica de promocao do autoavaliador
 
-- Revisar criterios minimos apos volume real de shadow, assistivo e automatico limitado.
-- Identificar limites muito permissivos ou restritivos.
-- Revisar bloqueios automaticos por falso positivo, regressao e impacto financeiro.
-- Definir criterios por segmento: intent, categoria, conta, faixa de valor e owner quando aplicavel.
-- Revisar se algum tipo de candidato pode ter auto-promocao com politica explicita.
-- Documentar excecoes que continuam exigindo revisao humana.
-- Atualizar retencao de evidencias quando houver novos requisitos operacionais.
+- [x] Revisar criterios minimos apos volume real de shadow, assistivo e automatico limitado.
+- [x] Identificar limites muito permissivos ou restritivos.
+- [x] Revisar bloqueios automaticos por falso positivo, regressao e impacto financeiro.
+- [x] Definir criterios por segmento: intent, categoria, conta, faixa de valor e owner quando aplicavel.
+- [x] Revisar se algum tipo de candidato pode ter auto-promocao com politica explicita.
+- [x] Documentar excecoes que continuam exigindo revisao humana.
+- [x] Atualizar retencao de evidencias quando houver novos requisitos operacionais.
 
-Contrato sugerido:
+Contrato implementado:
 
-- Marco 5 nao substitui a politica criada no Marco 2; ele revisa a politica com evidencias reais;
-- a reavaliacao deve ser conservadora quando houver risco financeiro ou baixa cobertura;
-- auto-promocao continua proibida salvo politica explicita, auditavel e reversivel;
-- ajustes de politica devem gerar nova versao operacional do autoavaliador.
+- endpoint autenticado `GET /nlp/auto-review/learning-loop/promotion-policy-reassessment`;
+- `policyVersion=v1` (viva) + `proposalVersion=v1.1-proposal` (somente leitura);
+- `runtimeEffective=false` e `applied=false` fixos; `allowsAutoPromotion=false`;
+- `keepGlobalCriteria=true` — nao muta `AUTO_REVIEW_PROMOTION_POLICY`;
+- elegibilidade operacional exclui `above_limit` (`humanExceptions.above_limit_excluded`);
+- segmentos: `transfer` pode `meets_current`; `create` permanece restritivo; `within_limit` documenta FP residual.
 
 #### AUTO-030 - Aprimorar modelo de candidato promovivel
 
-- Adicionar sinais de cobertura do dataset.
-- Adicionar confianca por segmento e nao apenas score global.
-- Registrar custo operacional esperado: volume reduzido de revisao, taxa de rejeicao e volume de rollback.
-- Registrar validade temporal do candidato quando houver drift de comportamento.
-- Registrar conflito com candidatos ativos ou rejeitados anteriormente.
-- Registrar explicacao resumida para aprovador humano.
-- Revisar status para incluir observacao pos-promocao, pausa e expiracao.
+- [x] Adicionar sinais de cobertura do dataset.
+- [x] Adicionar confianca por segmento e nao apenas score global.
+- [x] Registrar custo operacional esperado: volume reduzido de revisao, taxa de rejeicao e volume de rollback.
+- [x] Registrar validade temporal do candidato quando houver drift de comportamento.
+- [x] Registrar conflito com candidatos ativos ou rejeitados anteriormente.
+- [x] Registrar explicacao resumida para aprovador humano.
+- [x] Revisar status para incluir observacao pos-promocao, pausa e expiracao.
+
+Contrato implementado:
+
+- list/get enriquecidos: `GET /nlp/auto-review/promotion-candidates` e `.../:candidateVersion`;
+- envelope `{ candidate, qualitySignals|qualityPreview, runtimeEffective:false }`;
+- `qualitySignals`: coverage, bySegment, operationalCost (`estimate|unavailable`), temporal (`driftFlag: unknown`), conflicts, approverSummary;
+- status `under_observation`/`paused`/`expired` **nao** ativados (defer AUTO-032); ficha so prepara leitura;
+- approve/apply/rollback e politica v1 inalterados.
 
 #### AUTO-031 - Aprimorar replay/shadow comparativo
 
-- Separar amostra historica de treino, validacao e holdout.
-- Medir drift entre feedbacks antigos e recentes.
-- Comparar versao candidata contra versao atual por segmento critico.
-- Medir ganho real de reducao de revisao manual.
-- Medir aumento de falso positivo por faixa de valor.
-- Identificar categorias, contas e intents com regressao escondida pelo score global.
-- Criar relatorio comparativo com recomendacao automatica: promover, observar, rejeitar ou reduzir escopo.
-- Reprocessar candidatos rejeitados somente quando houver evidencia nova.
+- [x] Separar amostra historica de treino, validacao e holdout.
+- [x] Medir drift entre feedbacks antigos e recentes.
+- [x] Comparar versao candidata contra versao atual por segmento critico.
+- [x] Medir ganho real de reducao de revisao manual.
+- [x] Medir aumento de falso positivo por faixa de valor.
+- [x] Identificar categorias, contas e intents com regressao escondida pelo score global.
+- [x] Criar relatorio comparativo com recomendacao automatica: promover, observar, rejeitar ou reduzir escopo.
+- [x] Reprocessar candidatos rejeitados somente quando houver evidencia nova.
+
+Contrato implementado:
+
+- endpoint `GET /nlp/auto-review/promotion-candidates/:candidateVersion/comparative-replay`;
+- `runtimeEffective=false`; recomendacao `promote|observe|reject|reduce_scope` sem executar;
+- `sampleSplit.mode` = `temporal` ou `stub` honesto (sem fingir holdout ML);
+- `bySegment` com verdicts 029 + `hiddenRegression`; `above_limit` excluded;
+- evidência segmentada do candidato pode vir `evidenceAvailable=false` ate replay fino;
+- `rejectedReprocess.eligibleForReprocess` sinaliza sem disparar reprocess automatico.
 
 #### AUTO-032 - Aprimorar workflow de aprovacao de promocao
 
-- Adicionar etapa de observacao pos-promocao.
-- Permitir promocao parcial por segmento quando a evidencia global for insuficiente.
-- Permitir expirar aprovacao quando candidato ficar antigo sem aplicacao.
-- Exigir motivo estruturado para aprovacao excepcional.
-- Registrar decisao humana contra recomendacao automatica.
-- Expor fila de candidatos com maior impacto esperado e menor risco.
-- Criar alertas quando candidato ativo degradar metricas alem do limite.
+- [x] Adicionar etapa de observacao pos-promocao.
+- [x] Permitir promocao parcial por segmento quando a evidencia global for insuficiente.
+- [x] Permitir expirar aprovacao quando candidato ficar antigo sem aplicacao.
+- [x] Exigir motivo estruturado para aprovacao excepcional.
+- [x] Registrar decisao humana contra recomendacao automatica.
+- [x] Expor fila de candidatos com maior impacto esperado e menor risco.
+- [x] Criar alertas quando candidato ativo degradar metricas alem do limite.
+
+Contrato implementado (fatia fina):
+
+- fila ordenada por risco↑ / amostra↓ com `workflowRecommendation`;
+- detail inclui `workflow` (reco + expires + observationNote);
+- approve aceita `reasonCode` / `decisionVsRecommendation` / `exceptionalReason` (override exige motivo);
+- `POST .../expire` para approved sem apply → rejected + `expired_unapplied`;
+- promocao parcial / alertas automaticos **deferidos** (só sinal reduce_scope).
 
 #### AUTO-033 - Aprimorar rollback e despromocao
 
-- Diferenciar rollback imediato, pausa temporaria e expiracao planejada.
-- Definir gatilhos automaticos de pausa por degradacao de metrica.
-- Permitir despromocao parcial por segmento.
-- Registrar impacto estimado do rollback no volume de revisao manual.
-- Reprocessar amostra afetada apos rollback, pausa ou expiracao.
-- Expor historico de aprendizagem promovida, pausada, expirada e revertida.
-- Garantir que rollback nao altera feedbacks ja revisados nem transacoes existentes sem fluxo explicito.
+- [x] Diferenciar rollback imediato, pausa temporaria e expiracao planejada.
+- [x] Definir gatilhos automaticos de pausa por degradacao de metrica.
+- [x] Permitir despromoção parcial por segmento.
+- [x] Registrar impacto estimado do rollback no volume de revisao manual.
+- [x] Reprocessar amostra afetada apos rollback, pausa ou expiracao.
+- [x] Expor historico de aprendizagem promovida, pausada, expirada e revertida.
+- [x] Garantir que rollback nao altera feedbacks ja revisados nem transacoes existentes sem fluxo explicito.
+
+Contrato implementado (fatia fina):
+
+- `POST .../rollback` com `kind=immediate|pause|expire`; grava em `rollbackReason`/`notes`;
+- kind `immediate`/`pause` desativa alias runtime (034); history expoe `rollbackKind`;
+- gatilhos auto / despromoção parcial / reprocess amostra **deferidos**;
+- feedbacks/transações permanece intactos.
 
 #### AUTO-034 - Persistir aliases e ativar promocao no runtime
 
-- Criar tabela/entidade de aliases efetivos por owner, campo, valor canonico, alias, versao e status.
-- Migrar aliases estaticos atuais de `alias.rules.ts` para seed/migration controlada ou rotina de bootstrap idempotente.
-- Alterar o avaliador para carregar aliases ativos do banco com fallback seguro para a versao estatica durante transicao.
-- Conectar candidato de promocao do tipo `alias` ao cadastro de alias efetivo quando aprovado e aplicado.
-- Garantir que alias aplicado registre versao candidata, versao anterior, aprovador, evidencia e plano de rollback.
-- Impedir ativacao automatica quando houver conflito de alias para o mesmo owner/campo ou entidade inexistente.
-- Versionar/cachear aliases em runtime para evitar consulta excessiva e permitir invalidacao controlada apos promocao/rollback.
-- Garantir rollback/despromocao de alias sem alterar feedbacks ja revisados nem transacoes existentes.
-- Expor relatorio dos aliases efetivos, origem da promocao e status runtime.
+- [x] Criar tabela/entidade de aliases efetivos por owner, campo, valor canonico, alias, versao e status.
+- [x] Migrar aliases estaticos atuais de `alias.rules.ts` para seed/migration controlada ou rotina de bootstrap idempotente.
+- [x] Alterar o avaliador para carregar aliases ativos do banco com fallback seguro para a versao estatica durante transicao.
+- [x] Conectar candidato de promocao do tipo `alias` ao cadastro de alias efetivo quando aprovado e aplicado.
+- [x] Garantir que alias aplicado registre versao candidata, versao anterior, aprovador, evidencia e plano de rollback.
+- [x] Impedir ativacao automatica quando houver conflito de alias para o mesmo owner/campo ou entidade inexistente.
+- [x] Versionar/cachear aliases em runtime para evitar consulta excessiva e permitir invalidacao controlada apos promocao/rollback.
+- [x] Garantir rollback/despromocao de alias sem alterar feedbacks ja revisados nem transacoes existentes.
+- [x] Expor relatorio dos aliases efetivos, origem da promocao e status runtime.
 
-Contrato sugerido:
+Contrato implementado:
 
-- alias aprovado e aplicado passa a compor a camada deterministica do avaliador sem edicao manual de codigo;
-- ativacao automatica exige promocao aprovada, rollback disponivel, auditoria e replay/shadow sem regressao critica;
-- `active` no ciclo de promocao deve ser diferenciado de `runtime active`/`effective` para evitar ambiguidade operacional;
-- aliases estaticos devem ser tratados como base inicial, nao como fonte permanente de verdade.
+- migration `1781278085296` + entity `bk_tb_feedback_auto_review_effective_alias`;
+- `apply` de alias aprovado → runtime `active`; evaluator/NLP usam DB+fallback estático;
+- `GET /nlp/auto-review/effective-aliases`; conflito bloqueia apply;
+- `runtimeEffective` passa a refletir aliases ativos (não mais constante false);
+- auto-promoção continua `false`; estático permanece fallback (sem dump completo obrigatório).
 
 ### Passo a passo
 
@@ -841,31 +914,31 @@ Contrato sugerido:
 | 8     | P0         | Marco 2 | AUTO-009 - Registrar razoes de decisao                     | Concluida         | AUTO-006, AUTO-007                                | Explicar cada decisao com reasons auditaveis                                   |
 | 9     | P0         | Marco 2 | AUTO-008 - Implementar modo shadow                         | Concluida         | AUTO-006, AUTO-007, AUTO-009                      | Medir decisoes sem alterar feedbacks                                           |
 | 10    | P0         | Marco 2 | AUTO-010 - Criar relatorio operacional inicial             | Concluida         | AUTO-008                                          | Comparar decisao shadow contra revisao humana                                  |
-| 11    | P0         | Marco 2 | AUTO-022 - Criar learning loop supervisionado inicial      | Parcial           | AUTO-008, AUTO-010                                | Transformar reviews humanos em metricas, divergencias e insumos de aprendizado |
+| 11    | P0         | Marco 2 | AUTO-022 - Criar learning loop supervisionado inicial      | Concluida         | AUTO-008, AUTO-010                                | Transformar reviews humanos em metricas, divergencias e insumos de aprendizado |
 | 12    | P0         | Marco 2 | AUTO-023 - Definir politica de promocao do autoavaliador   | Concluida         | AUTO-022                                          | Definir como aprendizado pode virar comportamento ativo                        |
 | 13    | P0         | Marco 2 | AUTO-024 - Criar modelo de candidato promovivel            | Concluida         | AUTO-023                                          | Padronizar candidato de alias, regra, threshold, modelo ou politica            |
 | 14    | P0         | Marco 2 | AUTO-025 - Executar replay/shadow comparativo              | Concluida         | AUTO-024                                          | Comparar candidato contra versao atual antes de promocao                       |
 | 15    | P0         | Marco 2 | AUTO-026A - Criar persistencia de candidatos de promocao   | Concluida         | AUTO-025                                          | Persistir candidatos promoviveis com evidencia, risco e rollback               |
 | 16    | P0         | Marco 2 | AUTO-026B - Criar workflow de aprovacao de promocao        | Concluida         | AUTO-026A                                         | Aprovar, rejeitar ou aplicar candidato com auditoria                           |
-| 17    | P0         | Marco 2 | AUTO-027 - Implementar rollback de promocao                | Base implementada | AUTO-026B                                         | Reverter promocao aplicada sem reescrever historico financeiro                 |
+| 17    | P0         | Marco 2 | AUTO-027 - Implementar rollback de promocao                | Concluida         | AUTO-026B                                         | Reverter promocao aplicada sem reescrever historico financeiro                 |
 | 18    | P1         | Marco 3 | AUTO-011 - Sugerir correcao por alias                      | Concluida         | AUTO-010, AUTO-022                                | Sugerir correcao segura quando alias conhecido resolver entidade existente     |
 | 19    | P1         | Marco 3 | AUTO-012 - Aplicar limites por valor                       | Concluida         | AUTO-007                                          | Restringir autonomia por limite financeiro conservador                         |
 | 20    | P1         | Marco 3 | AUTO-013 - Criar fluxo de autoaprovacao controlada         | Base implementada | AUTO-022, AUTO-023, AUTO-025                      | Aplicar `approve` somente quando politica permitir                             |
 | 21    | P1         | Marco 3 | AUTO-014 - Criar fluxo de autocorrecao controlada          | Base implementada | AUTO-011, AUTO-022, AUTO-023, AUTO-025            | Aplicar `correct` somente para correcao segura e promovida                     |
-| 22    | P1         | Marco 3 | AUTO-015 - Testar nao sobrescrita humana                   | Base implementada | AUTO-013, AUTO-014                                | Garantir que automacao nunca sobrescreve revisao humana                        |
-| 23    | P1         | Marco 4 | AUTO-016 - Criar metricas de qualidade                     | Pendente          | AUTO-010, AUTO-022                                | Medir qualidade operacional por decisao, intent e campo                        |
-| 24    | P1         | Marco 4 | AUTO-017 - Criar trilha de auditoria                       | Pendente          | AUTO-013, AUTO-014, AUTO-026B                     | Rastrear versoes, reasons, aplicacoes e bloqueios                              |
-| 25    | P1         | Marco 4 | AUTO-018 - Definir rotina de reavaliacao                   | Pendente          | AUTO-008, AUTO-022, AUTO-025                      | Reprocessar feedbacks elegiveis de forma idempotente                           |
-| 26    | P2         | Marco 4 | AUTO-021 - Sugerir aliases a partir de divergencias        | Pendente          | AUTO-022, AUTO-023, AUTO-024                      | Gerar candidatos de alias para promocao controlada                             |
-| 27    | P2         | Marco 4 | AUTO-020 - Consolidar playbook operacional                 | Pendente          | AUTO-016, AUTO-017, AUTO-018, AUTO-023, AUTO-027  | Documentar ativacao, monitoramento, desligamento e rollback                    |
+| 22    | P1         | Marco 3 | AUTO-015 - Testar nao sobrescrita humana                   | Concluida         | AUTO-013, AUTO-014                                | Garantir que automacao nunca sobrescreve revisao humana                        |
+| 23    | P1         | Marco 4 | AUTO-016 - Criar metricas de qualidade                     | Base implementada | AUTO-010, AUTO-022                                | Medir qualidade operacional por decisao, intent e campo                        |
+| 24    | P1         | Marco 4 | AUTO-017 - Criar trilha de auditoria                       | Concluida         | AUTO-013, AUTO-014, AUTO-026B                     | Rastrear versoes, reasons, aplicacoes e bloqueios                              |
+| 25    | P1         | Marco 4 | AUTO-018 - Definir rotina de reavaliacao                   | Concluida         | AUTO-008, AUTO-022, AUTO-025                      | Reprocessar feedbacks elegiveis de forma idempotente                           |
+| 26    | P2         | Marco 4 | AUTO-021 - Sugerir aliases a partir de divergencias        | Concluida         | AUTO-022, AUTO-023, AUTO-024                      | Gerar candidatos de alias para promocao controlada                             |
+| 27    | P2         | Marco 4 | AUTO-020 - Consolidar playbook operacional                 | Concluida         | AUTO-016, AUTO-017, AUTO-018, AUTO-023, AUTO-027  | Documentar ativacao, monitoramento, desligamento e rollback                    |
 | 28    | P3         | Marco 4 | AUTO-019 - Criar criterios para LLM judge opcional         | Pendente          | AUTO-016, AUTO-020                                | Avaliar LLM apenas para casos ambiguos e sem autonomia direta                  |
-| 29    | P1         | Marco 5 | AUTO-028 - Reavaliar learning loop supervisionado          | Pendente          | AUTO-022, AUTO-016, AUTO-018                      | Revisar cobertura, qualidade e lacunas do aprendizado com dados reais          |
-| 30    | P1         | Marco 5 | AUTO-029 - Reavaliar politica de promocao do autoavaliador | Pendente          | AUTO-023, AUTO-026B, AUTO-027, AUTO-016, AUTO-028 | Ajustar criterios de promocao com dados reais                                  |
-| 31    | P1         | Marco 5 | AUTO-030 - Aprimorar modelo de candidato promovivel        | Pendente          | AUTO-024, AUTO-028, AUTO-029                      | Evoluir evidencias, cobertura e risco dos candidatos                           |
-| 32    | P1         | Marco 5 | AUTO-031 - Aprimorar replay/shadow comparativo             | Pendente          | AUTO-025, AUTO-030                                | Medir drift, regressao segmentada e ganho operacional                          |
-| 33    | P1         | Marco 5 | AUTO-032 - Aprimorar workflow de aprovacao de promocao     | Pendente          | AUTO-026B, AUTO-031                               | Adicionar observacao, expiracao e promocao parcial                             |
-| 34    | P1         | Marco 5 | AUTO-033 - Aprimorar rollback e despromocao                | Pendente          | AUTO-027, AUTO-032                                | Permitir pausa, expiracao e despromocao parcial                                |
-| 35    | P1         | Marco 5 | AUTO-034 - Persistir aliases e ativar promocao no runtime  | Pendente          | AUTO-017, AUTO-021, AUTO-027, AUTO-032, AUTO-033  | Aplicar alias aprovado no avaliador sem edicao manual de codigo                |
+| 29    | P1         | Marco 5 | AUTO-028 - Reavaliar learning loop supervisionado          | Concluida         | AUTO-022, AUTO-016, AUTO-018                      | Revisar cobertura, qualidade e lacunas do aprendizado com dados reais          |
+| 30    | P1         | Marco 5 | AUTO-029 - Reavaliar politica de promocao do autoavaliador | Concluida         | AUTO-023, AUTO-026B, AUTO-027, AUTO-016, AUTO-028 | Ajustar criterios de promocao com dados reais                                  |
+| 31    | P1         | Marco 5 | AUTO-030 - Aprimorar modelo de candidato promovivel        | Concluida         | AUTO-024, AUTO-028, AUTO-029                      | Evoluir evidencias, cobertura e risco dos candidatos                           |
+| 32    | P1         | Marco 5 | AUTO-031 - Aprimorar replay/shadow comparativo             | Concluida         | AUTO-025, AUTO-030                                | Medir drift, regressao segmentada e ganho operacional                          |
+| 33    | P1         | Marco 5 | AUTO-032 - Aprimorar workflow de aprovacao de promocao     | Concluida         | AUTO-026B, AUTO-031                               | Adicionar observacao, expiracao e promocao parcial                             |
+| 34    | P1         | Marco 5 | AUTO-033 - Aprimorar rollback e despromocao                | Concluida         | AUTO-027, AUTO-032                                | Permitir pausa, expiracao e despromocao parcial                                |
+| 35    | P1         | Marco 5 | AUTO-034 - Persistir aliases e ativar promocao no runtime  | Concluida         | AUTO-017, AUTO-021, AUTO-027, AUTO-032, AUTO-033  | Aplicar alias aprovado no avaliador sem edicao manual de codigo                |
 
 Legenda:
 

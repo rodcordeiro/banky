@@ -13,6 +13,7 @@ import {
   AutoReviewReportResult,
   AutoReviewReportItem,
   AutoReviewReasonSeverity,
+  AutoReviewRevaluationResult,
   AUTO_REVIEW_THRESHOLDS,
   FeedbackStatus,
 } from '../interfaces';
@@ -21,7 +22,7 @@ import { NlpService } from './nlp.service';
 const PROD_SHADOW_CRON = '0 */15 * * * *';
 const DEV_SHADOW_CRON = '0 */1 * * * *';
 const DEFAULT_SHADOW_BATCH_SIZE = 100;
-const DEFAULT_SHADOW_REVIEW_VERSION = 'auto-review-shadow-v1';
+export const DEFAULT_SHADOW_REVIEW_VERSION = 'auto-review-shadow-v1';
 
 @Injectable()
 export class FeedbackAutoReviewShadowService {
@@ -42,46 +43,99 @@ export class FeedbackAutoReviewShadowService {
     { waitForCompletion: true },
   )
   async processShadowBatch(): Promise<number> {
+    const result = await this.revaluatePendingBatch();
+    return result.evaluated;
+  }
+
+  /**
+   * Reavalia feedbacks pending em modo shadow, de forma idempotente por versao.
+   * Nao altera status/corrected* e nao aplica approve/correct.
+   */
+  async revaluatePendingBatch(options?: {
+    reviewVersion?: string;
+    batchSize?: number;
+    owner?: string;
+  }): Promise<AutoReviewRevaluationResult> {
+    const reviewVersion =
+      options?.reviewVersion?.trim() || DEFAULT_SHADOW_REVIEW_VERSION;
+    const batchSize =
+      Number.isFinite(options?.batchSize) && (options?.batchSize as number) > 0
+        ? Math.floor(options?.batchSize as number)
+        : DEFAULT_SHADOW_BATCH_SIZE;
+    const startedAt = new Date().toISOString();
+
+    this._logger.log(
+      `Starting shadow revaluation batch version=${reviewVersion} batchSize=${batchSize}`,
+    );
+
     const pendingFeedbacks = await this._feedbackRepository.find({
       where: {
         status: FeedbackStatus.pending,
+        ...(options?.owner ? { owner: options.owner } : {}),
       },
       order: {
         createdAt: 'ASC',
       },
-      take: DEFAULT_SHADOW_BATCH_SIZE,
+      take: batchSize,
     });
 
-    let processed = 0;
+    let evaluated = 0;
+    let skipped = 0;
+    let errors = 0;
+    const errorFeedbackIds: string[] = [];
 
     for (const feedback of pendingFeedbacks) {
       try {
-        const saved = await this.evaluateAndPersist(feedback);
+        if (feedback.status !== FeedbackStatus.pending) {
+          skipped += 1;
+          continue;
+        }
+
+        const saved = await this.evaluateAndPersist(feedback, reviewVersion);
         if (saved) {
-          processed += 1;
+          evaluated += 1;
+        } else {
+          skipped += 1;
         }
       } catch (error) {
+        errors += 1;
+        errorFeedbackIds.push(feedback.id);
         this._logger.error(
-          `Failed to process shadow review for feedback ${feedback.id}: ${this.getErrorMessage(error)}`,
+          `Failed to revaluate shadow review for feedback ${feedback.id}: ${this.getErrorMessage(error)}`,
         );
       }
     }
 
-    if (processed > 0) {
-      this._logger.log(`Processed ${processed} feedbacks in shadow mode.`);
-    }
+    const finishedAt = new Date().toISOString();
+    const result: AutoReviewRevaluationResult = {
+      startedAt,
+      finishedAt,
+      reviewVersion,
+      mode: AutoReviewMode.shadow,
+      batchSize,
+      candidates: pendingFeedbacks.length,
+      evaluated,
+      skipped,
+      errors,
+      errorFeedbackIds,
+    };
 
-    return processed;
+    this._logger.log(
+      `Finished shadow revaluation version=${reviewVersion} candidates=${result.candidates} evaluated=${evaluated} skipped=${skipped} errors=${errors}`,
+    );
+
+    return result;
   }
 
   async evaluateAndPersist(
     feedback: FeedbackEntity,
+    reviewVersion = DEFAULT_SHADOW_REVIEW_VERSION,
   ): Promise<FeedbackAutoReviewEntity | null> {
     const existing = await this._feedbackAutoReviewRepository.findOne({
       where: {
         feedbackId: feedback.id,
         mode: AutoReviewMode.shadow,
-        reviewVersion: DEFAULT_SHADOW_REVIEW_VERSION,
+        reviewVersion,
       },
     });
 
@@ -94,7 +148,7 @@ export class FeedbackAutoReviewShadowService {
       feedback.owner,
       {
         mode: AutoReviewMode.shadow,
-        reviewVersion: DEFAULT_SHADOW_REVIEW_VERSION,
+        reviewVersion,
       },
     );
 
@@ -118,6 +172,15 @@ export class FeedbackAutoReviewShadowService {
     feedback: FeedbackEntity,
     evaluation: AutoReviewResult,
   ): Promise<FeedbackEntity | null> {
+    if (
+      evaluation.mode === AutoReviewMode.automatic &&
+      evaluation.decision === AutoReviewDecision.approve &&
+      this.hasHumanCorrections(feedback)
+    ) {
+      await this._nlpService.persistBlockedAutoReview(feedback, evaluation);
+      return null;
+    }
+
     if (!this.canApplyAutoReviewDecision(feedback, evaluation)) {
       return null;
     }

@@ -31,6 +31,7 @@ export enum AutoReviewReasonCode {
   aliasCorrectionSuggested = 'alias_correction_suggested',
   valueAboveLimit = 'value_above_limit',
   lowConfidence = 'low_confidence',
+  humanCorrectionPresent = 'human_correction_present',
 }
 
 export type AutoReviewField =
@@ -123,6 +124,43 @@ export interface AutoReviewReportResult {
   };
 }
 
+export interface AutoReviewRevaluationResult {
+  startedAt: string;
+  finishedAt: string;
+  reviewVersion: string;
+  mode: AutoReviewMode;
+  batchSize: number;
+  candidates: number;
+  evaluated: number;
+  skipped: number;
+  errors: number;
+  errorFeedbackIds: string[];
+}
+
+export type AutoReviewAliasSuggestionField = 'account' | 'category';
+
+export interface AutoReviewAliasSuggestionItem {
+  field: AutoReviewAliasSuggestionField;
+  pattern: string;
+  predicted: string;
+  corrected: string;
+  count: number;
+  lastSeenAt: string;
+  examples: string[];
+  conflict: boolean;
+  meetsMinimumVolume: boolean;
+  alreadyPromoted: boolean;
+  alreadyRejected: boolean;
+  candidateVersion: string;
+}
+
+export interface AutoReviewAliasSuggestionResult {
+  generatedAt: string;
+  minVolume: number;
+  items: AutoReviewAliasSuggestionItem[];
+  runtimeEffective: false;
+}
+
 export type AutoReviewLearningField =
   | 'intent'
   | 'account'
@@ -174,6 +212,18 @@ export interface AutoReviewShadowVersionComparison {
   agreementRate: number;
 }
 
+export interface AutoReviewPromotionEvidence {
+  datasetVersion: string;
+  reviewVersions: string[];
+  sampleSize: number;
+  humanReviewedSampleSize: number;
+  agreementRate: number;
+  falsePositiveRate: number;
+  criteriaApplied: AutoReviewPromotionCriteria;
+  rollbackRequired: boolean;
+  reasons: string[];
+}
+
 export interface AutoReviewLearningLoopResult {
   generatedAt: string;
   dataset: AutoReviewLearningDatasetSummary;
@@ -181,7 +231,228 @@ export interface AutoReviewLearningLoopResult {
   categoryConfusions: AutoReviewCategoryConfusionItem[];
   divergenceExamples: AutoReviewLearningDivergenceExample[];
   shadowVersionComparisons: AutoReviewShadowVersionComparison[];
+  inspectionReady: boolean;
+  promotionEvidence: AutoReviewPromotionEvidence;
   promotionReadiness: {
+    eligible: boolean;
+    reasons: string[];
+  };
+}
+
+export type AutoReviewLearningReassessmentBlocker =
+  | 'conflict'
+  | 'below_min_volume'
+  | 'already_rejected'
+  | 'already_promoted'
+  | 'no_suggestion'
+  | 'other';
+
+export type AutoReviewLearningReassessmentRecommendationCode =
+  | 'do_not_increase_autonomy'
+  | 'reduce_scope'
+  | 'collect_labels'
+  | 'inspect_aliases'
+  | 'observe'
+  | 'await_alias_runtime';
+
+export interface AutoReviewLearningCoverageBucket {
+  key: string;
+  count: number;
+  share: number;
+}
+
+export interface AutoReviewLearningSourceQuality {
+  samples: number;
+  agreementRate: number | null;
+  applied?: number;
+}
+
+export interface AutoReviewLearningRecurringDivergence {
+  field: string;
+  pattern: string;
+  predicted: string;
+  corrected: string;
+  count: number;
+  blocker: AutoReviewLearningReassessmentBlocker;
+  isFailure: boolean;
+}
+
+export interface AutoReviewLearningBeforeAfterWindow {
+  agreementRate: number;
+  divergenceRate: number;
+  sampleSize: number;
+}
+
+export interface AutoReviewLearningReassessmentRecommendation {
+  code: AutoReviewLearningReassessmentRecommendationCode;
+  priority: number;
+  rationale: string;
+}
+
+/**
+ * Relatorio Marco 5 (AUTO-028): reavalia o learning loop sem aumentar autonomia.
+ */
+export interface AutoReviewLearningReassessmentResult {
+  generatedAt: string;
+  filters: {
+    from?: string;
+    to?: string;
+    baselineFrom?: string;
+    baselineTo?: string;
+  };
+  dataset: {
+    version: string;
+    criteria: {
+      excludePending: boolean;
+      excludeAutoAppliedFromTraining: boolean;
+      includeStatuses: string[];
+    };
+    volume: {
+      humanReviewed: number;
+      trainingEligible: number;
+      autoApplied: number;
+    };
+    recency: {
+      newestAt: string | null;
+      oldestAt: string | null;
+      medianAgeDays: number | null;
+    };
+    representativeness: {
+      byIntent: AutoReviewLearningCoverageBucket[];
+      byCategory: AutoReviewLearningCoverageBucket[];
+      byAccount: AutoReviewLearningCoverageBucket[];
+      byValueBand: AutoReviewLearningCoverageBucket[];
+    };
+  };
+  qualityBySource: {
+    humanReviewed: AutoReviewLearningSourceQuality;
+    shadow: AutoReviewLearningSourceQuality;
+    assistive: AutoReviewLearningSourceQuality;
+    automaticLimited: AutoReviewLearningSourceQuality;
+  };
+  coverage: {
+    byIntent: AutoReviewLearningCoverageBucket[];
+    byCategory: AutoReviewLearningCoverageBucket[];
+    byAccount: AutoReviewLearningCoverageBucket[];
+    byValueBand: AutoReviewLearningCoverageBucket[];
+  };
+  promotionVsLearning: {
+    aliasSuggestionVolume: number;
+    promoteCount: number;
+    candidatesCreated: number;
+    validatedLearning: boolean;
+    note: string;
+  };
+  recurringDivergencesWithoutCandidate: AutoReviewLearningRecurringDivergence[];
+  beforeAfter: {
+    status: 'comparable' | 'insufficientHistory';
+    before: AutoReviewLearningBeforeAfterWindow;
+    after: AutoReviewLearningBeforeAfterWindow;
+    deltas: {
+      agreementRate: number;
+      divergenceRate: number;
+    };
+  };
+  gapsAndBiases: {
+    lowSampleSegments: string[];
+    dominantSegments: string[];
+    lowConfidenceFields: string[];
+    labelGaps: string[];
+  };
+  signals: {
+    inspectionReady: boolean;
+    promotionEvidence: AutoReviewPromotionEvidence;
+    promotionReadiness: {
+      eligible: boolean;
+      reasons: string[];
+    };
+    aliasEffectivePromotionEligible: boolean;
+    aliasEffectivePromotionBlockers: string[];
+  };
+  recommendations: AutoReviewLearningReassessmentRecommendation[];
+  runtimeEffective: false;
+}
+
+export type AutoReviewValueBand = 'within_limit' | 'above_limit' | 'unknown';
+
+export interface AutoReviewQualityMetricsFilters {
+  from?: string;
+  to?: string;
+  valueApprovalLimit?: number;
+}
+
+export interface AutoReviewQualityDecisionCount {
+  decision: AutoReviewDecision;
+  total: number;
+}
+
+export interface AutoReviewQualityModeCount {
+  mode: AutoReviewMode;
+  total: number;
+  applied: number;
+  byDecision: AutoReviewQualityDecisionCount[];
+}
+
+export interface AutoReviewQualityIntentMetrics {
+  intent: string;
+  shadowVolume: number;
+  humanReviewedWithShadow: number;
+  agreementCount: number;
+  agreementRate: number;
+  potentialFalsePositives: number;
+  potentialFalsePositiveRate: number;
+}
+
+export interface AutoReviewQualityFieldScoreMetric {
+  field: AutoReviewLearningField;
+  samples: number;
+  averageScore: number;
+  lowScoreCount: number;
+}
+
+export interface AutoReviewQualityValueBandMetrics {
+  band: AutoReviewValueBand;
+  shadowVolume: number;
+  humanReviewedWithShadow: number;
+  agreementCount: number;
+  agreementRate: number;
+  potentialFalsePositives: number;
+  potentialFalsePositiveRate: number;
+}
+
+export interface AutoReviewQualityGuardrailBlock {
+  code: string;
+  severity: AutoReviewReasonSeverity;
+  count: number;
+}
+
+export interface AutoReviewQualityMetricsSummary {
+  shadowVolume: number;
+  humanReviewedWithShadow: number;
+  pendingWithShadow: number;
+  autoApplied: number;
+  agreementCount: number;
+  agreementRate: number;
+  potentialFalsePositives: number;
+  potentialFalsePositiveRate: number;
+  guardrailBlocks: number;
+}
+
+export interface AutoReviewQualityMetricsResult {
+  generatedAt: string;
+  filters: {
+    from?: string;
+    to?: string;
+    valueApprovalLimit: number;
+  };
+  summary: AutoReviewQualityMetricsSummary;
+  byMode: AutoReviewQualityModeCount[];
+  byDecision: AutoReviewQualityDecisionCount[];
+  byIntent: AutoReviewQualityIntentMetrics[];
+  byField: AutoReviewQualityFieldScoreMetric[];
+  byValueBand: AutoReviewQualityValueBandMetrics[];
+  guardrailBlocksByCode: AutoReviewQualityGuardrailBlock[];
+  aliasInspectionReadiness: {
     eligible: boolean;
     reasons: string[];
   };
@@ -233,6 +504,107 @@ export interface AutoReviewPromotionPolicy {
   >;
 }
 
+/** Versão viva da política Marco 2; AUTO-029 propõe, não promove versão. */
+export const AUTO_REVIEW_PROMOTION_POLICY_VERSION = 'v1';
+
+export type AutoReviewPromotionPolicySegmentKind = 'intent' | 'value_band';
+
+export type AutoReviewPromotionPolicySegmentVerdict =
+  | 'meets_current'
+  | 'near_current'
+  | 'below_current'
+  | 'excluded_human_exception'
+  | 'insufficient_sample';
+
+export type AutoReviewPromotionPolicyRecommendationCode =
+  | 'keep_global_criteria'
+  | 'do_not_enable_auto_promotion'
+  | 'observe_segment_transfer'
+  | 'keep_create_restrictive'
+  | 'exclude_above_limit_from_quality'
+  | 'await_alias_runtime'
+  | 'retain_shadow_evidence';
+
+export interface AutoReviewPromotionPolicyObservedSegment {
+  kind: AutoReviewPromotionPolicySegmentKind;
+  key: string;
+  sampleSize: number;
+  agreementRate: number;
+  falsePositiveRate: number;
+  vsCurrent: AutoReviewPromotionPolicySegmentVerdict;
+  meetsMinSamples: boolean;
+  meetsAgreement: boolean;
+  meetsFalsePositive: boolean;
+  suggestion: string;
+}
+
+export interface AutoReviewPromotionPolicyObservedBucket {
+  sampleSize: number;
+  agreementRate: number;
+  falsePositiveRate: number;
+  eligible: boolean;
+  blockers: string[];
+}
+
+export interface AutoReviewPromotionPolicyHumanException {
+  code: string;
+  segmentKind: AutoReviewPromotionPolicySegmentKind;
+  segmentKey: string;
+  reason: string;
+}
+
+export interface AutoReviewPromotionPolicyProposedSegment {
+  kind: AutoReviewPromotionPolicySegmentKind;
+  key: string;
+  action: 'observe' | 'keep_restrictive' | 'exclude' | 'document_only';
+  proposedCriteria?: Partial<AutoReviewPromotionCriteria>;
+  rationale: string;
+}
+
+export interface AutoReviewPromotionPolicyRecommendation {
+  code: AutoReviewPromotionPolicyRecommendationCode;
+  message: string;
+}
+
+/**
+ * Relatório AUTO-029: reavalia critérios com evidência real sem aplicar política.
+ */
+export interface AutoReviewPromotionPolicyReassessmentResult {
+  generatedAt: string;
+  policyVersion: string;
+  proposalVersion: string;
+  runtimeEffective: false;
+  applied: false;
+  filters: {
+    from?: string;
+    to?: string;
+    valueApprovalLimit: number;
+  };
+  referenceCandidateType: AutoReviewPromotionCandidateType;
+  observed: {
+    globalRaw: AutoReviewPromotionPolicyObservedBucket;
+    /** Elegibilidade operacional: exclui faixa above_limit (exceção humana). */
+    globalForEligibility: AutoReviewPromotionPolicyObservedBucket;
+    byIntent: AutoReviewPromotionPolicyObservedSegment[];
+    byValueBand: AutoReviewPromotionPolicyObservedSegment[];
+  };
+  currentCriteria: AutoReviewPromotionCriteria;
+  automaticBlockers: string[];
+  proposedCriteria: {
+    scope: 'segment';
+    allowsAutoPromotion: false;
+    keepGlobalCriteria: true;
+    bySegment: AutoReviewPromotionPolicyProposedSegment[];
+  };
+  humanExceptions: AutoReviewPromotionPolicyHumanException[];
+  evidenceRetention: {
+    keepShadowHistory: true;
+    keepPromotionCandidates: true;
+    note: string;
+  };
+  recommendations: AutoReviewPromotionPolicyRecommendation[];
+}
+
 export interface AutoReviewPromotionCandidateExample {
   feedbackId?: string;
   originalText: string;
@@ -272,6 +644,42 @@ export interface AutoReviewPromotionRollbackPlan {
   validation: string;
 }
 
+export type AutoReviewPromotionHistoryEventType =
+  | 'created'
+  | 'approved'
+  | 'rejected'
+  | 'applied'
+  | 'rolled_back';
+
+export type AutoReviewRollbackKind = 'immediate' | 'pause' | 'expire';
+
+/** Recomendação de workflow (AUTO-031/032) — não executa promoção. */
+export type AutoReviewComparativeReplayAction =
+  | 'promote'
+  | 'observe'
+  | 'reject'
+  | 'reduce_scope';
+
+export interface AutoReviewPromotionHistoryEvent {
+  candidateVersion: string;
+  candidateType: AutoReviewPromotionCandidateType;
+  cycleStatus: AutoReviewPromotionStatus;
+  event: AutoReviewPromotionHistoryEventType;
+  at: string;
+  by: string;
+  reason?: string;
+  /** true só quando há alias runtime ativo ligado ao evento/candidato. */
+  runtimeEffective: boolean;
+  rollbackKind?: AutoReviewRollbackKind | string;
+  notes?: string;
+}
+
+export interface AutoReviewPromotionHistoryResult {
+  generatedAt: string;
+  runtimeEffective: boolean;
+  items: AutoReviewPromotionHistoryEvent[];
+}
+
 export interface AutoReviewPromotionCandidate {
   type: AutoReviewPromotionCandidateType;
   status: AutoReviewPromotionStatus;
@@ -294,6 +702,135 @@ export interface AutoReviewPromotionCandidate {
   rolledBackAt?: string;
   rollbackReason?: string;
   notes?: string;
+}
+
+/** Confiança por segmento na ficha do aprovador (AUTO-030). */
+export type AutoReviewPromotionSegmentConfidence =
+  | 'high'
+  | 'medium'
+  | 'low'
+  | 'unknown';
+
+export interface AutoReviewPromotionCandidateCoverageSignal {
+  sampleSize: number;
+  minSamplesRequired: number;
+  minSamplesMet: boolean;
+  shadowAgreementRate: number;
+  falsePositiveRate: number;
+  eligibleSampleSize?: number;
+  excludedHumanExceptions: string[];
+}
+
+export interface AutoReviewPromotionCandidateSegmentSignal {
+  kind: AutoReviewPromotionPolicySegmentKind;
+  key: string;
+  sampleSize: number;
+  agreementRate: number;
+  falsePositiveRate: number;
+  verdict: AutoReviewPromotionPolicySegmentVerdict;
+  confidence: AutoReviewPromotionSegmentConfidence;
+}
+
+export interface AutoReviewPromotionCandidateOperationalCostSignal {
+  expectedReviewReductionRate?: number;
+  expectedRejectionRate?: number;
+  expectedRollbackVolume?: number;
+  basis: 'estimate' | 'unavailable';
+}
+
+export interface AutoReviewPromotionCandidateTemporalSignal {
+  asOf: string;
+  createdAt?: string;
+  stalenessDays?: number;
+  /** Drift real fica para AUTO-031; P0 só carimba unknown/false. */
+  driftFlag: false | 'unknown';
+}
+
+export interface AutoReviewPromotionCandidateConflictItem {
+  candidateVersion: string;
+  status: AutoReviewPromotionStatus;
+  reason?: string;
+}
+
+export interface AutoReviewPromotionCandidateConflictsSignal {
+  activeSameScope: AutoReviewPromotionCandidateConflictItem[];
+  rejectedSameScope: AutoReviewPromotionCandidateConflictItem[];
+}
+
+export interface AutoReviewPromotionCandidateApproverSummary {
+  text: string;
+  highlights: string[];
+}
+
+/**
+ * Sinais de qualidade da ficha do candidato (AUTO-030) — leitura, sem mudar approve.
+ */
+export interface AutoReviewPromotionCandidateQualitySignals {
+  coverage: AutoReviewPromotionCandidateCoverageSignal;
+  bySegment: AutoReviewPromotionCandidateSegmentSignal[];
+  operationalCost: AutoReviewPromotionCandidateOperationalCostSignal;
+  temporal: AutoReviewPromotionCandidateTemporalSignal;
+  conflicts: AutoReviewPromotionCandidateConflictsSignal;
+  approverSummary: AutoReviewPromotionCandidateApproverSummary;
+}
+
+export interface AutoReviewPromotionCandidateQualityPreview {
+  approverSummary: string;
+  hasConflicts: boolean;
+  minSamplesMet: boolean;
+  sampleSize: number;
+  worstSegmentVerdict?: AutoReviewPromotionPolicySegmentVerdict;
+  workflowRecommendation?: AutoReviewComparativeReplayAction;
+  riskLevel?: 'low' | 'medium' | 'high';
+}
+
+export interface AutoReviewPromotionCandidateWorkflow {
+  recommendation: AutoReviewComparativeReplayAction;
+  recommendationRationale: string;
+  approvedExpiresAt?: string | null;
+  expiredUnapplied?: boolean;
+  observationNote?: string;
+}
+
+export interface AutoReviewPromotionCandidateListItem {
+  candidate: FeedbackAutoReviewPromotionCandidateSnapshot;
+  qualityPreview: AutoReviewPromotionCandidateQualityPreview;
+  runtimeEffective: boolean;
+}
+
+export interface AutoReviewPromotionCandidateDetail {
+  candidate: FeedbackAutoReviewPromotionCandidateSnapshot;
+  qualitySignals: AutoReviewPromotionCandidateQualitySignals;
+  workflow: AutoReviewPromotionCandidateWorkflow;
+  runtimeEffective: boolean;
+}
+
+/** Snapshot JSON-serializável do candidato persistido (sem enrichment). */
+export interface FeedbackAutoReviewPromotionCandidateSnapshot {
+  id?: string;
+  owner: string;
+  type: AutoReviewPromotionCandidateType;
+  status: AutoReviewPromotionStatus;
+  origin: AutoReviewPromotionCandidateOrigin;
+  candidateVersion: string;
+  baseReviewVersion: string;
+  evidence: AutoReviewPromotionCandidateEvidence;
+  expectedImpact: AutoReviewPromotionCandidateImpact;
+  knownRisk: AutoReviewPromotionCandidateRisk;
+  rollbackPlan: AutoReviewPromotionRollbackPlan;
+  createdBy: string;
+  approvedBy?: string | null;
+  rejectedBy?: string | null;
+  appliedBy?: string | null;
+  rolledBackBy?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  approvedAt?: string | null;
+  rejectedAt?: string | null;
+  appliedAt?: string | null;
+  rolledBackAt?: string | null;
+  rollbackReason?: string | null;
+  notes?: string | null;
 }
 
 export enum AutoReviewPromotionReplayRecommendation {
@@ -321,6 +858,97 @@ export interface AutoReviewPromotionReplayResult {
   recommendation: AutoReviewPromotionReplayRecommendation;
 }
 
+export interface AutoReviewComparativeReplaySampleBucket {
+  sampleSize: number;
+  agreementRate: number;
+  falsePositiveRate: number;
+}
+
+export interface AutoReviewComparativeReplaySampleSplit {
+  mode: 'temporal' | 'stub';
+  older: AutoReviewComparativeReplaySampleBucket | null;
+  recent: AutoReviewComparativeReplaySampleBucket | null;
+  note: string;
+}
+
+export interface AutoReviewComparativeReplayDrift {
+  flag: true | false | 'unknown';
+  summary: string;
+  note: string;
+}
+
+export interface AutoReviewComparativeReplaySegment {
+  kind: AutoReviewPromotionPolicySegmentKind;
+  key: string;
+  sampleSize: number;
+  current: {
+    agreementRate: number;
+    falsePositiveRate: number;
+    verdict: AutoReviewPromotionPolicySegmentVerdict;
+  };
+  /** Métricas do próprio candidato por segmento; null quando ainda não há replay segmentado. */
+  candidate: {
+    agreementRate: number | null;
+    falsePositiveRate: number | null;
+    evidenceAvailable: boolean;
+  };
+  delta: {
+    agreementRate: number | null;
+    falsePositiveRate: number | null;
+  };
+  hiddenRegression: boolean;
+  note: string;
+}
+
+export interface AutoReviewComparativeReplayValueBandFp {
+  key: string;
+  rate: number;
+  delta: number | null;
+  note: string;
+}
+
+export interface AutoReviewComparativeReplayRecommendation {
+  action: AutoReviewComparativeReplayAction;
+  rationale: string;
+  blockers: string[];
+}
+
+export interface AutoReviewComparativeReplayRejectedReprocess {
+  eligibleForReprocess: boolean | null;
+  reason: string;
+}
+
+/**
+ * Relatório AUTO-031: crash-test shadow/candidato por segmento (somente leitura).
+ */
+export interface AutoReviewComparativeReplayResult {
+  generatedAt: string;
+  candidateVersion: string;
+  baseReviewVersion: string;
+  type: AutoReviewPromotionCandidateType;
+  status: AutoReviewPromotionStatus;
+  runtimeEffective: false;
+  sampleSplit: AutoReviewComparativeReplaySampleSplit;
+  drift: AutoReviewComparativeReplayDrift;
+  global: {
+    gates: AutoReviewPromotionReplayResult;
+    current: AutoReviewComparativeReplaySampleBucket;
+    candidate: AutoReviewComparativeReplaySampleBucket;
+    deltas: {
+      agreementRate: number;
+      falsePositiveRate: number;
+    };
+  };
+  bySegment: AutoReviewComparativeReplaySegment[];
+  falsePositivesByValueBand: AutoReviewComparativeReplayValueBandFp[];
+  operationalGain: {
+    expectedManualReviewReductionRate?: number;
+    basis: 'estimate' | 'unavailable';
+  };
+  recommendation: AutoReviewComparativeReplayRecommendation;
+  rejectedReprocess: AutoReviewComparativeReplayRejectedReprocess;
+}
+
 export interface AutoReviewThresholds {
   approve: number;
   correct: number;
@@ -339,6 +967,9 @@ export interface AutoReviewContext {
   valueApprovalLimit?: number;
   ownerAccounts?: AutoReviewEntityReference[];
   ownerCategories?: AutoReviewEntityReference[];
+  /** Alias rules resolvidas (DB ativos + fallback estático). */
+  accountAliases?: Array<{ patterns: string[]; target: string }>;
+  categoryAliases?: Array<{ patterns: string[]; target: string }>;
 }
 
 export const AUTO_REVIEW_DECISION_STATUS_MAP: Record<
@@ -608,6 +1239,14 @@ export const AUTO_REVIEW_REASON_CATALOG: Record<
     category: 'informative',
     severity: AutoReviewReasonSeverity.info,
     message: 'Score abaixo do limiar minimo para aprovacao automatica.',
+    field: 'overall',
+  },
+  [AutoReviewReasonCode.humanCorrectionPresent]: {
+    code: AutoReviewReasonCode.humanCorrectionPresent,
+    category: 'invalidating',
+    severity: AutoReviewReasonSeverity.warning,
+    message:
+      'Aplicacao bloqueada porque ja existe correcao humana no feedback.',
     field: 'overall',
   },
   [AutoReviewRuleCode.missingIntent]: {

@@ -4,19 +4,24 @@ import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entit
 import { FeedbackEntity } from '../entities/feedback.entity';
 import {
   AUTO_REVIEW_DECISION_STATUS_MAP,
+  AUTO_REVIEW_PROMOTION_POLICY,
   AutoReviewCategoryConfusionItem,
+  AutoReviewDecision,
   AutoReviewLearningDatasetSummary,
   AutoReviewLearningDivergenceExample,
   AutoReviewLearningField,
   AutoReviewLearningFieldMetric,
   AutoReviewLearningLoopResult,
   AutoReviewMode,
+  AutoReviewPromotionCandidateType,
+  AutoReviewPromotionEvidence,
   AutoReviewShadowVersionComparison,
   FeedbackStatus,
 } from '../interfaces';
 
 const DATASET_VERSION = 'learning-loop-v1';
 const DEFAULT_MAX_EXAMPLES = 20;
+const MIN_SAMPLES_FOR_INSPECTION = 5;
 const LEARNING_FIELDS: AutoReviewLearningField[] = [
   'intent',
   'account',
@@ -73,6 +78,16 @@ export class FeedbackAutoReviewLearningService {
     const trainingEligibleFeedbacks = reviewedFeedbacks.filter(
       feedback => !autoAppliedFeedbackIds.has(feedback.id),
     );
+    const shadowVersionComparisons = this.buildShadowVersionComparisons(
+      reviewedFeedbacks,
+      histories,
+    );
+    const promotionEvidence = this.buildPromotionEvidence(
+      trainingEligibleFeedbacks,
+      histories,
+      shadowVersionComparisons,
+    );
+    const promotionReadiness = this.buildPromotionReadiness(promotionEvidence);
 
     return {
       generatedAt: new Date().toISOString(),
@@ -87,11 +102,11 @@ export class FeedbackAutoReviewLearningService {
         reviewedFeedbacks,
         resolvedMaxExamples,
       ),
-      shadowVersionComparisons: this.buildShadowVersionComparisons(
-        reviewedFeedbacks,
-        histories,
-      ),
-      promotionReadiness: this.buildPromotionReadiness(reviewedFeedbacks),
+      shadowVersionComparisons,
+      inspectionReady:
+        promotionEvidence.humanReviewedSampleSize >= MIN_SAMPLES_FOR_INSPECTION,
+      promotionEvidence,
+      promotionReadiness,
     };
   }
 
@@ -270,23 +285,135 @@ export class FeedbackAutoReviewLearningService {
       .sort((left, right) => right.total - left.total);
   }
 
-  private buildPromotionReadiness(reviewedFeedbacks: FeedbackEntity[]): {
-    eligible: boolean;
-    reasons: string[];
-  } {
+  private buildPromotionEvidence(
+    trainingEligibleFeedbacks: FeedbackEntity[],
+    histories: FeedbackAutoReviewEntity[],
+    shadowVersionComparisons: AutoReviewShadowVersionComparison[],
+  ): AutoReviewPromotionEvidence {
+    const criteriaApplied =
+      AUTO_REVIEW_PROMOTION_POLICY.criteriaByType[
+        AutoReviewPromotionCandidateType.alias
+      ];
+    const feedbackById = new Map(
+      trainingEligibleFeedbacks.map(feedback => [feedback.id, feedback]),
+    );
+    const shadowHistories = histories.filter(
+      history =>
+        history.mode === AutoReviewMode.shadow &&
+        feedbackById.has(history.feedbackId),
+    );
+    const uniqueShadowFeedbackIds = [
+      ...new Set(shadowHistories.map(history => history.feedbackId)),
+    ];
+    const sampleSize = uniqueShadowFeedbackIds.length;
+    const humanReviewedSampleSize = sampleSize;
+
+    let matches = 0;
+    let confirmedFalsePositives = 0;
+
+    for (const feedbackId of uniqueShadowFeedbackIds) {
+      const feedback = feedbackById.get(feedbackId);
+      const history = shadowHistories.find(
+        item => item.feedbackId === feedbackId,
+      );
+      if (!feedback || !history) {
+        continue;
+      }
+
+      const expectedStatus = AUTO_REVIEW_DECISION_STATUS_MAP[history.decision];
+      if (expectedStatus === feedback.status) {
+        matches += 1;
+      }
+
+      if (
+        history.decision === AutoReviewDecision.approve &&
+        feedback.status === FeedbackStatus.corrected
+      ) {
+        confirmedFalsePositives += 1;
+      }
+    }
+
+    const agreementRate = this.ratio(matches, sampleSize);
+    const falsePositiveRate = this.ratio(confirmedFalsePositives, sampleSize);
     const reasons: string[] = [];
 
-    if (!reviewedFeedbacks.length) {
+    if (!trainingEligibleFeedbacks.length) {
       reasons.push('Nenhum feedback revisado disponivel para aprendizado.');
     }
 
+    if (sampleSize < criteriaApplied.minShadowSamples) {
+      reasons.push(
+        `Amostra shadow insuficiente (${sampleSize}/${criteriaApplied.minShadowSamples}).`,
+      );
+    }
+
+    if (agreementRate < criteriaApplied.minAgreementRate) {
+      reasons.push(
+        `Acordo shadow x humano (${agreementRate}) abaixo do minimo (${criteriaApplied.minAgreementRate}).`,
+      );
+    }
+
+    if (falsePositiveRate > criteriaApplied.maxFalsePositiveRate) {
+      reasons.push(
+        `Taxa de falso positivo confirmado (${falsePositiveRate}) acima do limite (${criteriaApplied.maxFalsePositiveRate}).`,
+      );
+    }
+
     reasons.push(
-      'Promocao automatica exige comparacao em shadow e criterio operacional externo.',
+      'Promocao exige aprovador humano e plano de rollback; eligible nao autoativa alias, regra ou modelo.',
     );
 
     return {
-      eligible: false,
+      datasetVersion: DATASET_VERSION,
+      reviewVersions: shadowVersionComparisons.map(item => item.reviewVersion),
+      sampleSize,
+      humanReviewedSampleSize,
+      agreementRate,
+      falsePositiveRate,
+      criteriaApplied,
+      rollbackRequired: true,
       reasons,
+    };
+  }
+
+  private buildPromotionReadiness(evidence: AutoReviewPromotionEvidence): {
+    eligible: boolean;
+    reasons: string[];
+  } {
+    const criteria = evidence.criteriaApplied;
+    const blockers = evidence.reasons.filter(
+      reason =>
+        !reason.includes('aprovador humano') &&
+        !reason.includes('Nenhum feedback revisado'),
+    );
+
+    const hasSample = evidence.sampleSize >= criteria.minShadowSamples;
+    const hasAgreement = evidence.agreementRate >= criteria.minAgreementRate;
+    const hasSafeFp =
+      evidence.falsePositiveRate <= criteria.maxFalsePositiveRate;
+    const hasRollback = evidence.rollbackRequired;
+    const eligible = hasSample && hasAgreement && hasSafeFp && hasRollback;
+
+    if (!evidence.humanReviewedSampleSize && !evidence.sampleSize) {
+      return {
+        eligible: false,
+        reasons: evidence.reasons,
+      };
+    }
+
+    if (eligible) {
+      return {
+        eligible: true,
+        reasons: [
+          'Amostra e metricas atendem a politica de alias para o aprovador humano decidir promocao.',
+          'Eligible nao autoativa comportamento nem altera status de feedback.',
+        ],
+      };
+    }
+
+    return {
+      eligible: false,
+      reasons: blockers.length ? blockers : evidence.reasons,
     };
   }
 

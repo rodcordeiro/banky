@@ -23,6 +23,7 @@ usuarios, autenticacao e NLP integrado.
 - Trate JWT, refresh token, dados financeiros, logs e New Relic como superficies sensiveis.
 - RabbitMQ existe no codigo, mas `startAllMicroservices()` esta comentado; nao reative sem decisao explicita.
 - Prefira `pnpm`, pois o repo possui `pnpm-lock.yaml`.
+- Para respostas ao usuário sobre tarefas, mantenha a resposta concisa e direta, com analogia simples e descritivo das ações que serão executadas.
 
 ## Comandos
 

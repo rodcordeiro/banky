@@ -43,3 +43,7 @@ uploaded/
 
 *.model.json
 *.csv
+
+# NLP local test artifacts
+/scripts/output.json
+/scripts/review-result.json

@@ -14,17 +14,40 @@ describe('NlpController', () => {
   };
   const shadowService = {
     buildOperationalReport: jest.fn(),
+    revaluatePendingBatch: jest.fn(),
   };
   const learningService = {
     buildLearningLoopReport: jest.fn(),
   };
+  const learningReassessmentService = {
+    buildReassessment: jest.fn(),
+  };
+  const promotionPolicyReassessmentService = {
+    buildReassessment: jest.fn(),
+  };
+  const qualityService = {
+    buildQualityMetrics: jest.fn(),
+  };
+  const aliasSuggestionService = {
+    buildAliasSuggestions: jest.fn(),
+    promoteAliasSuggestion: jest.fn(),
+  };
   const promotionService = {
     listCandidates: jest.fn(),
+    listCandidatesEnriched: jest.fn(),
     getCandidate: jest.fn(),
+    getCandidateEnriched: jest.fn(),
+    buildPromotionHistory: jest.fn(),
     approveCandidate: jest.fn(),
     rejectCandidate: jest.fn(),
     applyCandidate: jest.fn(),
     rollbackCandidate: jest.fn(),
+  };
+  const comparativeReplayService = {
+    buildComparativeReplay: jest.fn(),
+  };
+  const effectiveAliasService = {
+    listReport: jest.fn(),
   };
 
   let controller: NlpController;
@@ -34,7 +57,13 @@ describe('NlpController', () => {
       service as never,
       shadowService as never,
       learningService as never,
+      learningReassessmentService as never,
+      promotionPolicyReassessmentService as never,
+      qualityService as never,
       promotionService as never,
+      comparativeReplayService as never,
+      effectiveAliasService as never,
+      aliasSuggestionService as never,
     );
     jest.clearAllMocks();
   });
@@ -160,9 +189,79 @@ describe('NlpController', () => {
     );
   });
 
+  it('returns promotion policy reassessment for the authenticated owner', async () => {
+    const query = { from: '2026-08-01T00:00:00.000Z' };
+    const report = {
+      policyVersion: 'v1',
+      applied: false,
+      runtimeEffective: false,
+    };
+    promotionPolicyReassessmentService.buildReassessment.mockResolvedValue(
+      report,
+    );
+
+    await expect(
+      controller.autoReviewPromotionPolicyReassessment(req, query),
+    ).resolves.toBe(report);
+
+    expect(
+      promotionPolicyReassessmentService.buildReassessment,
+    ).toHaveBeenCalledWith(owner, query);
+  });
+
+  it('returns quality metrics for the authenticated owner', async () => {
+    const query = { from: '2026-08-01T00:00:00.000Z' };
+    const report = { summary: { shadowVolume: 3 } };
+    qualityService.buildQualityMetrics.mockResolvedValue(report);
+
+    await expect(controller.autoReviewQualityMetrics(req, query)).resolves.toBe(
+      report,
+    );
+
+    expect(qualityService.buildQualityMetrics).toHaveBeenCalledWith(
+      owner,
+      query,
+    );
+  });
+
+  it('runs shadow revaluation scoped by authenticated owner', async () => {
+    const payload = { reviewVersion: 'auto-review-shadow-v2', batchSize: 10 };
+    const result = { evaluated: 2, skipped: 1, errors: 0 };
+    shadowService.revaluatePendingBatch.mockResolvedValue(result);
+
+    await expect(controller.autoReviewRevaluate(req, payload)).resolves.toBe(
+      result,
+    );
+
+    expect(shadowService.revaluatePendingBatch).toHaveBeenCalledWith({
+      ...payload,
+      owner,
+    });
+  });
+
+  it('returns alias suggestions for the authenticated owner', async () => {
+    const report = { items: [], runtimeEffective: false };
+    aliasSuggestionService.buildAliasSuggestions.mockResolvedValue(report);
+
+    await expect(
+      controller.autoReviewAliasSuggestions(req, { minVolume: 3 }),
+    ).resolves.toBe(report);
+
+    expect(aliasSuggestionService.buildAliasSuggestions).toHaveBeenCalledWith(
+      owner,
+      3,
+    );
+  });
+
   it('lists promotion candidates scoped by authenticated owner', async () => {
-    const candidates = [{ candidateVersion: 'alias-v1' }];
-    promotionService.listCandidates.mockResolvedValue(candidates);
+    const candidates = [
+      {
+        candidate: { candidateVersion: 'alias-v1' },
+        qualityPreview: { approverSummary: 'resumo' },
+        runtimeEffective: false,
+      },
+    ];
+    promotionService.listCandidatesEnriched.mockResolvedValue(candidates);
 
     await expect(
       controller.autoReviewPromotionCandidates(req, {
@@ -170,9 +269,60 @@ describe('NlpController', () => {
       }),
     ).resolves.toBe(candidates);
 
-    expect(promotionService.listCandidates).toHaveBeenCalledWith(
+    expect(promotionService.listCandidatesEnriched).toHaveBeenCalledWith(
       owner,
       'candidate',
+    );
+  });
+
+  it('returns enriched promotion candidate detail for the authenticated owner', async () => {
+    const detail = {
+      candidate: { candidateVersion: 'alias-v1' },
+      qualitySignals: { approverSummary: { text: 'ficha' } },
+      runtimeEffective: false,
+    };
+    promotionService.getCandidateEnriched.mockResolvedValue(detail);
+
+    await expect(
+      controller.autoReviewPromotionCandidate(req, 'alias-v1'),
+    ).resolves.toBe(detail);
+
+    expect(promotionService.getCandidateEnriched).toHaveBeenCalledWith(
+      owner,
+      'alias-v1',
+    );
+  });
+
+  it('returns comparative replay for a promotion candidate', async () => {
+    const query = { recentDays: 30 };
+    const report = {
+      runtimeEffective: false,
+      recommendation: { action: 'reduce_scope' },
+    };
+    comparativeReplayService.buildComparativeReplay.mockResolvedValue(report);
+
+    await expect(
+      controller.autoReviewComparativeReplay(req, 'alias-v1', query),
+    ).resolves.toBe(report);
+
+    expect(
+      comparativeReplayService.buildComparativeReplay,
+    ).toHaveBeenCalledWith(owner, 'alias-v1', query);
+  });
+
+  it('returns dedicated promotion history for the authenticated owner', async () => {
+    const history = { runtimeEffective: false, items: [] };
+    promotionService.buildPromotionHistory.mockResolvedValue(history);
+
+    await expect(
+      controller.autoReviewPromotionHistory(req, {
+        candidateVersion: 'alias-v1',
+      }),
+    ).resolves.toBe(history);
+
+    expect(promotionService.buildPromotionHistory).toHaveBeenCalledWith(
+      owner,
+      'alias-v1',
     );
   });
 
@@ -191,6 +341,11 @@ describe('NlpController', () => {
       'alias-v1',
       owner,
       'ok',
+      {
+        reasonCode: undefined,
+        decisionVsRecommendation: undefined,
+        exceptionalReason: undefined,
+      },
     );
   });
 
@@ -214,6 +369,7 @@ describe('NlpController', () => {
       owner,
       'regression detected',
       'disabled before runtime integration',
+      'immediate',
     );
   });
 });

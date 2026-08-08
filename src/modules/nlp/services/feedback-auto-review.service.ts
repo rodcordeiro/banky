@@ -113,7 +113,7 @@ export class FeedbackAutoReviewService {
           fieldScores,
           reasons,
           feedback.originalText,
-          ACCOUNT_ALIASES,
+          context.accountAliases ?? ACCOUNT_ALIASES,
           suggestedCorrections,
         ) || aliasCorrectionApplied;
       aliasCorrectionApplied =
@@ -124,7 +124,7 @@ export class FeedbackAutoReviewService {
           fieldScores,
           reasons,
           feedback.originalText,
-          CATEGORY_ALIASES,
+          context.categoryAliases ?? CATEGORY_ALIASES,
           suggestedCorrections,
         ) || aliasCorrectionApplied;
     }

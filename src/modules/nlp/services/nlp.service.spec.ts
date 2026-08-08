@@ -6,8 +6,10 @@ import { ValueClassifier } from '../classifiers/value.classifier';
 import {
   AutoReviewDecision,
   AutoReviewMode,
+  AutoReviewReasonCode,
   FeedbackStatus,
 } from '../interfaces';
+import { ACCOUNT_ALIASES, CATEGORY_ALIASES } from '../utils/alias.rules';
 import { NlpService } from './nlp.service';
 
 const owner = '1c48d2bf-2d52-4764-98df-d81be158b01b';
@@ -103,6 +105,17 @@ describe('NlpService classifier orchestration', () => {
       paginateService as never,
       transactionsService as never,
       feedbackAutoReviewService as never,
+      {
+        resolveAliasRules: jest
+          .fn()
+          .mockImplementation((_owner, field) =>
+            Promise.resolve(
+              field === 'account' ? ACCOUNT_ALIASES : CATEGORY_ALIASES,
+            ),
+          ),
+        listReport: jest.fn(),
+        hasActiveRuntime: jest.fn().mockResolvedValue(false),
+      } as never,
     );
   });
 
@@ -295,6 +308,8 @@ describe('NlpService classifier orchestration', () => {
       valueApprovalLimit: 5000,
       ownerAccounts: accounts.map(({ name }) => ({ name })),
       ownerCategories: categories.map(({ name }) => ({ name })),
+      accountAliases: ACCOUNT_ALIASES,
+      categoryAliases: CATEGORY_ALIASES,
     });
   });
 
@@ -401,6 +416,11 @@ describe('NlpService classifier orchestration', () => {
       reviewVersion: 'auto-review-automatic-v1',
       evaluatedAt: '2026-06-17T10:00:00.000Z',
     };
+    const history = { id: 'history-id', applied: false };
+
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
 
     await expect(
       service.applyAutoReviewCorrection(feedback, evaluation),
@@ -409,7 +429,17 @@ describe('NlpService classifier orchestration', () => {
     );
 
     expect(feedbackRepository.save).not.toHaveBeenCalled();
-    expect(feedbackAutoReviewRepository.save).not.toHaveBeenCalled();
+    expect(feedbackAutoReviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applied: false,
+        appliedAt: null,
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            code: AutoReviewReasonCode.humanCorrectionPresent,
+          }),
+        ]),
+      }),
+    );
   });
 
   it('does not apply automatic correction when feedback is already corrected', async () => {
@@ -459,6 +489,10 @@ describe('NlpService classifier orchestration', () => {
       evaluatedAt: '2026-06-17T10:00:00.000Z',
     };
 
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
+
     await expect(
       service.applyAutoReviewCorrection(feedback, evaluation),
     ).rejects.toThrow(
@@ -466,7 +500,16 @@ describe('NlpService classifier orchestration', () => {
     );
 
     expect(feedbackRepository.save).not.toHaveBeenCalled();
-    expect(feedbackAutoReviewRepository.save).not.toHaveBeenCalled();
+    expect(feedbackAutoReviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applied: false,
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            code: AutoReviewReasonCode.humanCorrectionPresent,
+          }),
+        ]),
+      }),
+    );
   });
 
   it('blocks automatic correction over manually corrected value', async () => {
@@ -489,6 +532,10 @@ describe('NlpService classifier orchestration', () => {
       evaluatedAt: '2026-06-17T10:00:00.000Z',
     };
 
+    feedbackAutoReviewRepository.findOne.mockResolvedValue(null);
+    feedbackAutoReviewRepository.create.mockImplementation(value => value);
+    feedbackAutoReviewRepository.save.mockImplementation(async value => value);
+
     await expect(
       service.applyAutoReviewCorrection(feedback, evaluation),
     ).rejects.toThrow(
@@ -496,6 +543,15 @@ describe('NlpService classifier orchestration', () => {
     );
 
     expect(feedbackRepository.save).not.toHaveBeenCalled();
-    expect(feedbackAutoReviewRepository.save).not.toHaveBeenCalled();
+    expect(feedbackAutoReviewRepository.save).toHaveBeenCalledWith(
+      expect.objectContaining({
+        applied: false,
+        reasons: expect.arrayContaining([
+          expect.objectContaining({
+            code: AutoReviewReasonCode.humanCorrectionPresent,
+          }),
+        ]),
+      }),
+    );
   });
 });

@@ -50,3 +50,6 @@ nginx-local.conf
 LICENSE
 *.md
 .git
+
+*.model.json
+*.csv
