@@ -13,7 +13,7 @@ usuarios, autenticacao e NLP integrado.
 | Mudar codigo ou validar contrato | `.agents/references/conventions.md` |
 | Reaproveitar padroes locais | `.agents/references/patterns.md` |
 | Avaliar gaps conhecidos | `.agents/references/tech-debt.md` |
-| Consultar contratos HTTP | `.agents/skills/banky-api/SKILL.md` |
+| *contrato* HTTP, *endpoint* ou DTO | `.agents/skills/banky-api/SKILL.md` |
 | Aplicar guideline Nero | `$nero` -> `references/guidelines/api-guidelines.md` |
 
 ## Regras Rapidas
@@ -37,6 +37,5 @@ usuarios, autenticacao e NLP integrado.
 ## Skills Condicionais
 
 - Sempre: `$nero`.
-- Backend API: aplicar `$nero` -> `references/guidelines/api-guidelines.md`.
-- Contratos HTTP/endpoints: `$banky-api` -> `.agents/skills/banky-api/`.
+- Backend API: `$nero` -> `references/guidelines/api-guidelines.md`.
 - .NET nao se aplica: este checkout e NestJS/TypeScript.

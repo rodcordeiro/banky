@@ -9,4 +9,6 @@
 | `patterns.md` | Para seguir padroes locais ja observados. |
 | `tech-debt.md` | Para entender riscos conhecidos sem refatorar fora de escopo. |
 
+*contrato* HTTP: `$banky-api` -> `.agents/skills/banky-api/SKILL.md`.
+
 Guideline externo: dominio `api` -> `$nero` -> `references/guidelines/api-guidelines.md`.

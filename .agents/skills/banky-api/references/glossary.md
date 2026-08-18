@@ -1,6 +1,6 @@
 # Glossário — banky-api
 
-Vocabulário canônico do domínio Banky na API principal. Sem detalhes de implementação.
+Vocabulário do domínio. *ammount* (dois m) é a grafia do *contrato* de saldo em Account.
 
 ## Entidades principais
 

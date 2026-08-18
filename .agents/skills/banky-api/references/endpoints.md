@@ -1,12 +1,60 @@
 # Endpoints — banky-api
 
-Referência completa dos endpoints HTTP. Base path versionada: `/api/v1`. Health: `/api/health`.
+*Contrato* HTTP. Prefixo `/api` + URI `v1` → `/api/v1`. Health: `/api/health`. Bootstrap: `.agents/references/runtime.md`.
 
-Legenda: `[sem Zod]` = DTO sem schema Zod (validação incerta em runtime).
+Legenda: `[sem Zod]` = DTO sem schema Zod.
+
+NLP e auto-review: [nlp.md](nlp.md).
+
+## Índice
+
+| Método | Path | Auth | Detalhe |
+|--------|------|------|---------|
+| POST | /api/v1/auth/login | LocalAuth | #auth |
+| POST | /api/v1/auth/register | público | #auth |
+| POST | /api/v1/auth/refresh | Reauth | #auth |
+| GET | /api/v1/users | JWT | #users |
+| GET | /api/v1/users/me | JWT | #users |
+| GET/POST | /api/v1/accounts | JWT | #accounts |
+| GET/PUT/DELETE | /api/v1/accounts/:id | JWT | #accounts |
+| GET/POST | /api/v1/categories | JWT | #categories |
+| GET/PUT/DELETE | /api/v1/categories/:id | JWT | #categories |
+| GET | /api/v1/transactions | JWT | #transactions |
+| GET | /api/v1/transactions/uncategorized | JWT | #transactions |
+| GET/PUT/DELETE | /api/v1/transactions/:id | JWT | #transactions |
+| POST | /api/v1/transactions | JWT | #transactions |
+| POST | /api/v1/transactions/transfer | JWT | #transactions |
+| POST | /api/v1/transactions/credit-payment | JWT | #transactions |
+| GET/POST | /api/v1/payments | JWT | #payments |
+| GET/PUT/DELETE | /api/v1/payments/:id | JWT | #payments |
+| GET/POST/PUT/DELETE | /api/v1/parameters | JWT | #parameters |
+| GET/POST/PUT/DELETE | /api/v1/parameters/values… | JWT | #parameters |
+| GET | /api/health/ | público | #health |
+| POST | /api/v1/nlp | JWT | [nlp.md](nlp.md) |
+| GET | /api/v1/nlp/models | JWT | [nlp.md](nlp.md) |
+| GET | /api/v1/nlp | JWT | [nlp.md](nlp.md) |
+| POST | /api/v1/nlp/:id/review | JWT | [nlp.md](nlp.md) |
+| POST | /api/v1/nlp/training | JWT | [nlp.md](nlp.md) |
+| POST | /api/v1/nlp/:id/transaction | JWT | [nlp.md](nlp.md) |
+| * | /api/v1/nlp/auto-review/… | JWT | [nlp.md](nlp.md) |
+
+## Compartilhado
+
+| Decorator | Credencial | Uso |
+|-----------|------------|-----|
+| `@LocalAuth()` | body `username`, `password` | login |
+| `@Auth()` | `Authorization: Bearer <accessToken>` | rotas protegidas |
+| `@Reauth()` | body `refreshToken` | refresh |
+
+Login/refresh: `{ accessToken, expires, refreshToken, authenticated? }`. Access ~1 h; refresh ~5 dias.
+
+Paginação (`GET /transactions`, `GET /nlp`, `GET /nlp/auto-review/report`): `{ items: T[]; meta: { currentPage, itemCount, itemsPerPage, totalItems, totalPages?, hasNext } }`. Defaults: `page=1`, `limit=10`.
+
+Throttle: 10 req / 30 s. `ZodValidationPipe` nos DTOs Zod. Conflito DB → `409`. Entidades base: `{ id, createdAt, updatedAt }`.
 
 ---
 
-## Auth — `/api/v1/auth`
+## Auth
 
 ### POST /login
 
@@ -26,8 +74,6 @@ Legenda: `[sem Zod]` = DTO sem schema Zod (validação incerta em runtime).
 
 **Erros:** `401` credenciais inválidas; `409` conflito DB ao salvar token.
 
----
-
 ### POST /register
 
 | | |
@@ -42,8 +88,6 @@ Legenda: `[sem Zod]` = DTO sem schema Zod (validação incerta em runtime).
 **Comportamento:** cria user; password hasheado em `@BeforeInsert`.
 
 **Erros:** `400` erro no store; `409` username duplicado.
-
----
 
 ### POST /refresh
 
@@ -60,7 +104,7 @@ Legenda: `[sem Zod]` = DTO sem schema Zod (validação incerta em runtime).
 
 ---
 
-## Users — `/api/v1/users`
+## Users
 
 Auth: JWT Bearer em todas.
 
@@ -76,7 +120,7 @@ Auth: JWT Bearer em todas.
 
 ---
 
-## Accounts — `/api/v1/accounts`
+## Accounts
 
 Auth: JWT Bearer. Owner injetado em create/update.
 
@@ -110,7 +154,7 @@ Conta por id. **Sem verificação de ownership.**
 
 ---
 
-## Categories — `/api/v1/categories`
+## Categories
 
 Auth: JWT Bearer.
 
@@ -146,7 +190,7 @@ Categoria por id. **Sem verificação de ownership.**
 
 ---
 
-## Transactions — `/api/v1/transactions`
+## Transactions
 
 Auth: JWT Bearer. Rotas estáticas registradas antes de `/:id`.
 
@@ -210,7 +254,7 @@ Por id. **Sem verificação de ownership.**
 
 ---
 
-## Payments — `/api/v1/payments`
+## Payments
 
 Auth: JWT Bearer. Catálogo global (sem owner).
 
@@ -226,7 +270,7 @@ Auth: JWT Bearer. Catálogo global (sem owner).
 
 ---
 
-## Parameters — `/api/v1/parameters`
+## Parameters
 
 Auth: JWT Bearer.
 
@@ -241,13 +285,13 @@ Todas as definições de parâmetro.
 
 Valores do owner autenticado com relação `parameter`.
 
-### GET /:id
-
-Definição por id.
-
 ### GET /values/:id
 
 **Path `id`:** id da **definição** de parâmetro (não do value). Retorna values daquele parâmetro + owner.
+
+### GET /:id
+
+Definição por id.
 
 ### POST /
 
@@ -271,253 +315,15 @@ Definição por id.
 
 ---
 
-## Health — `/api/health`
+## Health
 
 ### GET /
 
-Auth: público.
+Auth: público. Path: `/api/health`.
 
-**Retorno (Terminus):**
-```json
-{
-  "status": "ok",
-  "info": {
-    "version": { "status": "up", "value": "1.4.3" },
-    "memory_heap": { "status": "up" },
-    "memory_rss": { "status": "up" }
-  },
-  "details": { }
-}
-```
+**Retorno (Terminus):** `status`, `info.version.value` (espelha `package.json`), `info.memory_heap`, `info.memory_rss`.
 
 **Limites:** heap ≤ 200 MB, RSS ≤ 3000 MB. Unhealthy → `503`.
-
----
-
-## NLP — `/api/v1/nlp`
-
-Auth: JWT Bearer em todas.
-
-### POST /
-
-Parse de texto livre em feedback.
-
-**Body** `[sem Zod]`: `{ text: string }`
-
-**Retorno:** `FeedbackEntity` com campos predicted, `status: pending`, `usedForTraining: false`.
-
-Intents: `create` | `transfer`.
-
----
-
-### GET /models
-
-Metadados dos classificadores (`intent`, `account`, `category`, `value`): exists, file, updatedAt, size, model.
-
----
-
-### GET /
-
-Lista feedbacks paginados do owner.
-
-**Query** `[sem Zod]`: `status?`, `usedForTraining?`, `id?`, `lastUpdated?`, `page?` (default 1), `limit?` (default 10).
-
-**Retorno:** paginado, ordenado `createdAt DESC`.
-
----
-
-### POST /:id/review
-
-Revisão humana.
-
-**Body** `[sem Zod]` — atenção: typos no DTO (`orrectedOriginAccount`, `orrectedCategory`):
-
-| Campo | Tipo |
-|-------|------|
-| status | pending \| validated \| corrected |
-| correctedIntent, correctedAccount, correctedDestinyAccount, correctedValue, correctedDate | opcionais |
-| orrectedOriginAccount, orrectedCategory | opcionais (nomes reais no JSON) |
-
-**Regras:** `404` feedback não encontrado; `400` status inválido; `400` status=corrected sem campo corrigido.
-
----
-
-### POST /training
-
-**Query:** `{ fullTraining?: boolean }` default false.
-
-**Comportamento:**
-- `false`: feedbacks com `usedForTraining=false` e status ≠ pending.
-- `true`: todos não-pending.
-- Marca `usedForTraining=true` no incremental.
-
-**Retorno:** void/undefined se nenhum elegível.
-
----
-
-### POST /:id/transaction
-
-Cria transação(ões) a partir de feedback revisado.
-
-**Retorno:** transfer → `{ type: 'transfer', feedbackId }`; create → `TransactionsEntity`.
-
-**Erros:** `404` feedback; `400` valor/conta/categoria inválidos.
-
----
-
-## NLP Auto-Review
-
-Todas exigem JWT. Owner = `req.user.id`. Leitura analítica com `runtimeEffective: false` salvo após `apply`.
-
-### GET /auto-review/report
-
-**Query:** page, limit, mode (shadow|assistive|automatic), decision, minScore, maxScore, from, to, divergence, sortBy, order.
-
-**Retorno:** `{ items: AutoReviewReportItem[], meta }` paginado.
-
----
-
-### GET /auto-review/learning-loop
-
-**Query:** `{ maxExamples?: number }` default 20.
-
-**Retorno:** dataset, métricas por campo, confusões, divergências, evidência de promoção.
-
----
-
-### GET /auto-review/learning-loop/reassessment
-
-**Query:** from, to, baselineFrom, baselineTo, maxExamples.
-
-**Retorno:** cobertura, qualidade por fonte, divergências recorrentes, janelas before/after.
-
----
-
-### GET /auto-review/learning-loop/promotion-policy-reassessment
-
-**Query:** from?, to?, valueApprovalLimit?
-
-**Retorno:** versão de policy, segmentos, critérios propostos. Não aplica policy.
-
----
-
-### GET /auto-review/quality-metrics
-
-**Query:** from?, to?, valueApprovalLimit?
-
-**Retorno:** summary, breakdowns por mode/decision/intent/field/value band, guardrails.
-
----
-
-### POST /auto-review/revaluate
-
-**Body:** `{ reviewVersion?, batchSize? }`
-
-**Retorno:** `{ startedAt, finishedAt, reviewVersion, mode, batchSize, candidates, evaluated, skipped, errors, errorFeedbackIds }`
-
----
-
-### GET /auto-review/alias-suggestions
-
-**Query:** `{ minVolume?: number }` default 2.
-
-**Retorno:** `{ generatedAt, minVolume, items[], runtimeEffective: false }`
-
----
-
-### POST /auto-review/alias-suggestions/promote
-
-**Body:** `{ field: 'account'|'category', pattern, predicted, corrected, minVolume? }`
-
-**Retorno:** `FeedbackAutoReviewPromotionCandidateEntity`
-
-**Erros:** sugestão não encontrada, conflito textual, volume insuficiente, já rejeitada.
-
----
-
-### POST /auto-review/alias-suggestions/promote-eligible
-
-**Query:** minVolume?
-
-**Retorno:** batch com contadores e outcomes por item.
-
----
-
-### GET /auto-review/promotion-candidates
-
-**Query:** `{ status?: candidate|shadow_validated|approved|rejected|active|rolled_back }`
-
-**Retorno:** lista enriquecida com preview de qualidade.
-
----
-
-### GET /auto-review/promotion-history
-
-**Query:** `{ candidateVersion?: string }`
-
-**Retorno:** timeline de eventos.
-
----
-
-### GET /auto-review/promotion-candidates/:candidateVersion
-
-**Retorno:** detalhe completo + workflow hint.
-
-**Erros:** `404`
-
----
-
-### GET /auto-review/promotion-candidates/:candidateVersion/comparative-replay
-
-**Query:** from?, to?, recentDays? (default 30), valueApprovalLimit?
-
-**Retorno:** crash-test sombra — sample split, drift, métricas, recomendação.
-
----
-
-### GET /auto-review/effective-aliases
-
-**Retorno:** aliases ativos/inativos com `runtimeEffective`, versões, timestamps de ativação/desativação.
-
----
-
-### POST /auto-review/promotion-candidates/:candidateVersion/approve
-
-**Body:** `{ notes?, reasonCode?, decisionVsRecommendation?: agree|override, exceptionalReason? }`
-
-**Comportamento:** status → `approved`. Exige estado candidate/shadow_validated; valida gates de replay; override exige reasonCode + exceptionalReason.
-
----
-
-### POST /auto-review/promotion-candidates/:candidateVersion/expire
-
-**Body:** action DTO (notes opcional).
-
-**Comportamento:** approved não aplicado → rejected com nota expired.
-
----
-
-### POST /auto-review/promotion-candidates/:candidateVersion/reject
-
-**Body:** action DTO.
-
-**Erros:** não rejeita active ou rolled_back.
-
----
-
-### POST /auto-review/promotion-candidates/:candidateVersion/apply
-
-**Body:** action DTO.
-
-**Comportamento:** approved não expirado → active; ativa alias em runtime. Idempotente se já active.
-
----
-
-### POST /auto-review/promotion-candidates/:candidateVersion/rollback
-
-**Body:** `{ reason: string (required), notes?, kind?: immediate|pause|expire }`
-
-**Comportamento:** desativa alias; status → rolled_back. Só active. Idempotente se já rolled_back.
 
 ---
 
@@ -532,51 +338,12 @@ Todas exigem JWT. Owner = `req.user.id`. Leitura analítica com `runtimeEffectiv
 | 501 | Transaction store catch-all |
 | 204 | DELETE bem-sucedido |
 
----
-
-## Índice rápido
-
-| Método | Path | Auth |
-|--------|------|------|
-| POST | /api/v1/auth/login | LocalAuth |
-| POST | /api/v1/auth/register | público |
-| POST | /api/v1/auth/refresh | Reauth |
-| GET | /api/v1/users | JWT |
-| GET | /api/v1/users/me | JWT |
-| GET/POST | /api/v1/accounts | JWT |
-| GET/PUT/DELETE | /api/v1/accounts/:id | JWT |
-| GET/POST | /api/v1/categories | JWT |
-| GET/PUT/DELETE | /api/v1/categories/:id | JWT |
-| GET | /api/v1/transactions | JWT |
-| GET | /api/v1/transactions/uncategorized | JWT |
-| GET/PUT/DELETE | /api/v1/transactions/:id | JWT |
-| POST | /api/v1/transactions | JWT |
-| POST | /api/v1/transactions/transfer | JWT |
-| POST | /api/v1/transactions/credit-payment | JWT |
-| GET/POST | /api/v1/payments | JWT |
-| GET/PUT/DELETE | /api/v1/payments/:id | JWT |
-| GET/POST/PUT/DELETE | /api/v1/parameters[...] | JWT |
-| GET/POST/PUT/DELETE | /api/v1/parameters/values[...] | JWT |
-| GET | /api/health/ | público |
-| POST | /api/v1/nlp | JWT |
-| GET | /api/v1/nlp/models | JWT |
-| GET | /api/v1/nlp | JWT |
-| POST | /api/v1/nlp/:id/review | JWT |
-| POST | /api/v1/nlp/training | JWT |
-| POST | /api/v1/nlp/:id/transaction | JWT |
-| GET | /api/v1/nlp/auto-review/* | JWT |
-| POST | /api/v1/nlp/auto-review/* | JWT |
-
-**Total:** 55 rotas (54 em `/api/v1` + health).
-
----
-
 ## Gaps conhecidos
 
 1. E2E stub — não cobre endpoints reais.
-2. Rotas `/:id` sem owner scoping em accounts, categories, transactions.
+2. *ownership* — `/:id` sem owner scoping em accounts, categories, transactions.
 3. `GET /users` expõe todos os users.
-4. DTOs auth/NLP sem Zod — validação incerta.
-5. Typos em `ApproveFeedbackDto` (`orrected*`).
+4. DTOs auth/NLP sem Zod.
+5. *orrected* em `ApproveFeedbackDto`.
 6. `POST /transactions/transfer` retorna 201 com body vazio.
-7. Throttle global 10/30s pode limitar batch auto-review.
+7. Throttle 10/30s pode limitar batch auto-review.
