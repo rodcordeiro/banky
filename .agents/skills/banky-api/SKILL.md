@@ -98,4 +98,6 @@ Atualizar esta skill quando:
 - novo fluxo NLP/auto-review;
 - correção de gap documentado (owner scoping, Zod em DTOs).
 
+Sincronizar a cópia consumidora em `banky_app/.agents/skills/banky-api/references/` (`endpoints.md`, `glossary.md`) no mesmo ciclo da mudança de contrato.
+
 Versão da API no momento da última revisão: **1.4.3** (`package.json`). Total: **55 rotas HTTP** (54 versionadas + health).
