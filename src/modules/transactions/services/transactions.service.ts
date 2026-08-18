@@ -15,24 +15,23 @@ import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
 import { CreditPaymentTransactionDTO } from '../dto/credit.dto';
 
 @Injectable()
-export class TransactionsService extends BaseService {
+export class TransactionsService extends BaseService<TransactionsEntity> {
   override repository = this._repository;
   constructor(
     @Inject('TRANSACTIONS_REPOSITORY')
     private readonly _repository: Repository<TransactionsEntity>,
     private readonly _accountsService: AccountsService,
     private readonly _categoriesService: CategoriesService,
-    private readonly _paginateService: PaginationService,
+    paginateService: PaginationService,
     private readonly _parametersService: ParameterValuesService,
   ) {
-    super();
+    super(paginateService);
   }
   async listAll(query: QueryTransactionsDTO & { owner: string }) {
-    return this._paginateService.paginate(
-      this._repository,
+    return this.findAll(
       {
-        limit: query.limit,
-        page: query.page,
+        limit: query.limit ?? 10,
+        page: query.page ?? 1,
       },
       {
         select: [

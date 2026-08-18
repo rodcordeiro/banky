@@ -1,29 +1,21 @@
 # Runtime
 
-Bootstrap:
+Bootstrap (`src/main.ts`):
 
-- `src/main.ts` cria `NestFastifyApplication` com logger Fastify.
-- Registra Helmet, compression e CSRF.
-- Habilita CORS amplo, shutdown hooks, prefixo global `api` e versionamento URI default `v1`.
-- Usa `DataBaseInterceptor` e `BadRequestInterceptor` globais.
-- Configura Swagger em `/swagger`.
+- `NestFastifyApplication` com logger Fastify; import `newrelic`.
+- Helmet, compression, CSRF (`csrf-token`); CORS `origin: '*'`.
+- Prefixo `api`, versionamento URI default `v1`, shutdown hooks.
+- Interceptors globais: `DataBaseInterceptor`, `BadRequestInterceptor`.
+- Swagger em `/swagger`.
+- `connectMicroservice(RABBITMQ_CONFIG)`; `startAllMicroservices()` comentado.
 
-Banco:
+`AppModule`:
 
-- `src/core/database/database.providers.ts` cria `DataSource` MySQL.
-- `synchronize` fica `false`.
-- `migrationsRun` fica `true`.
-- Tabela de migrations: `bk_tb_migrations`.
-- Entidades: `src/**/*.entity.ts`.
-- Migrations: `src/core/database/migrations`.
+- `ConfigModule.forRoot({ isGlobal: true })`; env validado em `src/common/config/env.config.ts` (Zod).
+- `ZodValidationPipe` global; `ThrottlerGuard` 10 req / 30 s.
+- `DatabaseModule`, `CronModule`, `PassportModule`, `NestJwtModule`, `SharedModule`.
+- `RabbitModule` comentado.
 
-Mensageria e jobs:
+Banco (`src/core/database/database.providers.ts`): MySQL, `synchronize: false`, `migrationsRun: true`, entidades `src/**/*.entity.ts`.
 
-- `CronModule` esta ativo no `AppModule`.
-- `RabbitModule` esta comentado no `AppModule`.
-- `app.connectMicroservice(RABBITMQ_CONFIG)` existe, mas `app.startAllMicroservices()` esta comentado.
-
-Operacao:
-
-- Configuracao vem de `ConfigModule.forRoot({ isGlobal: true })` e `src/common/config/env.config.ts`.
-- Nao registrar valores reais de `.env`, tokens ou payloads sensiveis em docs, logs ou testes.
+Nao registrar valores reais de `.env`, tokens ou payloads sensiveis.

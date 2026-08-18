@@ -8,11 +8,13 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
+import { QueryPaginateDTO } from '@/core/paginate/dto/query-paginate.dto';
 
 import { CategoriesService } from '../services/categories.service';
 import { CreateCategoryDTO } from '../dto/create.dto';
@@ -28,9 +30,14 @@ export class CategoriesController {
   constructor(private readonly _service: CategoriesService) {}
 
   @Get()
-  @Get()
-  async index(@Req() req: AuthenticatedRequest) {
-    return this._service.listAll(req.user.id);
+  async index(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QueryPaginateDTO,
+  ) {
+    return this._service.listAll(req.user.id, {
+      page: query.page ?? 1,
+      limit: query.limit ?? 10,
+    });
   }
 
   @Get('/:id')

@@ -12,25 +12,47 @@ describe('AccountsService', () => {
     delete: jest.fn(),
   };
 
+  const paginateService = {
+    paginate: jest.fn(),
+  };
+
   let service: AccountsService;
 
   beforeEach(() => {
-    service = new AccountsService(repository as never);
+    service = new AccountsService(
+      repository as never,
+      paginateService as never,
+    );
     jest.clearAllMocks();
   });
 
-  it('finds all accounts', async () => {
+  it('finds all accounts as a paginated page', async () => {
     const accounts = [{ id: 'account-id' }];
-    repository.find.mockResolvedValue(accounts);
+    const page = {
+      items: accounts,
+      meta: {
+        currentPage: 1,
+        itemCount: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+        hasNext: false,
+      },
+    };
+    paginateService.paginate.mockResolvedValue(page);
 
-    await expect(service.findAll()).resolves.toBe(accounts);
+    await expect(service.findAll()).resolves.toBe(page);
 
-    expect(repository.find).toHaveBeenCalledWith();
+    expect(paginateService.paginate).toHaveBeenCalledWith(
+      repository,
+      { page: 1, limit: 10 },
+      undefined,
+    );
   });
 
   it('finds accounts by options', async () => {
     const accounts = [{ id: 'account-id' }];
-    const options = { where: { owner: { id: 'user-id' } } };
+    const options = { where: { owner: { id: 'user-id' } } } as never;
     repository.find.mockResolvedValue(accounts);
 
     await expect(service.findBy(options)).resolves.toBe(accounts);

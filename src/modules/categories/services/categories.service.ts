@@ -1,26 +1,34 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { BaseService } from '@/common/services/base.service';
+import { PaginationService } from '@/core/paginate/paginate.service';
 
 import { CategoriesEntity } from '@/modules/categories/entities/categories.entity';
 
 @Injectable()
-export class CategoriesService extends BaseService {
+export class CategoriesService extends BaseService<CategoriesEntity> {
   override repository = this._repository;
   constructor(
     @Inject('CATEGORIES_REPOSITORY')
     private readonly _repository: Repository<CategoriesEntity>,
+    paginateService: PaginationService,
   ) {
-    super();
+    super(paginateService);
   }
 
-  async listAll(owner: string) {
-    return this._repository
-      .createQueryBuilder('category')
-      .innerJoinAndSelect('category.owner', 'owner')
-      .leftJoinAndSelect('category.subcategories', 'subcategory')
-      .where('category.category IS NULL')
-      .andWhere(`category.owner = '${owner}'`)
-      .getMany();
+  async listAll(
+    owner: string,
+    options: IPaginationOptions = { page: 1, limit: 10 },
+  ) {
+    return this.findAll(options, {
+      where: {
+        owner: { id: owner },
+        category: IsNull(),
+      },
+      relations: {
+        owner: true,
+        subcategories: true,
+      },
+    } as never);
   }
 }

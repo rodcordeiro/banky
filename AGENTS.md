@@ -1,41 +1,34 @@
 # banky-api
 
-API NestJS/Fastify do Banky para contas, categorias, pagamentos, transacoes,
-usuarios, autenticacao e NLP integrado.
+API NestJS + Fastify do Banky. Entrada: `src/main.ts`. Prefixo `/api`, versionamento URI `v1`. Dominios em `src/modules` via `SharedModule`.
 
 ## Como Usar Este Contexto
 
 | Quando | Ler |
 | --- | --- |
-| Entender layout do repo | `.agents/references/structure.md` |
-| Entender bootstrap, banco, HTTP e jobs | `.agents/references/runtime.md` |
-| Entender dominio e superficies sensiveis | `.agents/references/domain.md` |
-| Mudar codigo ou validar contrato | `.agents/references/conventions.md` |
-| Reaproveitar padroes locais | `.agents/references/patterns.md` |
-| Avaliar gaps conhecidos | `.agents/references/tech-debt.md` |
+| Layout, modulo, camada | `.agents/references/structure.md` |
+| Bootstrap, banco, HTTP, cron, RabbitMQ | `.agents/references/runtime.md` |
+| Superficies de negocio e risco | `.agents/references/domain.md` |
+| Mudar codigo ou validar | `.agents/references/conventions.md` |
+| Padroes ja observados | `.agents/references/patterns.md` |
+| Gaps e debito vs guideline | `.agents/references/tech-debt.md` |
 | *contrato* HTTP, *endpoint* ou DTO | `.agents/skills/banky-api/SKILL.md` |
-| Aplicar guideline Nero | `$nero` -> `references/guidelines/api-guidelines.md` |
+| Guideline de dominio `api` | `$nero` -> `references/guidelines/api-guidelines.md` |
 
 ## Regras Rapidas
 
-- Use `$nero` para contexto de knowledge deste projeto.
-- Preserve controllers finos; regras ficam em services e acesso a dados em providers.
-- Nao altere migrations, contratos HTTP, CI/CD ou infraestrutura sem pedido explicito.
-- Trate JWT, refresh token, dados financeiros, logs e New Relic como superficies sensiveis.
-- RabbitMQ existe no codigo, mas `startAllMicroservices()` esta comentado; nao reative sem decisao explicita.
-- Prefira `pnpm`, pois o repo possui `pnpm-lock.yaml`.
-- Para respostas ao usuário sobre tarefas, mantenha a resposta concisa e direta, com analogia simples e descritivo das ações que serão executadas.
-
-## Comandos
-
-- `pnpm run start:dev`
-- `pnpm run lint`
-- `pnpm run build`
-- `pnpm run test`
-- `pnpm run test:e2e` para mudancas em contrato HTTP
+- Use `$nero` para knowledge deste projeto.
+- Controllers na borda HTTP; regras em services; dados em providers.
+- Migrations, CI/CD, infra e *contrato* HTTP so com pedido explicito.
+- Superficies: JWT, refresh, dados financeiros, logs, New Relic.
+- RabbitMQ esta no codigo; `startAllMicroservices()` permanece comentado.
+- Validar com `pnpm run lint` e `pnpm run test`. Mudanca de *contrato*: `pnpm run test:e2e`.
+- Prefira `pnpm` (`pnpm-lock.yaml`).
+- Resposta ao usuario: concisa, analogia simples, acoes que serao executadas.
 
 ## Skills Condicionais
 
 - Sempre: `$nero`.
-- Backend API: `$nero` -> `references/guidelines/api-guidelines.md`.
-- .NET nao se aplica: este checkout e NestJS/TypeScript.
+- *contrato* / *endpoint*: `$banky-api` (`.agents/skills/banky-api/`).
+- Guideline Nest/API: `$nero` -> `references/guidelines/api-guidelines.md`.
+- `$dotnet-backend-patterns` omitido: checkout e NestJS/TypeScript.

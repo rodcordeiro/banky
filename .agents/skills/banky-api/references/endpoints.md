@@ -48,7 +48,7 @@ NLP e auto-review: [nlp.md](nlp.md).
 
 Login/refresh: `{ accessToken, expires, refreshToken, authenticated? }`. Access ~1 h; refresh ~5 dias.
 
-Paginação (`GET /transactions`, `GET /nlp`, `GET /nlp/auto-review/report`): `{ items: T[]; meta: { currentPage, itemCount, itemsPerPage, totalItems, totalPages?, hasNext } }`. Defaults: `page=1`, `limit=10`.
+Paginação (`GET /users`, `GET /accounts`, `GET /categories`, `GET /payments`, `GET /transactions`, `GET /nlp`, `GET /nlp/auto-review/report`): `{ items: T[]; meta: { currentPage, itemCount, itemsPerPage, totalItems, totalPages?, hasNext } }`. Query Zod `page?`, `limit?`. Defaults: `page=1`, `limit=10`. `GET /categories` pagina raízes; `subcategories` vêm no item.
 
 Throttle: 10 req / 30 s. `ZodValidationPipe` nos DTOs Zod. Conflito DB → `409`. Entidades base: `{ id, createdAt, updatedAt }`.
 
@@ -110,7 +110,9 @@ Auth: JWT Bearer em todas.
 
 ### GET /
 
-**Retorno:** `UsersEntity[]` — todos os usuários (sem filtro por owner).
+**Query (Zod):** `page?`, `limit?`
+
+**Retorno:** paginado `{ items: UsersEntity[], meta }` — todos os usuários (sem filtro por owner).
 
 ### GET /me
 
@@ -128,7 +130,9 @@ Auth: JWT Bearer. Owner injetado em create/update.
 
 ### GET /
 
-Contas do owner autenticado, com relação `owner`.
+**Query (Zod):** `page?`, `limit?`
+
+Contas do owner autenticado, com relação `owner`. **Retorno:** paginado `{ items, meta }`.
 
 ### GET /:id
 
@@ -162,7 +166,9 @@ Auth: JWT Bearer.
 
 ### GET /
 
-Raízes (`category IS NULL`) do owner, com `subcategories`.
+**Query (Zod):** `page?`, `limit?`
+
+Raízes (`category IS NULL`) do owner, com `subcategories`. **Retorno:** paginado `{ items, meta }` (página de raízes, não de folhas).
 
 ### GET /:id
 
@@ -262,7 +268,7 @@ Auth: JWT Bearer. Catálogo global (sem owner).
 
 | Método | Path | Body | Status |
 |--------|------|------|--------|
-| GET | / | — | 200 array |
+| GET | / | Query Zod `page?`, `limit?` | 200 paginado `{ items, meta }` |
 | GET | /:id | — | 200 |
 | POST | / | `{ name }` Zod | 200 |
 | PUT | /:id | `{ name }` completo | 200 |

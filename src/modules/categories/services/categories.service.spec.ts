@@ -1,15 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
+import { IsNull } from 'typeorm';
 import { CategoryClassification } from '../entities/categories.entity';
 import { CategoriesService } from './categories.service';
 
 describe('CategoriesService', () => {
-  const queryBuilder = {
-    innerJoinAndSelect: jest.fn(),
-    leftJoinAndSelect: jest.fn(),
-    where: jest.fn(),
-    andWhere: jest.fn(),
-    getMany: jest.fn(),
-  };
   const repository = {
     find: jest.fn(),
     findBy: jest.fn(),
@@ -18,33 +12,49 @@ describe('CategoriesService', () => {
     save: jest.fn(),
     merge: jest.fn(),
     delete: jest.fn(),
-    createQueryBuilder: jest.fn(),
+  };
+
+  const paginateService = {
+    paginate: jest.fn(),
   };
 
   let service: CategoriesService;
 
   beforeEach(() => {
-    service = new CategoriesService(repository as never);
-    queryBuilder.innerJoinAndSelect.mockReturnValue(queryBuilder);
-    queryBuilder.leftJoinAndSelect.mockReturnValue(queryBuilder);
-    queryBuilder.where.mockReturnValue(queryBuilder);
-    queryBuilder.andWhere.mockReturnValue(queryBuilder);
-    repository.createQueryBuilder.mockReturnValue(queryBuilder);
+    service = new CategoriesService(
+      repository as never,
+      paginateService as never,
+    );
     jest.clearAllMocks();
   });
 
-  it('finds all categories', async () => {
+  it('finds all categories as a paginated page', async () => {
     const categories = [{ id: 'category-id' }];
-    repository.find.mockResolvedValue(categories);
+    const page = {
+      items: categories,
+      meta: {
+        currentPage: 1,
+        itemCount: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+        hasNext: false,
+      },
+    };
+    paginateService.paginate.mockResolvedValue(page);
 
-    await expect(service.findAll()).resolves.toBe(categories);
+    await expect(service.findAll()).resolves.toBe(page);
 
-    expect(repository.find).toHaveBeenCalledWith();
+    expect(paginateService.paginate).toHaveBeenCalledWith(
+      repository,
+      { page: 1, limit: 10 },
+      undefined,
+    );
   });
 
   it('finds categories by options', async () => {
     const categories = [{ id: 'category-id' }];
-    const options = { where: { owner: { id: 'user-id' } } };
+    const options = { where: { owner: { id: 'user-id' } } } as never;
     repository.find.mockResolvedValue(categories);
 
     await expect(service.findBy(options)).resolves.toBe(categories);
@@ -126,26 +136,34 @@ describe('CategoriesService', () => {
 
   it('lists root categories with subcategories scoped by owner', async () => {
     const owner = 'user-id';
-    const categories = [{ id: 'category-id', subcategories: [] }];
-    queryBuilder.getMany.mockResolvedValue(categories);
+    const page = {
+      items: [{ id: 'category-id', subcategories: [] }],
+      meta: {
+        currentPage: 1,
+        itemCount: 1,
+        itemsPerPage: 10,
+        totalItems: 1,
+        totalPages: 1,
+        hasNext: false,
+      },
+    };
+    paginateService.paginate.mockResolvedValue(page);
 
-    await expect(service.listAll(owner)).resolves.toBe(categories);
+    await expect(service.listAll(owner)).resolves.toBe(page);
 
-    expect(repository.createQueryBuilder).toHaveBeenCalledWith('category');
-    expect(queryBuilder.innerJoinAndSelect).toHaveBeenCalledWith(
-      'category.owner',
-      'owner',
+    expect(paginateService.paginate).toHaveBeenCalledWith(
+      repository,
+      { page: 1, limit: 10 },
+      {
+        where: {
+          owner: { id: owner },
+          category: IsNull(),
+        },
+        relations: {
+          owner: true,
+          subcategories: true,
+        },
+      },
     );
-    expect(queryBuilder.leftJoinAndSelect).toHaveBeenCalledWith(
-      'category.subcategories',
-      'subcategory',
-    );
-    expect(queryBuilder.where).toHaveBeenCalledWith(
-      'category.category IS NULL',
-    );
-    expect(queryBuilder.andWhere).toHaveBeenCalledWith(
-      `category.owner = '${owner}'`,
-    );
-    expect(queryBuilder.getMany).toHaveBeenCalledWith();
   });
 });

@@ -1,26 +1,15 @@
 # Dominio
 
-O `banky-api` e a API principal do Banky. A superficie funcional cobre:
+API principal do Banky: usuarios/auth, contas e pagamentos, categorias e parametros, transacoes, NLP (parse, feedback, auto-review), health.
 
-- usuarios e autenticacao;
-- contas e formas de pagamento;
-- categorias e parametros;
-- transacoes financeiras;
-- NLP para classificacao, feedback e autoavaliacao;
-- healthcheck e operacao de background.
+Decisao vigente: `banky_nlp` consolidado nesta API; tratar NLP como modulo local ate nova decisao.
 
-Superficies sensiveis:
+Superficies:
 
-- contratos HTTP versionados em `/api/v1`;
-- DTOs Zod e Swagger;
-- persistencia financeira em MySQL;
-- migrations e indices;
-- JWT e refresh token;
-- logs, New Relic e interceptors;
-- fluxo NLP e feedbacks usados para treinamento.
+- *contrato* HTTP `/api/v1` (skill `$banky-api`);
+- persistencia MySQL e migrations;
+- JWT e refresh;
+- logs, New Relic, interceptors;
+- feedbacks e treino NLP.
 
-Decisao vigente no knowledge:
-
-- `banky_nlp` foi consolidado dentro de `banky-api`; trate NLP como parte da API principal ate nova decisao.
-
-Nao invente regra financeira. Sem evidencia em controller/service/provider/teste, registre como hipotese ou deixe fora.
+Cite controller, service, provider ou teste. Sem evidencia, marque hipotese.

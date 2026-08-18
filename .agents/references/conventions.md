@@ -1,24 +1,19 @@
 # Convencoes
 
-Mudancas:
+Mudanca:
 
-- Leia `README.md`, `AGENTS.md` e o modulo afetado antes de editar.
-- Mantenha controller na borda HTTP: decorators, guards, validacao, chamada de service e resposta.
-- Coloque regra de negocio em services.
-- Mantenha acesso a dados nos providers ou padrao equivalente ja usado pelo modulo.
-- Nao exponha entidade TypeORM como contrato publico sem motivo explicito.
-- Ao alterar rota, DTO, schema, status code ou payload JSON, registre impacto de compatibilidade.
-- Nao altere migrations aplicadas, CI/CD, Docker ou infraestrutura sem pedido explicito.
+- Leia o modulo afetado e, se for *contrato* HTTP, `$banky-api`.
+- Controller: rota, decorator, guard, pipe, chamada de service, resposta.
+- Regra de negocio em services; dados nos providers do modulo.
+- Entidade TypeORM como response so quando o *contrato* atual ja e assim.
+- Rota, DTO, status ou JSON: registrar impacto em `banky_app` / `bany_mcp`.
+- Migration aplicada, CI/CD, Docker ou infra: so com pedido explicito.
 
-Comandos:
+Validacao (scripts em `package.json`):
 
 - `pnpm run lint`
-- `pnpm run build`
 - `pnpm run test`
-- `pnpm run test:e2e` para contrato HTTP
+- `pnpm run test:e2e` para *contrato* HTTP
+- `pnpm run build` dispara `preformat`/`format`; conferir o diff depois
 
-Observacoes:
-
-- `pnpm run build` aciona formatacao via scripts existentes.
-- Evite rodar comandos que reescrevem muitos arquivos fora do escopo da tarefa.
-- Nao editar `dist/`, `coverage/` ou `node_modules/`.
+Nao editar `dist/`, `coverage/` ou `node_modules/`.

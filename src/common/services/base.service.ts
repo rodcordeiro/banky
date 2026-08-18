@@ -3,14 +3,28 @@ import {
   DeepPartial,
   FindManyOptions,
   FindOneOptions,
+  ObjectLiteral,
   Repository,
 } from 'typeorm';
 
-export abstract class BaseService<Entity = any> {
+import { PaginationService } from '@/core/paginate/paginate.service';
+
+export abstract class BaseService<
+  Entity extends ObjectLiteral = ObjectLiteral,
+> {
   protected repository: Repository<Entity>;
 
-  async findAll() {
-    return await this.repository.find();
+  constructor(protected readonly paginateService: PaginationService) {}
+
+  async findAll(
+    options: IPaginationOptions = { page: 1, limit: 10 },
+    searchOptions?: FindManyOptions<Entity>,
+  ): Promise<Pagination<Entity>> {
+    return this.paginateService.paginate(
+      this.repository,
+      options,
+      searchOptions,
+    );
   }
 
   async findBy(options: FindManyOptions<Entity>) {
@@ -33,17 +47,17 @@ export abstract class BaseService<Entity = any> {
     }
   }
 
-  async store(data: Entity) {
+  async store(data: DeepPartial<Entity>) {
     const details = this.repository.create(data);
     return await this.repository.save(details);
   }
   async update(id: string, data: DeepPartial<Entity>) {
-    const details = await this.findOneBy({ id } as any);
+    const details = await this.findOneBy({ id } as never);
     this.repository.merge(details, data);
     return await this.repository.save(details);
   }
   async destroy(id: string) {
-    await this.findBy({ id } as any);
-    await this.repository.delete({ id } as any);
+    await this.findBy({ id } as never);
+    await this.repository.delete({ id } as never);
   }
 }

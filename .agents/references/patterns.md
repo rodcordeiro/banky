@@ -1,23 +1,21 @@
 # Padroes Locais
 
-NestJS:
+Nest:
 
-- Modulos por dominio em `src/modules/<domain>`.
-- Controllers delegam para services.
-- Providers fazem papel de repositorio/acesso a dados quando ja existe esse padrao.
-- DTOs usam Zod e `createZodDto`.
+- Um modulo por dominio em `src/modules/<domain>`.
+- Controller delega; provider isola TypeORM quando o modulo ja usa esse corte.
+- DTO de escrita: Zod + `createZodDto` quando o arquivo ja segue isso.
 
 TypeORM:
 
-- Filtros por relacao `owner` devem usar objeto relacional quando aplicavel, por exemplo `owner: { id: ownerId }`.
-- Migrations novas ficam em `src/core/database/migrations`.
-- Nao ajustar migration ja aplicada sem plano de compatibilidade e rollback.
+- Filtro `owner` com `{ owner: { id: ownerId } }`, nao `{ owner: ownerId }`.
+- Migration nova em `src/core/database/migrations`; nao reescrever migration aplicada.
 
 NLP:
 
-- Resolver sinais explicitos de conta/categoria com dados persistidos antes de classificador probabilistico quando o fluxo existente permitir.
-- Escopar por owner quando disponivel para evitar misturar dados entre usuarios.
+- Resolver conta/categoria persistida antes do classificador, no fluxo que ja faz isso.
+- Escopar por owner.
 
-ESLint TypeScript:
+ESLint:
 
-- Usar `@typescript-eslint/no-unused-vars`; nao habilitar tambem a regra base `no-unused-vars`.
+- So `@typescript-eslint/no-unused-vars`; nao ligar tambem `no-unused-vars`.

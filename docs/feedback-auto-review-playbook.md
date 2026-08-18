@@ -6,7 +6,7 @@ Guia para operar o autoavaliador sem confundir **ciclo de promoção** com **run
 
 - Feedback NLP: `pending` → revisão humana (`validated` / `corrected`) → lançamento é passo separado.
 - Decisão do autoavaliador (`approve` / `correct` / `manual_review` / `reject`) ≠ `status` de negócio.
-- `PromotionCandidate.active` **não** significa regra viva no avaliador até AUTO-034.
+- Status `active` no ciclo ≠ **runtime effective**. `apply` de alias persiste o effective alias e o avaliador passa a usá-lo; conferir `effective-aliases` / `runtimeEffective`, não só o status do candidato. Cron de apply automático permanece desligado.
 - Cron de **apply automático** permanece **desligado**.
 
 ## Modos

@@ -8,11 +8,13 @@ import {
   Param,
   Post,
   Put,
+  Query,
   Req,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 
 import { Auth } from '@/common/decorators/auth.decorator';
+import { QueryPaginateDTO } from '@/core/paginate/dto/query-paginate.dto';
 
 import { AccountsService } from '../services/accounts.service';
 import { CreateAccountDTO } from '../dto/create.dto';
@@ -28,13 +30,22 @@ export class AccountsController {
   constructor(private readonly _service: AccountsService) {}
 
   @Get()
-  async index(@Req() req: AuthenticatedRequest) {
-    return await this._service.findBy({
-      where: {
-        owner: { id: req.user.id },
+  async index(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: QueryPaginateDTO,
+  ) {
+    return await this._service.findAll(
+      {
+        page: query.page ?? 1,
+        limit: query.limit ?? 10,
       },
-      relations: { owner: true },
-    });
+      {
+        where: {
+          owner: { id: req.user.id },
+        },
+        relations: { owner: true },
+      } as never,
+    );
   }
 
   @Get('/:id')

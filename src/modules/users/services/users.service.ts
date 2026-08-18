@@ -1,17 +1,19 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { FindOneOptions, Repository } from 'typeorm';
 import { BaseService } from '@/common/services/base.service';
+import { PaginationService } from '@/core/paginate/paginate.service';
 
 import { UsersEntity } from '@/modules/users/entities/users.entity';
 
 @Injectable()
-export class UsersService extends BaseService {
+export class UsersService extends BaseService<UsersEntity> {
   override repository = this._repository;
   constructor(
     @Inject('USER_REPOSITORY')
     private readonly _repository: Repository<UsersEntity>,
+    paginateService: PaginationService,
   ) {
-    super();
+    super(paginateService);
   }
 
   async validate(options: FindOneOptions<UsersEntity>['where']) {

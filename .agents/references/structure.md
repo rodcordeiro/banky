@@ -1,34 +1,19 @@
 # Estrutura
 
-Stack principal:
+Stack observada: Node.js + TypeScript, NestJS 10 + Fastify, TypeORM + MySQL, Zod/`nestjs-zod`, Swagger, Passport/JWT, New Relic, cron. RabbitMQ nas dependencias.
 
-- Node.js + TypeScript.
-- NestJS 10 com Fastify.
-- TypeORM + MySQL.
-- Zod com `nestjs-zod` e Swagger.
-- Passport/JWT, New Relic, cron e dependencias RabbitMQ.
+Entrada: `src/main.ts`. Raiz: `src/app.module.ts`. Dominios montados em `src/modules/shared.module.ts`.
 
-Pastas ativas:
+| Path | Papel |
+| --- | --- |
+| `src/modules/` | Dominios: accounts, auth, categories, health, nlp, parameters, payments, transactions, users |
+| `src/common/` | Guards, interceptors, schemas, entidade base, utils, `env.config.ts` |
+| `src/core/` | Database, cron, HTTP, JWT, paginate, RabbitMQ |
+| `src/core/database/migrations/` | Migrations TypeORM (`bk_tb_migrations`) |
+| `test/` | Jest e2e (`app.e2e-spec.ts`) |
+| `.agents/skills/banky-api/` | Domain Skill de *contrato* HTTP |
+| `docs/` | Playbook/backlog auto-review e ADR de treino NLP |
 
-- `src/main.ts`: bootstrap HTTP, seguranca, versionamento, interceptors, Swagger e microservice connection.
-- `src/app.module.ts`: modulo raiz e providers globais.
-- `src/common/`: guards, interceptors, schemas, entidades base, utils e interfaces.
-- `src/core/`: database, cron, HTTP, JWT, paginate e RabbitMQ.
-- `src/modules/`: dominios funcionais.
-- `src/core/database/migrations/`: migrations TypeORM.
-- `test/`: e2e Jest.
-- `docs/`: ADRs e backlog tecnico.
+Padrao de modulo observado: `controllers/`, `services/`, `providers/`, `entities/`, `dto` ou `dtos/`.
 
-Modulos principais:
-
-- `accounts`
-- `auth`
-- `categories`
-- `health`
-- `nlp`
-- `parameters`
-- `payments`
-- `transactions`
-- `users`
-
-Padrao de modulo observado: `controllers`, `services`, `providers`, `entities` e `dto`.
+O README omite `nlp` na arvore; o checkout inclui `NlpModule` no `SharedModule`.
