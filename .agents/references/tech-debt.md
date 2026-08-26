@@ -16,4 +16,3 @@ Adequacao vs `$nero` `references/guidelines/api-guidelines.md` (sem reestruturar
 - `GET/PUT/DELETE /:id` em accounts, categories e transactions sem *ownership*.
 - `GET /users` lista todos os users.
 - `CancellationToken` ausente no `src/`.
-- `CategoriesController` tem `@Get()` duplicado.

@@ -12,3 +12,5 @@
 *contrato* HTTP: `$banky-api` -> `.agents/skills/banky-api/SKILL.md`.
 
 Guideline: dominio `api` -> `$nero` -> `references/guidelines/api-guidelines.md`.
+
+Estrutura (`calls`, imports, vizinhos e paths): `$nero-code-graph` (`cg_*`). Corpo e WIP: filesystem.

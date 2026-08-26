@@ -12,4 +12,9 @@ Superficies:
 - logs, New Relic, interceptors;
 - feedbacks e treino NLP.
 
+Registro de transacao:
+
+- `TransactionsController.create` delega a transacao comum para `TransactionsService.store`;
+- `NlpService.createTransactionFromFeedback` resolve entidades do owner e delega para `store` ou `createTransfer` conforme o intent.
+
 Cite controller, service, provider ou teste. Sem evidencia, marque hipotese.

@@ -5,6 +5,7 @@ Nest:
 - Um modulo por dominio em `src/modules/<domain>`.
 - Controller delega; provider isola TypeORM quando o modulo ja usa esse corte.
 - DTO de escrita: Zod + `createZodDto` quando o arquivo ja segue isso.
+- Listas base usam `BaseService.findAll` com retorno paginado via `PaginationService`.
 
 TypeORM:
 

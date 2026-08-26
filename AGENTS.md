@@ -13,6 +13,7 @@ API NestJS + Fastify do Banky. Entrada: `src/main.ts`. Prefixo `/api`, versionam
 | Padroes ja observados | `.agents/references/patterns.md` |
 | Gaps e debito vs guideline | `.agents/references/tech-debt.md` |
 | *contrato* HTTP, *endpoint* ou DTO | `.agents/skills/banky-api/SKILL.md` |
+| Chamadas, imports ou caminho entre simbolos | `$nero-code-graph` (`cg_*`) |
 | Guideline de dominio `api` | `$nero` -> `references/guidelines/api-guidelines.md` |
 
 ## Regras Rapidas
@@ -29,6 +30,7 @@ API NestJS + Fastify do Banky. Entrada: `src/main.ts`. Prefixo `/api`, versionam
 ## Skills Condicionais
 
 - Sempre: `$nero`.
+- Estrutura do checkout (*calls*, imports, vizinhos, path): `$nero-code-graph`; corpo de arquivo continua no filesystem.
 - *contrato* / *endpoint*: `$banky-api` (`.agents/skills/banky-api/`).
 - Guideline Nest/API: `$nero` -> `references/guidelines/api-guidelines.md`.
 - `$dotnet-backend-patterns` omitido: checkout e NestJS/TypeScript.

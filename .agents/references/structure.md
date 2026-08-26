@@ -12,6 +12,7 @@ Entrada: `src/main.ts`. Raiz: `src/app.module.ts`. Dominios montados em `src/mod
 | `src/core/database/migrations/` | Migrations TypeORM (`bk_tb_migrations`) |
 | `test/` | Jest e2e (`app.e2e-spec.ts`) |
 | `.agents/skills/banky-api/` | Domain Skill de *contrato* HTTP |
+| `.nero-code-graph/graph.json` | Artefato estrutural derivado do checkout; consultar via `$nero-code-graph` |
 | `docs/` | Playbook/backlog auto-review e ADR de treino NLP |
 
 Padrao de modulo observado: `controllers/`, `services/`, `providers/`, `entities/`, `dto` ou `dtos/`.
