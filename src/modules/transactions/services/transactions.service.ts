@@ -173,14 +173,20 @@ export class TransactionsService extends BaseService<TransactionsEntity> {
       date: data.date || new Date().toISOString(),
     });
 
-    await this._repository.save([originTransaction, destinyTransaction]);
+    const transactions = await this._repository.save([
+      originTransaction,
+      destinyTransaction,
+    ]);
     await this._accountsService.update(originAccount.id, {
       ammount: originAccount.ammount - data.value,
     });
     await this._accountsService.update(destinyAccount.id, {
       ammount: destinyAccount.ammount + data.value,
     });
+
+    return transactions;
   }
+
   async payCreditcart(data: CreditPaymentTransactionDTO & { owner: string }) {
     const originAccount = await this._accountsService.findOneBy({
       id: data.origin,

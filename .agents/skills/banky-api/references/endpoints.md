@@ -244,7 +244,7 @@ Por id. **Sem verificação de ownership.**
 
 **Comportamento:** duas transações (mesmo `batchId`); categorias via parâmetros `transference_origin_category` e `transference_destiny_category`; debita origem, credita destino.
 
-**Retorno:** corpo vazio (service retorna void).
+**Retorno:** array default do TypeORM com as duas Transactions persistidas.
 
 **Erros:** `400` parâmetros ou contas não encontradas.
 
@@ -351,5 +351,5 @@ Auth: público. Path: `/api/health`.
 3. `GET /users` expõe todos os users.
 4. DTOs auth/NLP sem Zod.
 5. *orrected* em `ApproveFeedbackDto`.
-6. `POST /transactions/transfer` retorna 201 com body vazio.
+6. `POST /transactions/transfer` retorna 201 com as duas Transactions persistidas.
 7. Throttle 10/30s pode limitar batch auto-review.

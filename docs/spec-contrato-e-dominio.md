@@ -76,7 +76,7 @@ Uma spec de registro descreve o produto **como está** (comportamento observáve
 64. As a developer, I want DB unique conflicts to surface as 409, so that duplicate username or keys are distinguishable from validation errors.
 65. As a developer, I want not-found on core CRUD to stay 400 where that is today’s contract, so that clients do not guess 404.
 66. As a developer, I want NLP not-found to stay 404, so that review of a missing Feedback is distinct from a bad body.
-67. As a developer, I want Transfer HTTP to return 201 with empty body, so that I do not parse a missing pair of Transactions from the response.
+67. As a developer, I want Transfer HTTP to return 201 with the two persisted Transactions, so that consumers can use the created pair without another query.
 68. As a developer, I want credit payment HTTP to return the Transaction, so that I can show the card payment row.
 69. As an operator, I want health at `/api/health` without JWT, so that probes do not need a user.
 70. As an operator, I want to know RabbitMQ is compiled in but not started, so that I do not wait for a queue that never consumes.
