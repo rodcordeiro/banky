@@ -39,7 +39,7 @@
     "@nestjs/microservices": "^10.4.19",
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.4.19",
-    "@nestjs/platform-fastify": "^10.4.19",
+    "@nestjs/platform-fastify": "^11.0.0",
     "@nestjs/platform-socket.io": "^10.4.19",
     "@nestjs/schedule": "^6.1.1",
     "@nestjs/swagger": "^7.4.2",
