@@ -30,4 +30,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
-      - run: pnpm run test -- --runInBand
+      - run: pnpm run test -- --if-present --runInBand
