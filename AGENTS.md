@@ -34,3 +34,17 @@ API NestJS + Fastify do Banky. Entrada: `src/main.ts`. Prefixo `/api`, versionam
 - *contrato* / *endpoint*: `$banky-api` (`.agents/skills/banky-api/`).
 - Guideline Nest/API: `$nero` -> `references/guidelines/api-guidelines.md`.
 - `$dotnet-backend-patterns` omitido: checkout e NestJS/TypeScript.
+
+## Agent skills
+
+### Issue tracker
+
+Issues ficam em `rodcordeiro/banky` e devem integrar o Banky Project #11. Veja `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use o vocabulário canônico de cinco labels. Veja `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Repositório single-context: leia `CONTEXT.md` e `docs/adrs/`. Veja `docs/agents/domain.md`.
