@@ -4,7 +4,7 @@ describe('AccountsController', () => {
   const owner = 'user-id';
   const req = { user: { id: owner } } as AuthenticatedRequest;
   const service = {
-    findBy: jest.fn(),
+    findAll: jest.fn(),
     findOneBy: jest.fn(),
     store: jest.fn(),
     update: jest.fn(),
@@ -19,17 +19,23 @@ describe('AccountsController', () => {
   });
 
   it('lists accounts scoped by authenticated owner', async () => {
-    const accounts = [{ id: 'account-id' }];
-    service.findBy.mockResolvedValue(accounts);
+    const page = { items: [{ id: 'account-id' }], meta: { currentPage: 1 } };
+    service.findAll.mockResolvedValue(page);
 
-    await expect(controller.index(req)).resolves.toBe(accounts);
+    await expect(controller.index(req, {})).resolves.toBe(page);
 
-    expect(service.findBy).toHaveBeenCalledWith({
-      where: {
-        owner: { id: owner },
+    expect(service.findAll).toHaveBeenCalledWith(
+      {
+        page: 1,
+        limit: 10,
       },
-      relations: { owner: true },
-    });
+      {
+        where: {
+          owner: { id: owner },
+        },
+        relations: { owner: true },
+      },
+    );
   });
 
   it('gets account by id', async () => {

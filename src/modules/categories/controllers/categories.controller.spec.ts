@@ -20,12 +20,18 @@ describe('CategoriesController', () => {
   });
 
   it('lists category tree scoped by authenticated owner', async () => {
-    const categories = [{ id: 'category-id', subcategories: [] }];
-    service.listAll.mockResolvedValue(categories);
+    const page = {
+      items: [{ id: 'category-id', subcategories: [] }],
+      meta: { currentPage: 1 },
+    };
+    service.listAll.mockResolvedValue(page);
 
-    await expect(controller.index(req)).resolves.toBe(categories);
+    await expect(controller.index(req, {})).resolves.toBe(page);
 
-    expect(service.listAll).toHaveBeenCalledWith(owner);
+    expect(service.listAll).toHaveBeenCalledWith(owner, {
+      page: 1,
+      limit: 10,
+    });
   });
 
   it('gets category by id', async () => {

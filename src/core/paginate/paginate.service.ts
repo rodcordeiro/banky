@@ -47,6 +47,9 @@ export class PaginationService {
     searchOptions?: FindManyOptions<T>,
   ): Promise<Pagination<T>> {
     const { limit, page, countQueries } = this.resolveOptions(options);
+    const countOptions = searchOptions
+      ? { ...searchOptions, relations: undefined, select: undefined }
+      : undefined;
 
     const promises: [Promise<T[]>, Promise<number> | undefined] = [
       entityRepository.find({
@@ -59,7 +62,7 @@ export class PaginationService {
 
     if (countQueries) {
       promises[1] = entityRepository.count({
-        ...searchOptions,
+        ...countOptions,
       });
     }
 

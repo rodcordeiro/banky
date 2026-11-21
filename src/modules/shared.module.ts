@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 
+import { PaginationModule } from '@/core/paginate/paginate.module';
 import { HealthModule } from '@/modules/health/health.module';
 import { UsersModule } from '@/modules/users/users.module';
 import { AuthModule } from '@/modules/auth/auth.module';
@@ -11,6 +12,7 @@ import { ParametersModule } from './parameters/parameters.module';
 import { NlpModule } from './nlp/nlp.module';
 @Module({
   imports: [
+    PaginationModule,
     HealthModule,
     UsersModule,
     AuthModule,

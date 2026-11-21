@@ -1,6 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { BaseService } from './base.service';
+import { PaginationService } from '@/core/paginate/paginate.service';
 
 type TestEntity = {
   id: string;
@@ -9,8 +10,11 @@ type TestEntity = {
 };
 
 class TestService extends BaseService<TestEntity> {
-  constructor(repository: Repository<TestEntity>) {
-    super();
+  constructor(
+    repository: Repository<TestEntity>,
+    paginateService: PaginationService,
+  ) {
+    super(paginateService);
     this.repository = repository;
   }
 }
@@ -25,21 +29,57 @@ describe('BaseService', () => {
     merge: jest.fn(),
     delete: jest.fn(),
   };
+  const paginateService = {
+    paginate: jest.fn(),
+  };
 
   let service: TestService;
 
+  const page = {
+    items: [{ id: 'entity-id', name: 'entity' }],
+    meta: {
+      currentPage: 1,
+      itemCount: 1,
+      itemsPerPage: 10,
+      totalItems: 1,
+      totalPages: 1,
+      hasNext: false,
+    },
+  };
+
   beforeEach(() => {
-    service = new TestService(repository as unknown as Repository<TestEntity>);
+    service = new TestService(
+      repository as unknown as Repository<TestEntity>,
+      paginateService as unknown as PaginationService,
+    );
     jest.clearAllMocks();
   });
 
-  it('finds all records', async () => {
-    const records = [{ id: 'entity-id', name: 'entity' }];
-    repository.find.mockResolvedValue(records);
+  it('finds all records as a paginated page', async () => {
+    paginateService.paginate.mockResolvedValue(page);
 
-    await expect(service.findAll()).resolves.toBe(records);
+    await expect(service.findAll()).resolves.toBe(page);
 
-    expect(repository.find).toHaveBeenCalledWith();
+    expect(paginateService.paginate).toHaveBeenCalledWith(
+      repository,
+      { page: 1, limit: 10 },
+      undefined,
+    );
+  });
+
+  it('forwards pagination and search options to paginate', async () => {
+    const searchOptions = { where: { active: true } };
+    paginateService.paginate.mockResolvedValue(page);
+
+    await expect(
+      service.findAll({ page: 2, limit: 5 }, searchOptions),
+    ).resolves.toBe(page);
+
+    expect(paginateService.paginate).toHaveBeenCalledWith(
+      repository,
+      { page: 2, limit: 5 },
+      searchOptions,
+    );
   });
 
   it('finds records by where options', async () => {

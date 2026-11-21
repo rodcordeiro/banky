@@ -100,7 +100,18 @@ export class BaseClassifier {
 
   async classify(text: string): Promise<string | number | null> {
     if (!this.classifier) await this.init();
-    return this.classifier!.classify(this.preprocess(text));
+    try {
+      return this.classifier!.classify(this.preprocess(text));
+    } catch (error) {
+      if (this.isNotTrainedError(error)) {
+        this.logger.warn(
+          `Model '${this.model}' is not trained; returning no classification.`,
+        );
+        return null;
+      }
+
+      throw error;
+    }
   }
 
   async train(
@@ -113,7 +124,18 @@ export class BaseClassifier {
 
     this.classifier = classifier;
 
-    for (const sample of samples ?? []) {
+    const validSamples = (samples ?? []).filter(
+      sample => sample.text && sample.label,
+    );
+
+    if (!validSamples.length) {
+      this.logger.warn(
+        `Model '${this.model}' received no valid samples; training skipped.`,
+      );
+      return;
+    }
+
+    for (const sample of validSamples) {
       if (!sample.text || !sample.label) continue;
       classifier.addDocument(this.preprocess(sample.text), sample.label);
     }
@@ -125,8 +147,18 @@ export class BaseClassifier {
   async retrain(newSamples: TrainingSample[]): Promise<void> {
     this.logger.verbose(`Retraining model '${this.model}' with feedback.`);
     const classifier = await this.init();
+    const validSamples = newSamples.filter(
+      sample => sample.text && sample.label,
+    );
 
-    for (const sample of newSamples) {
+    if (!validSamples.length) {
+      this.logger.warn(
+        `Model '${this.model}' received no valid samples; retraining skipped.`,
+      );
+      return;
+    }
+
+    for (const sample of validSamples) {
       classifier.addDocument(this.preprocess(sample.text), sample.label);
     }
 
@@ -135,11 +167,24 @@ export class BaseClassifier {
     this.logger.verbose(`Retraining finished for model '${this.model}'.`);
   }
 
+  private isNotTrainedError(error: unknown): boolean {
+    const message =
+      error instanceof Error
+        ? error.message
+        : typeof error === 'string'
+          ? error
+          : String((error as { message?: unknown })?.message ?? error);
+
+    return /not trained/i.test(message);
+  }
+
   private save(): Promise<void> {
     const modelPath = this.getModelPath();
+    fs.mkdirSync(path.dirname(modelPath), { recursive: true });
+
     return new Promise((resolve, reject) => {
       this.classifier!.save(modelPath, err => {
-        if (err) reject(err);
+        if (err) return reject(err);
         this.logger.verbose(`Model '${this.model}' saved.`);
         resolve();
       });

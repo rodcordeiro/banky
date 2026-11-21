@@ -1,6 +1,9 @@
 import { DataSource } from 'typeorm';
 import { AccountsEntity } from '../../accounts/entities/accounts.entity';
 import { CategoriesEntity } from '../../categories/entities/categories.entity';
+import { FeedbackAutoReviewEntity } from '../entities/feedback-auto-review.entity';
+import { FeedbackAutoReviewPromotionCandidateEntity } from '../entities/feedback-auto-review-promotion-candidate.entity';
+import { FeedbackAutoReviewEffectiveAliasEntity } from '../entities/feedback-auto-review-effective-alias.entity';
 import { FeedbackEntity } from '../entities/feedback.entity';
 
 export const NlpProviders = [
@@ -20,6 +23,24 @@ export const NlpProviders = [
     provide: 'CATEGORIES_REPOSITORY',
     useFactory: (dataSource: DataSource) =>
       dataSource.getRepository(CategoriesEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'FEEDBACK_AUTO_REVIEW_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(FeedbackAutoReviewEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'FEEDBACK_AUTO_REVIEW_PROMOTION_CANDIDATE_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(FeedbackAutoReviewPromotionCandidateEntity),
+    inject: ['DATA_SOURCE'],
+  },
+  {
+    provide: 'FEEDBACK_AUTO_REVIEW_EFFECTIVE_ALIAS_REPOSITORY',
+    useFactory: (dataSource: DataSource) =>
+      dataSource.getRepository(FeedbackAutoReviewEffectiveAliasEntity),
     inject: ['DATA_SOURCE'],
   },
 ];
