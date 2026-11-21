@@ -35,4 +35,26 @@ describe('BaseClassifier', () => {
 
     expect(classifyMock).toHaveBeenCalledWith('mercadinho com taxa de servico');
   });
+
+  it('returns null when the underlying classifier is not trained', async () => {
+    const classifyMock = jest.fn(() => {
+      throw new Error('Not Trained');
+    });
+    classifier.classifier = {
+      classify: classifyMock,
+    } as unknown as typeof classifier.classifier;
+
+    await expect(classifier.classify('qualquer texto')).resolves.toBeNull();
+  });
+
+  it('also handles non-error not trained throws from classifier libraries', async () => {
+    const classifyMock = jest.fn(() => {
+      throw { message: 'Not Trained' };
+    });
+    classifier.classifier = {
+      classify: classifyMock,
+    } as unknown as typeof classifier.classifier;
+
+    await expect(classifier.classify('qualquer texto')).resolves.toBeNull();
+  });
 });

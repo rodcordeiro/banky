@@ -15,24 +15,23 @@ import { CreateTransferTransactionDTO } from '../dto/transfer.dto';
 import { CreditPaymentTransactionDTO } from '../dto/credit.dto';
 
 @Injectable()
-export class TransactionsService extends BaseService {
+export class TransactionsService extends BaseService<TransactionsEntity> {
   override repository = this._repository;
   constructor(
     @Inject('TRANSACTIONS_REPOSITORY')
     private readonly _repository: Repository<TransactionsEntity>,
     private readonly _accountsService: AccountsService,
     private readonly _categoriesService: CategoriesService,
-    private readonly _paginateService: PaginationService,
+    paginateService: PaginationService,
     private readonly _parametersService: ParameterValuesService,
   ) {
-    super();
+    super(paginateService);
   }
   async listAll(query: QueryTransactionsDTO & { owner: string }) {
-    return this._paginateService.paginate(
-      this._repository,
+    return this.findAll(
       {
-        limit: query.limit,
-        page: query.page,
+        limit: query.limit ?? 10,
+        page: query.page ?? 1,
       },
       {
         select: [
@@ -174,14 +173,20 @@ export class TransactionsService extends BaseService {
       date: data.date || new Date().toISOString(),
     });
 
-    await this._repository.save([originTransaction, destinyTransaction]);
+    const transactions = await this._repository.save([
+      originTransaction,
+      destinyTransaction,
+    ]);
     await this._accountsService.update(originAccount.id, {
       ammount: originAccount.ammount - data.value,
     });
     await this._accountsService.update(destinyAccount.id, {
       ammount: destinyAccount.ammount + data.value,
     });
+
+    return transactions;
   }
+
   async payCreditcart(data: CreditPaymentTransactionDTO & { owner: string }) {
     const originAccount = await this._accountsService.findOneBy({
       id: data.origin,
